@@ -20,6 +20,15 @@ Funciona:
 - GET /health.
 - Estructura de carpetas.
 
+Verificacion local:
+
+- dotnet restore funciona.
+- dotnet build funciona.
+- dotnet run funciona.
+- Swagger abre en localhost:5085.
+- GET /health responde 200 OK.
+- El warning HTTPS de desarrollo fue corregido.
+
 Pendiente:
 
 - Modelos.
