@@ -1,0 +1,10 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=IndotelCoreDb;Trusted_Connection=True;TrustServerCertificate=True;"
+  },
+  "Jwt": {
+    "Issuer": "Indotel.Core",
+    "Audience": "Indotel.Clients",
+    "Key": "COLOCA_AQUI_UNA_CLAVE_LOCAL_DE_32_CARACTERES_O_MAS"
+  }
+}
