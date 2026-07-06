@@ -29,11 +29,37 @@ Verificacion local:
 - GET /health responde 200 OK.
 - El warning HTTPS de desarrollo fue corregido.
 
-Pendiente:
+## Bloque 2: modelos y DbContext
 
-- Modelos.
-- DbContext.
-- Base de datos.
+Se agregaron los modelos principales del MVP y el DbContext.
+
+Modelos agregados:
+
+- Rol.
+- Usuario.
+- Ciudadano.
+- Prestadora.
+- ServicioTelecom.
+- Reclamacion.
+- DocumentoReclamacion.
+- RespuestaPrestadora.
+- HistorialReclamacion.
+- Auditoria.
+
+Archivos importantes:
+
+- core-indotel/Indotel.Core/Data/IndotelDbContext.cs
+- docs/DATABASE_MODEL.md
+
+Pendiente del Bloque 2:
+
+- Probar dotnet build localmente.
+- Crear migracion inicial.
+- Crear base de datos.
+- Crear datos semilla.
+
+Pendiente general:
+
 - Login.
 - JWT.
 - Reclamaciones.
