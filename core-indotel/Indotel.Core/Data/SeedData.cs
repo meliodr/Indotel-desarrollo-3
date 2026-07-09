@@ -1,0 +1,63 @@
+using Indotel.Core.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace Indotel.Core.Data;
+
+public static class SeedData
+{
+    public static async Task InitializeAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IndotelDbContext>();
+
+        await db.Database.MigrateAsync();
+
+        if (!await db.Roles.AnyAsync())
+        {
+            db.Roles.AddRange(
+                new Rol { Nombre = "Administrador", Descripcion = "Acceso total al sistema" },
+                new Rol { Nombre = "AnalistaDAU", Descripcion = "Gestiona reclamaciones ciudadanas" },
+                new Rol { Nombre = "Prestadora", Descripcion = "Consulta y responde casos asignados" },
+                new Rol { Nombre = "Ciudadano", Descripcion = "Registra y consulta sus reclamaciones" },
+                new Rol { Nombre = "Auditor", Descripcion = "Consulta reportes y auditoria" }
+            );
+        }
+
+        if (!await db.ServiciosTelecom.AnyAsync())
+        {
+            db.ServiciosTelecom.AddRange(
+                new ServicioTelecom { Nombre = "Internet", Descripcion = "Servicio de internet fijo o movil" },
+                new ServicioTelecom { Nombre = "Telefonia movil", Descripcion = "Servicio de llamadas y datos moviles" },
+                new ServicioTelecom { Nombre = "Telefonia fija", Descripcion = "Servicio telefonico residencial o empresarial" },
+                new ServicioTelecom { Nombre = "Telecable", Descripcion = "Servicio de television por cable" }
+            );
+        }
+
+        if (!await db.Prestadoras.AnyAsync())
+        {
+            db.Prestadoras.AddRange(
+                new Prestadora { Rnc = "101001001", NombreComercial = "Claro Dominicana", RazonSocial = "Compania Dominicana de Telefonos", Representante = "Representante Claro", Telefono = "8090000001", Correo = "claro@test.local" },
+                new Prestadora { Rnc = "101001002", NombreComercial = "Altice Dominicana", RazonSocial = "Altice Dominicana", Representante = "Representante Altice", Telefono = "8090000002", Correo = "altice@test.local" },
+                new Prestadora { Rnc = "101001003", NombreComercial = "Viva", RazonSocial = "Trilogy Dominicana", Representante = "Representante Viva", Telefono = "8090000003", Correo = "viva@test.local" },
+                new Prestadora { Rnc = "101001004", NombreComercial = "Wind Telecom", RazonSocial = "Wind Telecom", Representante = "Representante Wind", Telefono = "8090000004", Correo = "wind@test.local" }
+            );
+        }
+
+        await db.SaveChangesAsync();
+
+        if (!await db.Usuarios.AnyAsync(x => x.Correo == "admin@indotel.test"))
+        {
+            var adminRole = await db.Roles.FirstAsync(x => x.Nombre == "Administrador");
+            db.Usuarios.Add(new Usuario
+            {
+                NombreCompleto = "Administrador INDOTEL",
+                Correo = "admin@indotel.test",
+                PasswordHash = "PendienteConfigurarHashEnBloqueJWT",
+                RolId = adminRole.Id,
+                Activo = true
+            });
+
+            await db.SaveChangesAsync();
+        }
+    }
+}
