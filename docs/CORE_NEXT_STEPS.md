@@ -11,9 +11,12 @@ El Core esta funcional y validado dentro del alcance academico definido.
 Estado recomendado para presentacion:
 
 ```text
-Core academico/demo: 100%
-Core funcional probado: 100%
-Core produccion academica/prototipo avanzado: 100%
+Core principal de reclamaciones: 100%
+Fase 2A - Resoluciones institucionales: 100%
+Fase 2B - Autorizaciones y certificaciones: 100%
+Fase 2C - Espectro radioelectrico y licencias tecnicas: 100%
+Fase 2D - Reportes regulatorios ampliados: 100%
+Fase 3 - Hardening basico de autenticacion: 100%
 ```
 
 No se declara como produccion gubernamental real certificada.
@@ -22,11 +25,46 @@ No se declara como produccion gubernamental real certificada.
 
 Este documento lista mejoras futuras que elevarian el Core desde prototipo institucional avanzado hacia una base productiva mas robusta.
 
-Estas mejoras no son necesarias para la defensa actual y no deben implementarse apresuradamente antes de la entrega si pueden poner en riesgo la estabilidad ya probada.
+Varias mejoras que antes estaban como pendientes ya fueron implementadas en Fase 3:
 
-## 3. Prioridad 1 - Mejoras que mas valor agregan
+```text
+Refresh token.
+Logout real.
+Revocacion de refresh token.
+Bloqueo por intentos fallidos.
+Rate limiting basico en Auth.
+```
 
-### 3.1 Pruebas automatizadas
+Por eso, lo que sigue ahora no es agregar mas funciones rapidamente, sino cerrar, defender, probar y preparar una evolucion mas limpia.
+
+## 3. Prioridad 1 - Cierre de entrega
+
+Antes de cualquier nueva funcion:
+
+```text
+1. Verificar git status.
+2. Subir migraciones pendientes si existen.
+3. Ejecutar prueba final del Core.
+4. Ejecutar scripts de Fase 2A, 2B, 2C, 2D y Fase 3.
+5. No tocar mas codigo si todo pasa.
+6. Preparar defensa.
+```
+
+Comandos sugeridos:
+
+```bash
+git status --short
+bash /tmp/probar_final_100_indotel.sh
+bash scripts/probar_fase2a_resoluciones.sh
+bash scripts/probar_fase2b_autorizaciones_certificaciones.sh
+ADMIN_PASSWORD='***' bash scripts/probar_fase2c_espectro_licencias.sh
+ADMIN_PASSWORD='***' bash scripts/probar_fase2d_reportes_ampliados.sh
+ADMIN_PASSWORD='***' bash scripts/probar_fase3_hardening_auth.sh
+```
+
+## 4. Prioridad 2 - Pruebas automatizadas formales
+
+Actualmente existen scripts funcionales end-to-end. El siguiente paso profesional seria convertir parte de esa cobertura en pruebas automatizadas dentro del proyecto.
 
 Agregar un proyecto:
 
@@ -46,6 +84,9 @@ Testcontainers para SQL Server opcional
 Pruebas recomendadas:
 
 - Login correcto e incorrecto.
+- Refresh token.
+- Logout.
+- Bloqueo por intentos fallidos.
 - Registro ciudadano.
 - RBAC por roles.
 - Dueno real ciudadano.
@@ -54,69 +95,17 @@ Pruebas recomendadas:
 - SLA vencido.
 - Resolucion y cierre.
 - Bloqueo de documentos a usuario ajeno.
+- Resoluciones institucionales.
+- Autorizaciones.
+- Certificaciones.
+- Espectro.
+- Licencias tecnicas.
 - Notificaciones protegidas.
 - Auditoria generada.
 
-### 3.2 Rate limiting
+## 5. Prioridad 3 - Mejoras arquitectonicas
 
-Agregar limite de peticiones a endpoints publicos o sensibles:
-
-```text
-POST /api/auth/login
-POST /api/auth/register-ciudadano
-POST /api/auth/forgot-password
-POST /api/auth/reset-password
-GET /api/health
-```
-
-Beneficio:
-
-- Mitiga fuerza bruta.
-- Reduce abuso de endpoints publicos.
-- Mejora postura de seguridad.
-
-### 3.3 Refresh token y logout real
-
-Agregar:
-
-```text
-POST /api/auth/refresh-token
-POST /api/auth/logout
-```
-
-Tablas posibles:
-
-```text
-RefreshTokens
-RevokedTokens
-```
-
-Beneficio:
-
-- Mejor experiencia de usuario.
-- Revocacion real de sesiones.
-- Menor riesgo si un token expira rapido.
-
-### 3.4 Bloqueo por intentos fallidos
-
-Agregar campos a Usuario:
-
-```text
-AccessFailedCount
-LockoutEnd
-LastLoginAt
-LastFailedLoginAt
-```
-
-Regla sugerida:
-
-```text
-5 intentos fallidos -> bloqueo temporal de 15 minutos
-```
-
-## 4. Prioridad 2 - Mejoras arquitectonicas
-
-### 4.1 Separacion Controllers -> Services -> Repositories
+### 5.1 Separacion Controllers -> Services -> Repositories
 
 Estado actual:
 
@@ -140,20 +129,30 @@ Ejemplos de servicios futuros:
 
 ```text
 ReclamacionService
+ResolucionInstitucionalService
+AutorizacionService
+CertificacionService
+EspectroService
+LicenciaTecnicaService
 SlaService
 DocumentoService
 AuditoriaService
 NotificacionService
 ReporteService
+AuthSessionService
 ```
 
-### 4.2 Dominio mas expresivo
+### 5.2 Dominio mas expresivo
 
 Agregar objetos o servicios de dominio:
 
 ```text
 ReclamacionEstadoMachine
+ResolucionEstadoMachine
+SolicitudInstitucionalEstadoMachine
+LicenciaTecnicaEstadoMachine
 NumeroExpedienteGenerator
+NumeroResolucionGenerator
 SlaCalculator
 DocumentoAccessPolicy
 NotificacionPolicy
@@ -165,7 +164,7 @@ Beneficio:
 - Mejor testabilidad.
 - Mejor lectura para equipos futuros.
 
-### 4.3 Validadores
+### 5.3 Validadores
 
 Agregar validadores dedicados para requests complejos.
 
@@ -182,11 +181,16 @@ Validaciones recomendadas:
 - Resolver reclamacion.
 - Cerrar reclamacion.
 - Subir documento.
+- Crear resolucion.
+- Crear autorizacion.
+- Crear certificacion.
+- Crear frecuencia.
+- Crear licencia tecnica.
 - Crear notificacion.
 
-## 5. Prioridad 3 - Seguridad productiva
+## 6. Prioridad 4 - Seguridad y operacion productiva
 
-### 5.1 Auditoria append-only mas estricta
+### 6.1 Auditoria append-only mas estricta
 
 Mejorar auditoria para produccion real:
 
@@ -195,7 +199,7 @@ Mejorar auditoria para produccion real:
 - Politica append-only.
 - Hash encadenado opcional para detectar manipulacion.
 
-### 5.2 Almacenamiento documental externo o cifrado
+### 6.2 Almacenamiento documental externo o cifrado
 
 Estado actual:
 
@@ -214,7 +218,7 @@ Hash SHA-256 por archivo
 Antivirus/escaneo opcional
 ```
 
-### 5.3 Logs estructurados y observabilidad
+### 6.3 Logs estructurados y observabilidad
 
 Agregar:
 
@@ -235,9 +239,22 @@ Grafana + Loki
 Application Insights en Azure si fuera produccion
 ```
 
-## 6. Prioridad 4 - API y contratos
+### 6.4 Politicas por ambiente
 
-### 6.1 Versionado de API
+Ajustar para produccion:
+
+```text
+CORS estricto.
+Secretos fuera de appsettings.
+Rotacion de secretos.
+HTTPS obligatorio.
+Headers de seguridad.
+Rate limiting por IP/usuario mas granular.
+```
+
+## 7. Prioridad 5 - API y contratos
+
+### 7.1 Versionado de API
 
 Agregar versionado futuro:
 
@@ -249,7 +266,7 @@ Agregar versionado futuro:
 
 No cambiarlo antes de la defensa si puede romper scripts existentes.
 
-### 6.2 Contrato OpenAPI formal
+### 7.2 Contrato OpenAPI formal
 
 Exportar Swagger a un archivo:
 
@@ -263,7 +280,7 @@ Uso:
 - Contrato con integraciones futuras.
 - Base para clientes HTTP tipados.
 
-### 6.3 Paginacion estandar
+### 7.3 Paginacion estandar
 
 Estandarizar respuestas paginadas:
 
@@ -277,19 +294,11 @@ Estandarizar respuestas paginadas:
 }
 ```
 
-## 7. Prioridad 5 - Modulos futuros de INDOTEL
+## 8. Modulos futuros fuera del alcance actual
 
-Estos modulos ampliarian el sistema, pero no forman parte del Core actual probado.
+Estos modulos ampliarian el sistema, pero no deben implementarse antes de la defensa.
 
-### 7.1 Espectro radioelectrico
-
-- Inventario de frecuencias.
-- Licencias de uso de frecuencia.
-- Renovaciones.
-- Vencimientos.
-- Alertas regulatorias.
-
-### 7.2 Sanciones y facturacion
+### 8.1 Sanciones y facturacion
 
 - Multas a prestadoras.
 - Generacion de deuda.
@@ -297,7 +306,7 @@ Estos modulos ampliarian el sistema, pero no forman parte del Core actual probad
 - Integracion con caja/pagos.
 - Cierre de sanciones pagadas.
 
-### 7.3 Portal ciudadano
+### 8.2 Portal ciudadano
 
 - Frontend web.
 - Consulta de reclamaciones.
@@ -305,14 +314,22 @@ Estos modulos ampliarian el sistema, pero no forman parte del Core actual probad
 - Notificaciones visuales.
 - Descarga de resoluciones.
 
-### 7.4 Portal prestadora
+### 8.3 Portal prestadora
 
 - Bandeja de reclamaciones recibidas.
 - Respuestas formales.
 - Adjuntar evidencias.
 - Seguimiento de SLA.
 
-## 8. Recomendacion antes de defensa
+### 8.4 Integraciones reales
+
+- Correo/SMS real.
+- Firma digital real.
+- Sistemas externos gubernamentales.
+- Pagos.
+- Consulta IMEI/GSMA.
+
+## 9. Recomendacion antes de defensa
 
 No implementar cambios grandes antes de la defensa.
 
@@ -326,6 +343,6 @@ Hacer solamente:
 5. Mostrar limitaciones de forma honesta.
 ```
 
-## 9. Frase recomendada
+## 10. Frase recomendada
 
-> El Core actual ya cumple el alcance funcional academico. Las mejoras listadas en este documento no son correcciones urgentes, sino una ruta de evolucion hacia produccion real.
+> El Core actual ya cumple el alcance funcional academico. Las mejoras restantes no son correcciones urgentes, sino una ruta de evolucion hacia produccion real y mantenimiento a largo plazo.
