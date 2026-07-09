@@ -53,5 +53,9 @@ public class IndotelDbContext : DbContext
         modelBuilder.Entity<Reclamacion>()
             .HasIndex(x => x.NumeroExpediente)
             .IsUnique();
+
+        modelBuilder.Entity<Reclamacion>()
+            .Property(x => x.MontoAjuste)
+            .HasPrecision(18, 2);
     }
 }
