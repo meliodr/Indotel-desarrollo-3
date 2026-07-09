@@ -12,7 +12,7 @@ Porcentajes actuales:
 ```text
 Core academico/demo: 100%
 Core funcional probado: 100%
-Core produccion real estimado: 89%
+Core produccion real estimado: 91%
 ```
 
 El Core no se declara como produccion completa. Se declara como una base funcional y probada, con plan formal para evolucionar a produccion real.
@@ -69,6 +69,12 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Fecha de respuesta de prestadora.
 - Deteccion y marcado de reclamaciones vencidas.
 - Consulta de reclamaciones vencidas.
+- Resolucion estructurada de reclamaciones.
+- Cierre estructurado de reclamaciones.
+- Diferenciacion entre FechaResolucion y FechaCierre.
+- Registro de resultado, fundamento, accion ordenada y monto de ajuste.
+- Registro de motivo de cierre, comentario y conformidad ciudadana.
+- Precision decimal configurada para MontoAjuste.
 - Reportes basicos.
 - Script de pruebas funcionales.
 - Evidencia formal de pruebas.
@@ -77,6 +83,7 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Evidencia de gestion de servicios telecom.
 - Evidencia de clasificacion de reclamaciones.
 - Evidencia de SLA regulatorio.
+- Evidencia de resolucion y cierre estructurado.
 - Plan de produccion real.
 - Checklist de produccion real.
 
@@ -167,6 +174,8 @@ GET /api/reclamaciones/{id}/respuestas
 POST /api/reclamaciones/{id}/respuesta-prestadora
 GET /api/reclamaciones/sla/vencidas
 POST /api/reclamaciones/sla/marcar-vencidas
+POST /api/reclamaciones/{id}/resolver
+POST /api/reclamaciones/{id}/cerrar
 ```
 
 ### Documentos
@@ -205,6 +214,7 @@ Tambien se probaron bloqueos correctos:
 RECIBIDA -> CERRADA = 409 Conflict
 CERRADA -> VALIDADA = 409 Conflict
 Subir documento a caso cerrado = 409 Conflict
+Cierre estructurado sin resolver = 409 Conflict
 ```
 
 ## Pruebas adicionales realizadas
@@ -296,6 +306,29 @@ Consulta de vencidas = 200 OK
 Marcar vencidas = 200 OK
 ```
 
+### Resolucion y cierre estructurado
+
+```text
+Crear reclamacion = 201 OK
+Cierre sin resolver = 409 OK
+Flujo hasta EN_REVISION = OK
+Resolver reclamacion = 200 OK
+Estado RESUELTA = OK
+FechaResolucion = OK
+ResultadoResolucion = OK
+ComentarioResolucion = OK
+FundamentoResolucion = OK
+AccionOrdenada = OK
+MontoAjuste = OK
+Cerrar reclamacion = 200 OK
+Estado CERRADA = OK
+FechaCierre = OK
+MotivoCierre = OK
+ComentarioCierre = OK
+ConformidadCiudadano = OK
+Historial = 200 OK
+```
+
 ## Evidencia de pruebas
 
 Documentos de evidencia:
@@ -307,6 +340,7 @@ docs/CORE_PRESTADORAS_TEST_RESULTS.md
 docs/CORE_SERVICIOS_TEST_RESULTS.md
 docs/CORE_CLASIFICACION_TEST_RESULTS.md
 docs/CORE_SLA_TEST_RESULTS.md
+docs/CORE_RESOLUCION_CIERRE_TEST_RESULTS.md
 ```
 
 Resultado documentado:
@@ -322,6 +356,7 @@ Gestion de prestadoras probada
 Gestion de servicios telecom probada
 Clasificacion de reclamaciones probada
 SLA regulatorio probado
+Resolucion y cierre estructurado probado
 Flujo completo probado
 Documentos/evidencias probado
 Consulta por expediente probada
@@ -355,6 +390,7 @@ docs/CORE_PRESTADORAS_TEST_RESULTS.md
 docs/CORE_SERVICIOS_TEST_RESULTS.md
 docs/CORE_CLASIFICACION_TEST_RESULTS.md
 docs/CORE_SLA_TEST_RESULTS.md
+docs/CORE_RESOLUCION_CIERRE_TEST_RESULTS.md
 docs/CORE_PRODUCTION_PLAN.md
 docs/CORE_PRODUCTION_CHECKLIST.md
 docs/CORE_NEXT_IMPLEMENTATION_PLAN.md
@@ -373,7 +409,6 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 - Bloqueo por intentos fallidos.
 - Recuperacion de contrasena estricta con token hasheado e invalidable.
 - RBAC fase 2 estricto con `CiudadanoId` y `PrestadoraId` en Usuario.
-- Resolucion y cierre estructurado.
 - Auditoria institucional completa.
 - Descarga segura de documentos.
 - Filtros y paginacion.
@@ -389,4 +424,4 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 
 El Core queda listo para defensa academica y con una ruta clara para evolucionar a produccion real.
 
-La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano, gestion basica completa de prestadoras, gestion basica completa de servicios telecom, clasificacion funcional de reclamaciones y SLA regulatorio basico.
+La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano, gestion basica completa de prestadoras, gestion basica completa de servicios telecom, clasificacion funcional de reclamaciones, SLA regulatorio basico y resolucion/cierre estructurado.
