@@ -34,6 +34,13 @@ public class ReclamacionesController : ControllerBase
         return reclamacion is null ? NotFound() : Ok(reclamacion);
     }
 
+    [HttpGet("expediente/{numero}")]
+    public async Task<IActionResult> GetByNumeroExpediente(string numero)
+    {
+        var reclamacion = await _db.Reclamaciones.FirstOrDefaultAsync(x => x.NumeroExpediente == numero);
+        return reclamacion is null ? NotFound(new { mensaje = "No existe una reclamacion con este numero de expediente" }) : Ok(reclamacion);
+    }
+
     [HttpGet("{id:int}/historial")]
     public async Task<IActionResult> GetHistorial(int id)
     {
