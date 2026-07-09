@@ -98,6 +98,15 @@ public class ReclamacionesController : ControllerBase
                 UsuarioId = userId,
                 FechaCambio = ahora
             });
+
+            RegistrarAuditoriaPendiente(
+                "Reclamacion",
+                reclamacion.Id.ToString(),
+                "SLA_VENCIDA",
+                "WARN",
+                "Reclamacion marcada como vencida por SLA",
+                estadoAnterior,
+                ReclamacionEstados.Vencida);
         }
 
         await _db.SaveChangesAsync();
@@ -253,6 +262,14 @@ public class ReclamacionesController : ControllerBase
         await _db.SaveChangesAsync();
 
         await RegistrarHistorial(reclamacion.Id, string.Empty, ReclamacionEstados.Recibida, "Reclamacion registrada");
+        await RegistrarAuditoria(
+            "Reclamacion",
+            reclamacion.Id.ToString(),
+            "CREAR_RECLAMACION",
+            "INFO",
+            $"Reclamacion creada con expediente {reclamacion.NumeroExpediente}",
+            string.Empty,
+            ReclamacionEstados.Recibida);
 
         return CreatedAtAction(nameof(GetById), new { id = reclamacion.Id }, reclamacion);
     }
@@ -301,6 +318,14 @@ public class ReclamacionesController : ControllerBase
 
         await _db.SaveChangesAsync();
         await RegistrarHistorial(id, estadoAnterior, estadoNuevo, request.Comentario);
+        await RegistrarAuditoria(
+            "Reclamacion",
+            id.ToString(),
+            "CAMBIO_ESTADO",
+            "INFO",
+            request.Comentario,
+            estadoAnterior,
+            estadoNuevo);
 
         return Ok(reclamacion);
     }
@@ -347,6 +372,14 @@ public class ReclamacionesController : ControllerBase
 
         await _db.SaveChangesAsync();
         await RegistrarHistorial(id, estadoAnterior, estadoNuevo, request.ComentarioResolucion.Trim());
+        await RegistrarAuditoria(
+            "Reclamacion",
+            id.ToString(),
+            "RESOLVER_RECLAMACION",
+            "INFO",
+            request.ComentarioResolucion.Trim(),
+            estadoAnterior,
+            estadoNuevo);
 
         return Ok(reclamacion);
     }
@@ -386,6 +419,14 @@ public class ReclamacionesController : ControllerBase
 
         await _db.SaveChangesAsync();
         await RegistrarHistorial(id, estadoAnterior, estadoNuevo, request.MotivoCierre.Trim());
+        await RegistrarAuditoria(
+            "Reclamacion",
+            id.ToString(),
+            "CERRAR_RECLAMACION",
+            "INFO",
+            request.MotivoCierre.Trim(),
+            estadoAnterior,
+            estadoNuevo);
 
         return Ok(reclamacion);
     }
@@ -442,6 +483,14 @@ public class ReclamacionesController : ControllerBase
 
         await _db.SaveChangesAsync();
         await RegistrarHistorial(id, estadoAnterior, estadoNuevo, "Respuesta registrada por la prestadora");
+        await RegistrarAuditoria(
+            "Reclamacion",
+            id.ToString(),
+            "RESPUESTA_PRESTADORA",
+            "INFO",
+            "Respuesta registrada por la prestadora",
+            estadoAnterior,
+            estadoNuevo);
 
         return Ok(respuesta);
     }
@@ -552,5 +601,62 @@ public class ReclamacionesController : ControllerBase
         });
 
         await _db.SaveChangesAsync();
+    }
+
+    private void RegistrarAuditoriaPendiente(
+        string entidad,
+        string entidadId,
+        string accion,
+        string nivel,
+        string detalle,
+        string estadoAnterior,
+        string estadoNuevo)
+    {
+        _db.Auditorias.Add(CrearAuditoria(entidad, entidadId, accion, nivel, detalle, estadoAnterior, estadoNuevo));
+    }
+
+    private async Task RegistrarAuditoria(
+        string entidad,
+        string entidadId,
+        string accion,
+        string nivel,
+        string detalle,
+        string estadoAnterior,
+        string estadoNuevo)
+    {
+        _db.Auditorias.Add(CrearAuditoria(entidad, entidadId, accion, nivel, detalle, estadoAnterior, estadoNuevo));
+        await _db.SaveChangesAsync();
+    }
+
+    private Auditoria CrearAuditoria(
+        string entidad,
+        string entidadId,
+        string accion,
+        string nivel,
+        string detalle,
+        string estadoAnterior,
+        string estadoNuevo)
+    {
+        var userId = ObtenerUsuarioIdActual();
+
+        return new Auditoria
+        {
+            UsuarioId = userId == 0 ? null : userId,
+            UsuarioCorreo = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
+            UsuarioRol = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty,
+            Entidad = entidad,
+            EntidadId = entidadId,
+            Accion = accion,
+            Nivel = string.IsNullOrWhiteSpace(nivel) ? "INFO" : nivel.ToUpperInvariant(),
+            Detalle = detalle ?? string.Empty,
+            EstadoAnterior = estadoAnterior ?? string.Empty,
+            EstadoNuevo = estadoNuevo ?? string.Empty,
+            MetodoHttp = HttpContext.Request.Method,
+            Ruta = HttpContext.Request.Path,
+            DireccionIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+            UserAgent = HttpContext.Request.Headers.UserAgent.ToString(),
+            CorrelationId = HttpContext.TraceIdentifier,
+            Fecha = DateTime.UtcNow
+        };
     }
 }
