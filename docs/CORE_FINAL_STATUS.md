@@ -5,14 +5,14 @@ Estado revisado: 09/07/2026
 
 ## Estado general
 
-El Core del Sistema Digital INDOTEL queda funcional, probado y documentado para demostracion academica.
+El Core del Sistema Digital INDOTEL queda funcional, probado y documentado para demostracion academica, con avances adicionales hacia una base de produccion real.
 
 Porcentajes actuales:
 
 ```text
 Core academico/demo: 100%
-Core funcional probado: 98% - 100%
-Core produccion real estimado: 70%
+Core funcional probado: 100%
+Core produccion real estimado: 77%
 ```
 
 El Core no se declara como produccion completa. Se declara como una base funcional y probada, con plan formal para evolucionar a produccion real.
@@ -29,6 +29,9 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Datos semilla.
 - Login con JWT.
 - Autorizacion con Bearer Token en Swagger.
+- Registro publico ciudadano basico.
+- Cambio de contrasena autenticado.
+- Recuperacion/restablecimiento de contrasena basico para demo.
 - Roles base.
 - CRUD base de usuarios.
 - Catalogos.
@@ -43,10 +46,13 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Historial de reclamacion.
 - Documentos/evidencias.
 - Bloqueo de documentos en casos cerrados.
-- Reportes basicos.
 - RBAC fase 1 por roles.
+- RBAC basico por dueno real para ciudadanos.
+- Proteccion de documentos por dueno real.
+- Reportes basicos.
 - Script de pruebas funcionales.
 - Evidencia formal de pruebas.
+- Evidencia RBAC por dueno real.
 - Plan de produccion real.
 - Checklist de produccion real.
 
@@ -57,6 +63,10 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 ```text
 POST /api/auth/login
 GET /api/auth/me
+POST /api/auth/register-ciudadano
+POST /api/auth/change-password
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
 ```
 
 ### Catalogos
@@ -143,12 +153,39 @@ CERRADA -> VALIDADA = 409 Conflict
 Subir documento a caso cerrado = 409 Conflict
 ```
 
+## Pruebas adicionales realizadas
+
+### Autenticacion publica ciudadana
+
+```text
+Registro ciudadano = OK
+/api/auth/me con token ciudadano = OK
+Cambio de contrasena = OK
+Login con clave anterior = 401 OK
+Login con nueva clave = OK
+Forgot password = OK
+Reset password = OK
+Login con clave restablecida = OK
+```
+
+### RBAC por dueno real ciudadano
+
+```text
+Ciudadano A crea reclamacion propia = OK
+Ciudadano A ve su reclamacion = 200 OK
+Ciudadano B intenta ver reclamacion de A = 403 OK
+Ciudadano B intenta crear reclamacion usando ID de A = 403 OK
+Ciudadano A lista solo sus reclamaciones = OK
+Ciudadano B intenta ver documentos de A = 403 OK
+```
+
 ## Evidencia de pruebas
 
-Documento de evidencia:
+Documentos de evidencia:
 
 ```text
 docs/CORE_TEST_RESULTS.md
+docs/CORE_RBAC_OWNER_TEST_RESULTS.md
 ```
 
 Resultado documentado:
@@ -158,6 +195,8 @@ Build correcto
 SQL Server Docker corriendo
 API corriendo en http://localhost:5085
 Endpoints base respondiendo
+Auth publica ciudadana probada
+RBAC por dueno real probado
 Flujo completo probado
 Documentos/evidencias probado
 Consulta por expediente probada
@@ -176,8 +215,7 @@ Uso:
 
 ```bash
 cd /home/jarry/Indotel-desarrollo-3
-chmod +x scripts/probar_core_indotel.sh
-./scripts/probar_core_indotel.sh
+bash scripts/probar_core_indotel.sh
 ```
 
 ## Documentacion disponible
@@ -187,6 +225,7 @@ Documentos principales:
 ```text
 docs/CORE_FINAL_STATUS.md
 docs/CORE_TEST_RESULTS.md
+docs/CORE_RBAC_OWNER_TEST_RESULTS.md
 docs/CORE_PRODUCTION_PLAN.md
 docs/CORE_PRODUCTION_CHECKLIST.md
 docs/CORE_NEXT_IMPLEMENTATION_PLAN.md
@@ -201,10 +240,10 @@ docs/CORE_AUDIT_MAP.md
 
 Estos puntos no bloquean la demo academica, pero si son necesarios para produccion real:
 
-- Registro publico de ciudadano.
-- Recuperacion de contrasena.
 - Refresh token y logout.
-- RBAC fase 2 con `CiudadanoId` y `PrestadoraId` en Usuario.
+- Bloqueo por intentos fallidos.
+- Recuperacion de contrasena estricta con token hasheado e invalidable.
+- RBAC fase 2 estricto con `CiudadanoId` y `PrestadoraId` en Usuario.
 - Gestion completa de prestadoras.
 - Gestion completa de servicios telecom.
 - Tipos, motivos y clasificacion de reclamaciones.
@@ -225,4 +264,4 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 
 El Core queda listo para defensa academica y con una ruta clara para evolucionar a produccion real.
 
-La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion y checklist por fases.
+La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica y RBAC por dueno real ciudadano.
