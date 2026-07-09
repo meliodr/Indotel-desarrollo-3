@@ -12,7 +12,7 @@ Porcentajes actuales:
 ```text
 Core academico/demo: 100%
 Core funcional probado: 100%
-Core produccion real estimado: 83%
+Core produccion real estimado: 86%
 ```
 
 El Core no se declara como produccion completa. Se declara como una base funcional y probada, con plan formal para evolucionar a produccion real.
@@ -57,12 +57,19 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Validacion de nombre duplicado en servicios.
 - Activacion/desactivacion de servicios.
 - Consulta de reclamaciones por servicio.
+- Clasificacion de reclamaciones por tipo y motivo.
+- Canales de recepcion normalizados.
+- Prioridades normalizadas.
+- Provincia y municipio en reclamaciones.
+- Validacion de canal y prioridad.
+- Validacion de correspondencia motivo/tipo.
 - Reportes basicos.
 - Script de pruebas funcionales.
 - Evidencia formal de pruebas.
 - Evidencia RBAC por dueno real.
 - Evidencia de gestion de prestadoras.
 - Evidencia de gestion de servicios telecom.
+- Evidencia de clasificacion de reclamaciones.
 - Plan de produccion real.
 - Checklist de produccion real.
 
@@ -85,6 +92,14 @@ POST /api/auth/reset-password
 GET /api/catalogos/roles
 GET /api/catalogos/servicios
 GET /api/catalogos/prestadoras
+GET /api/catalogos/reclamaciones/tipos
+POST /api/catalogos/reclamaciones/tipos
+PATCH /api/catalogos/reclamaciones/tipos/{id}/estado
+GET /api/catalogos/reclamaciones/motivos
+POST /api/catalogos/reclamaciones/motivos
+PATCH /api/catalogos/reclamaciones/motivos/{id}/estado
+GET /api/catalogos/reclamaciones/canales
+GET /api/catalogos/reclamaciones/prioridades
 ```
 
 ### Prestadoras
@@ -237,6 +252,23 @@ Ver reclamaciones de servicio = 200 OK
 Catalogo antiguo /api/catalogos/servicios = 200 OK
 ```
 
+### Clasificacion de reclamaciones
+
+```text
+Crear tipo de reclamacion = 201 OK
+Tipo duplicado = 409 OK
+Crear motivo de reclamacion = 201 OK
+Motivo duplicado = 409 OK
+Listar tipos = 200 OK
+Listar motivos por tipo = 200 OK
+Listar canales = 200 OK
+Listar prioridades = 200 OK
+Canal invalido = 400 OK
+Prioridad invalida = 400 OK
+Crear reclamacion clasificada = 201 OK
+Consultar reclamacion clasificada = 200 OK
+```
+
 ## Evidencia de pruebas
 
 Documentos de evidencia:
@@ -246,6 +278,7 @@ docs/CORE_TEST_RESULTS.md
 docs/CORE_RBAC_OWNER_TEST_RESULTS.md
 docs/CORE_PRESTADORAS_TEST_RESULTS.md
 docs/CORE_SERVICIOS_TEST_RESULTS.md
+docs/CORE_CLASIFICACION_TEST_RESULTS.md
 ```
 
 Resultado documentado:
@@ -259,6 +292,7 @@ Auth publica ciudadana probada
 RBAC por dueno real probado
 Gestion de prestadoras probada
 Gestion de servicios telecom probada
+Clasificacion de reclamaciones probada
 Flujo completo probado
 Documentos/evidencias probado
 Consulta por expediente probada
@@ -290,6 +324,7 @@ docs/CORE_TEST_RESULTS.md
 docs/CORE_RBAC_OWNER_TEST_RESULTS.md
 docs/CORE_PRESTADORAS_TEST_RESULTS.md
 docs/CORE_SERVICIOS_TEST_RESULTS.md
+docs/CORE_CLASIFICACION_TEST_RESULTS.md
 docs/CORE_PRODUCTION_PLAN.md
 docs/CORE_PRODUCTION_CHECKLIST.md
 docs/CORE_NEXT_IMPLEMENTATION_PLAN.md
@@ -308,7 +343,6 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 - Bloqueo por intentos fallidos.
 - Recuperacion de contrasena estricta con token hasheado e invalidable.
 - RBAC fase 2 estricto con `CiudadanoId` y `PrestadoraId` en Usuario.
-- Tipos, motivos y clasificacion de reclamaciones.
 - SLA regulatorio.
 - Resolucion y cierre estructurado.
 - Auditoria institucional completa.
@@ -326,4 +360,4 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 
 El Core queda listo para defensa academica y con una ruta clara para evolucionar a produccion real.
 
-La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano, gestion basica completa de prestadoras y gestion basica completa de servicios telecom.
+La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano, gestion basica completa de prestadoras, gestion basica completa de servicios telecom y clasificacion funcional de reclamaciones.
