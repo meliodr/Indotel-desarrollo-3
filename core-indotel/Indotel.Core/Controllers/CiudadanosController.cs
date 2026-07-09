@@ -19,6 +19,7 @@ public class CiudadanosController : ControllerBase
         _db = db;
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -26,6 +27,7 @@ public class CiudadanosController : ControllerBase
         return Ok(data);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Ciudadano")]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -33,6 +35,7 @@ public class CiudadanosController : ControllerBase
         return ciudadano is null ? NotFound() : Ok(ciudadano);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor")]
     [HttpGet("cedula/{cedula}")]
     public async Task<IActionResult> GetByCedula(string cedula)
     {
@@ -40,6 +43,7 @@ public class CiudadanosController : ControllerBase
         return ciudadano is null ? NotFound(new { mensaje = "No existe un ciudadano con esta cedula" }) : Ok(ciudadano);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Ciudadano")]
     [HttpGet("{id:int}/reclamaciones")]
     public async Task<IActionResult> GetReclamacionesByCiudadano(int id)
     {
@@ -54,6 +58,7 @@ public class CiudadanosController : ControllerBase
         return Ok(data);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Ciudadano")]
     [HttpPost]
     public async Task<IActionResult> Create(CiudadanoCreateDto request)
     {
@@ -78,6 +83,7 @@ public class CiudadanosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = ciudadano.Id }, ciudadano);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Ciudadano")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, CiudadanoUpdateDto request)
     {
