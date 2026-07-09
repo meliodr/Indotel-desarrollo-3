@@ -12,7 +12,7 @@ Porcentajes actuales:
 ```text
 Core academico/demo: 100%
 Core funcional probado: 100%
-Core produccion real estimado: 80%
+Core produccion real estimado: 83%
 ```
 
 El Core no se declara como produccion completa. Se declara como una base funcional y probada, con plan formal para evolucionar a produccion real.
@@ -53,11 +53,16 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Validacion de RNC duplicado.
 - Activacion/desactivacion de prestadoras.
 - Consulta de reclamaciones por prestadora.
+- Gestion completa basica de servicios telecom.
+- Validacion de nombre duplicado en servicios.
+- Activacion/desactivacion de servicios.
+- Consulta de reclamaciones por servicio.
 - Reportes basicos.
 - Script de pruebas funcionales.
 - Evidencia formal de pruebas.
 - Evidencia RBAC por dueno real.
 - Evidencia de gestion de prestadoras.
+- Evidencia de gestion de servicios telecom.
 - Plan de produccion real.
 - Checklist de produccion real.
 
@@ -80,7 +85,6 @@ POST /api/auth/reset-password
 GET /api/catalogos/roles
 GET /api/catalogos/servicios
 GET /api/catalogos/prestadoras
-GET /api/servicios
 ```
 
 ### Prestadoras
@@ -92,6 +96,17 @@ POST /api/prestadoras
 PUT /api/prestadoras/{id}
 PATCH /api/prestadoras/{id}/estado
 GET /api/prestadoras/{id}/reclamaciones
+```
+
+### Servicios telecom
+
+```text
+GET /api/servicios
+GET /api/servicios/{id}
+POST /api/servicios
+PUT /api/servicios/{id}
+PATCH /api/servicios/{id}/estado
+GET /api/servicios/{id}/reclamaciones
 ```
 
 ### Usuarios
@@ -208,6 +223,20 @@ Ver reclamaciones de prestadora = 200 OK
 Catalogo antiguo /api/catalogos/prestadoras = 200 OK
 ```
 
+### Gestion de servicios telecom
+
+```text
+Listar servicios = 200 OK
+Crear servicio = 201 OK
+Consultar servicio por ID = 200 OK
+Nombre duplicado = 409 OK
+Actualizar servicio = 200 OK
+Desactivar servicio = 200 OK
+Reactivar servicio = 200 OK
+Ver reclamaciones de servicio = 200 OK
+Catalogo antiguo /api/catalogos/servicios = 200 OK
+```
+
 ## Evidencia de pruebas
 
 Documentos de evidencia:
@@ -216,6 +245,7 @@ Documentos de evidencia:
 docs/CORE_TEST_RESULTS.md
 docs/CORE_RBAC_OWNER_TEST_RESULTS.md
 docs/CORE_PRESTADORAS_TEST_RESULTS.md
+docs/CORE_SERVICIOS_TEST_RESULTS.md
 ```
 
 Resultado documentado:
@@ -228,6 +258,7 @@ Endpoints base respondiendo
 Auth publica ciudadana probada
 RBAC por dueno real probado
 Gestion de prestadoras probada
+Gestion de servicios telecom probada
 Flujo completo probado
 Documentos/evidencias probado
 Consulta por expediente probada
@@ -258,6 +289,7 @@ docs/CORE_FINAL_STATUS.md
 docs/CORE_TEST_RESULTS.md
 docs/CORE_RBAC_OWNER_TEST_RESULTS.md
 docs/CORE_PRESTADORAS_TEST_RESULTS.md
+docs/CORE_SERVICIOS_TEST_RESULTS.md
 docs/CORE_PRODUCTION_PLAN.md
 docs/CORE_PRODUCTION_CHECKLIST.md
 docs/CORE_NEXT_IMPLEMENTATION_PLAN.md
@@ -276,7 +308,6 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 - Bloqueo por intentos fallidos.
 - Recuperacion de contrasena estricta con token hasheado e invalidable.
 - RBAC fase 2 estricto con `CiudadanoId` y `PrestadoraId` en Usuario.
-- Gestion completa de servicios telecom.
 - Tipos, motivos y clasificacion de reclamaciones.
 - SLA regulatorio.
 - Resolucion y cierre estructurado.
@@ -295,4 +326,4 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 
 El Core queda listo para defensa academica y con una ruta clara para evolucionar a produccion real.
 
-La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano y gestion basica completa de prestadoras.
+La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano, gestion basica completa de prestadoras y gestion basica completa de servicios telecom.
