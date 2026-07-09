@@ -22,11 +22,26 @@ public class ReclamacionesController : ControllerBase
         _db = db;
     }
 
-    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora")]
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var data = await _db.Reclamaciones.OrderByDescending(x => x.Id).ToListAsync();
+        var query = _db.Reclamaciones.AsQueryable();
+
+        if (User.IsInRole("Ciudadano"))
+        {
+            var ciudadanoId = await ObtenerCiudadanoIdActual();
+            if (ciudadanoId is null) return Forbid();
+            query = query.Where(x => x.CiudadanoId == ciudadanoId.Value);
+        }
+        else if (User.IsInRole("Prestadora"))
+        {
+            var prestadoraId = await ObtenerPrestadoraIdActual();
+            if (prestadoraId is null) return Forbid();
+            query = query.Where(x => x.PrestadoraId == prestadoraId.Value);
+        }
+
+        var data = await query.OrderByDescending(x => x.Id).ToListAsync();
         return Ok(data);
     }
 
@@ -35,7 +50,11 @@ public class ReclamacionesController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var reclamacion = await _db.Reclamaciones.FindAsync(id);
-        return reclamacion is null ? NotFound() : Ok(reclamacion);
+        if (reclamacion is null) return NotFound();
+
+        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
+
+        return Ok(reclamacion);
     }
 
     [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
@@ -43,15 +62,21 @@ public class ReclamacionesController : ControllerBase
     public async Task<IActionResult> GetByNumeroExpediente(string numero)
     {
         var reclamacion = await _db.Reclamaciones.FirstOrDefaultAsync(x => x.NumeroExpediente == numero);
-        return reclamacion is null ? NotFound(new { mensaje = "No existe una reclamacion con este numero de expediente" }) : Ok(reclamacion);
+        if (reclamacion is null) return NotFound(new { mensaje = "No existe una reclamacion con este numero de expediente" });
+
+        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
+
+        return Ok(reclamacion);
     }
 
     [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet("{id:int}/historial")]
     public async Task<IActionResult> GetHistorial(int id)
     {
-        var existe = await _db.Reclamaciones.AnyAsync(x => x.Id == id);
-        if (!existe) return NotFound();
+        var reclamacion = await _db.Reclamaciones.FindAsync(id);
+        if (reclamacion is null) return NotFound();
+
+        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
 
         var data = await _db.HistorialReclamaciones
             .Where(x => x.ReclamacionId == id)
@@ -65,8 +90,10 @@ public class ReclamacionesController : ControllerBase
     [HttpGet("{id:int}/respuestas")]
     public async Task<IActionResult> GetRespuestas(int id)
     {
-        var existe = await _db.Reclamaciones.AnyAsync(x => x.Id == id);
-        if (!existe) return NotFound();
+        var reclamacion = await _db.Reclamaciones.FindAsync(id);
+        if (reclamacion is null) return NotFound();
+
+        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
 
         var data = await _db.RespuestasPrestadora
             .Where(x => x.ReclamacionId == id)
@@ -80,7 +107,22 @@ public class ReclamacionesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(ReclamacionCreateDto request)
     {
-        var ciudadanoExiste = await _db.Ciudadanos.AnyAsync(x => x.Id == request.CiudadanoId);
+        var ciudadanoId = request.CiudadanoId;
+
+        if (User.IsInRole("Ciudadano"))
+        {
+            var ciudadanoIdActual = await ObtenerCiudadanoIdActual();
+            if (ciudadanoIdActual is null) return Forbid();
+
+            if (request.CiudadanoId != ciudadanoIdActual.Value)
+            {
+                return Forbid();
+            }
+
+            ciudadanoId = ciudadanoIdActual.Value;
+        }
+
+        var ciudadanoExiste = await _db.Ciudadanos.AnyAsync(x => x.Id == ciudadanoId);
         var prestadoraExiste = await _db.Prestadoras.AnyAsync(x => x.Id == request.PrestadoraId);
         var servicioExiste = await _db.ServiciosTelecom.AnyAsync(x => x.Id == request.ServicioTelecomId);
 
@@ -92,7 +134,7 @@ public class ReclamacionesController : ControllerBase
         var reclamacion = new Reclamacion
         {
             NumeroExpediente = await GenerarNumeroExpediente(),
-            CiudadanoId = request.CiudadanoId,
+            CiudadanoId = ciudadanoId,
             PrestadoraId = request.PrestadoraId,
             ServicioTelecomId = request.ServicioTelecomId,
             Titulo = request.Titulo,
@@ -155,6 +197,17 @@ public class ReclamacionesController : ControllerBase
         var reclamacion = await _db.Reclamaciones.FindAsync(id);
         if (reclamacion is null) return NotFound();
 
+        if (User.IsInRole("Prestadora"))
+        {
+            var prestadoraIdActual = await ObtenerPrestadoraIdActual();
+            if (prestadoraIdActual is null) return Forbid();
+
+            if (request.PrestadoraId != prestadoraIdActual.Value || reclamacion.PrestadoraId != prestadoraIdActual.Value)
+            {
+                return Forbid();
+            }
+        }
+
         if (reclamacion.PrestadoraId != request.PrestadoraId)
         {
             return BadRequest(new { mensaje = "La prestadora no corresponde a esta reclamacion" });
@@ -205,6 +258,50 @@ public class ReclamacionesController : ControllerBase
         }
 
         return $"IND-{DateTime.UtcNow:yyyyMMddHHmmssfffffff}-{Guid.NewGuid():N}";
+    }
+
+    private async Task<bool> PuedeVerReclamacion(Reclamacion reclamacion)
+    {
+        if (User.IsInRole("Administrador") || User.IsInRole("AnalistaDAU") || User.IsInRole("Auditor"))
+        {
+            return true;
+        }
+
+        if (User.IsInRole("Ciudadano"))
+        {
+            var ciudadanoId = await ObtenerCiudadanoIdActual();
+            return ciudadanoId == reclamacion.CiudadanoId;
+        }
+
+        if (User.IsInRole("Prestadora"))
+        {
+            var prestadoraId = await ObtenerPrestadoraIdActual();
+            return prestadoraId == reclamacion.PrestadoraId;
+        }
+
+        return false;
+    }
+
+    private async Task<int?> ObtenerCiudadanoIdActual()
+    {
+        var correo = User.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(correo)) return null;
+
+        return await _db.Ciudadanos
+            .Where(x => x.Correo == correo && x.Activo)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task<int?> ObtenerPrestadoraIdActual()
+    {
+        var correo = User.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(correo)) return null;
+
+        return await _db.Prestadoras
+            .Where(x => x.Correo == correo && x.Activo)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync();
     }
 
     private async Task RegistrarHistorial(int reclamacionId, string estadoAnterior, string estadoNuevo, string comentario)
