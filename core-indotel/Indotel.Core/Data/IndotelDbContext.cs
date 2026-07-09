@@ -113,9 +113,19 @@ public class IndotelDbContext : DbContext
             .HasIndex(x => x.Nombre)
             .IsUnique();
 
+        modelBuilder.Entity<TipoAutorizacion>().HasData(
+            new TipoAutorizacion { Id = 1, Nombre = "Operacion de servicio telecom", Descripcion = "Solicitud para operar o prestar servicios de telecomunicaciones", Activo = true, FechaCreacion = new DateTime(2026, 1, 1) },
+            new TipoAutorizacion { Id = 2, Nombre = "Renovacion de autorizacion", Descripcion = "Renovacion de una autorizacion institucional existente", Activo = true, FechaCreacion = new DateTime(2026, 1, 1) },
+            new TipoAutorizacion { Id = 3, Nombre = "Autorizacion tecnica especial", Descripcion = "Autorizacion regulatoria para pruebas o condiciones tecnicas especiales", Activo = true, FechaCreacion = new DateTime(2026, 1, 1) });
+
         modelBuilder.Entity<TipoCertificacion>()
             .HasIndex(x => x.Nombre)
             .IsUnique();
+
+        modelBuilder.Entity<TipoCertificacion>().HasData(
+            new TipoCertificacion { Id = 1, Nombre = "Certificacion de registro", Descripcion = "Certificacion de existencia o registro institucional", Activo = true, FechaCreacion = new DateTime(2026, 1, 1) },
+            new TipoCertificacion { Id = 2, Nombre = "Certificacion de cumplimiento", Descripcion = "Certificacion de cumplimiento regulatorio", Activo = true, FechaCreacion = new DateTime(2026, 1, 1) },
+            new TipoCertificacion { Id = 3, Nombre = "Certificacion tecnica", Descripcion = "Certificacion sobre condicion tecnica o documental", Activo = true, FechaCreacion = new DateTime(2026, 1, 1) });
 
         modelBuilder.Entity<SolicitudAutorizacion>()
             .HasIndex(x => x.NumeroSolicitud)
