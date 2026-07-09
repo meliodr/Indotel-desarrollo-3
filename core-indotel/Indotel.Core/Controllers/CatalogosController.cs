@@ -25,7 +25,6 @@ public class CatalogosController : ControllerBase
     }
 
     [HttpGet("servicios")]
-    [HttpGet("~/api/servicios")]
     public async Task<IActionResult> GetServicios()
     {
         var data = await _db.ServiciosTelecom.Where(x => x.Activo).OrderBy(x => x.Nombre).ToListAsync();
