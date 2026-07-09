@@ -1,4 +1,5 @@
 using Indotel.Core.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Indotel.Core.Data;
@@ -9,6 +10,7 @@ public static class SeedData
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IndotelDbContext>();
+        var passwordHasher = new PasswordHasher<Usuario>();
 
         await db.Database.MigrateAsync();
 
@@ -45,19 +47,27 @@ public static class SeedData
 
         await db.SaveChangesAsync();
 
-        if (!await db.Usuarios.AnyAsync(x => x.Correo == "admin@indotel.test"))
+        var adminRole = await db.Roles.FirstAsync(x => x.Nombre == "Administrador");
+        var admin = await db.Usuarios.FirstOrDefaultAsync(x => x.Correo == "admin@indotel.test");
+
+        if (admin is null)
         {
-            var adminRole = await db.Roles.FirstAsync(x => x.Nombre == "Administrador");
-            db.Usuarios.Add(new Usuario
+            admin = new Usuario
             {
                 NombreCompleto = "Administrador INDOTEL",
                 Correo = "admin@indotel.test",
-                PasswordHash = "PendienteConfigurarHashEnBloqueJWT",
                 RolId = adminRole.Id,
                 Activo = true
-            });
+            };
 
-            await db.SaveChangesAsync();
+            admin.PasswordHash = passwordHasher.HashPassword(admin, "Admin123*");
+            db.Usuarios.Add(admin);
         }
+        else if (admin.PasswordHash == "PendienteConfigurarHashEnBloqueJWT")
+        {
+            admin.PasswordHash = passwordHasher.HashPassword(admin, "Admin123*");
+        }
+
+        await db.SaveChangesAsync();
     }
 }
