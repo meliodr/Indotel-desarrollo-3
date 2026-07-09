@@ -94,6 +94,7 @@ public class ReclamacionesController : ControllerBase
     }
 
     [HttpPut("{id:int}/estado")]
+    [HttpPatch("{id:int}/estado")]
     public async Task<IActionResult> CambiarEstado(int id, CambiarEstadoReclamacionDto request)
     {
         var reclamacion = await _db.Reclamaciones.FindAsync(id);
