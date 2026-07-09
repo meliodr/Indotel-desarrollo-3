@@ -33,7 +33,6 @@ public class CatalogosController : ControllerBase
     }
 
     [HttpGet("prestadoras")]
-    [HttpGet("~/api/prestadoras")]
     public async Task<IActionResult> GetPrestadoras()
     {
         var data = await _db.Prestadoras.Where(x => x.Activa).OrderBy(x => x.NombreComercial).ToListAsync();
