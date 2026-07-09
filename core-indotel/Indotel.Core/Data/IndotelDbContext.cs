@@ -31,6 +31,7 @@ public class IndotelDbContext : DbContext
     public DbSet<FrecuenciaRadioelectrica> FrecuenciasRadioelectricas => Set<FrecuenciaRadioelectrica>();
     public DbSet<AsignacionFrecuencia> AsignacionesFrecuencia => Set<AsignacionFrecuencia>();
     public DbSet<LicenciaTecnica> LicenciasTecnicas => Set<LicenciaTecnica>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -168,5 +169,12 @@ public class IndotelDbContext : DbContext
 
         modelBuilder.Entity<LicenciaTecnica>()
             .HasIndex(x => x.FechaVencimiento);
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(x => x.TokenHash)
+            .IsUnique();
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(x => x.UsuarioId);
     }
 }
