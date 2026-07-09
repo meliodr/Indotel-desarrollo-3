@@ -24,6 +24,13 @@ public class IndotelDbContext : DbContext
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
     public DbSet<TipoResolucion> TiposResolucion => Set<TipoResolucion>();
     public DbSet<ResolucionInstitucional> ResolucionesInstitucionales => Set<ResolucionInstitucional>();
+    public DbSet<TipoAutorizacion> TiposAutorizacion => Set<TipoAutorizacion>();
+    public DbSet<TipoCertificacion> TiposCertificacion => Set<TipoCertificacion>();
+    public DbSet<SolicitudAutorizacion> SolicitudesAutorizacion => Set<SolicitudAutorizacion>();
+    public DbSet<SolicitudCertificacion> SolicitudesCertificacion => Set<SolicitudCertificacion>();
+    public DbSet<FrecuenciaRadioelectrica> FrecuenciasRadioelectricas => Set<FrecuenciaRadioelectrica>();
+    public DbSet<AsignacionFrecuencia> AsignacionesFrecuencia => Set<AsignacionFrecuencia>();
+    public DbSet<LicenciaTecnica> LicenciasTecnicas => Set<LicenciaTecnica>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -101,5 +108,55 @@ public class IndotelDbContext : DbContext
 
         modelBuilder.Entity<ResolucionInstitucional>()
             .HasIndex(x => x.PrestadoraId);
+
+        modelBuilder.Entity<TipoAutorizacion>()
+            .HasIndex(x => x.Nombre)
+            .IsUnique();
+
+        modelBuilder.Entity<TipoCertificacion>()
+            .HasIndex(x => x.Nombre)
+            .IsUnique();
+
+        modelBuilder.Entity<SolicitudAutorizacion>()
+            .HasIndex(x => x.NumeroSolicitud)
+            .IsUnique();
+
+        modelBuilder.Entity<SolicitudAutorizacion>()
+            .HasIndex(x => x.Estado);
+
+        modelBuilder.Entity<SolicitudCertificacion>()
+            .HasIndex(x => x.NumeroSolicitud)
+            .IsUnique();
+
+        modelBuilder.Entity<SolicitudCertificacion>()
+            .HasIndex(x => x.Estado);
+
+        modelBuilder.Entity<FrecuenciaRadioelectrica>()
+            .Property(x => x.RangoInicioMHz)
+            .HasPrecision(18, 6);
+
+        modelBuilder.Entity<FrecuenciaRadioelectrica>()
+            .Property(x => x.RangoFinMHz)
+            .HasPrecision(18, 6);
+
+        modelBuilder.Entity<FrecuenciaRadioelectrica>()
+            .HasIndex(x => new { x.RangoInicioMHz, x.RangoFinMHz, x.Region })
+            .IsUnique();
+
+        modelBuilder.Entity<FrecuenciaRadioelectrica>()
+            .HasIndex(x => x.Estado);
+
+        modelBuilder.Entity<AsignacionFrecuencia>()
+            .HasIndex(x => new { x.FrecuenciaRadioelectricaId, x.Activa });
+
+        modelBuilder.Entity<LicenciaTecnica>()
+            .HasIndex(x => x.NumeroLicencia)
+            .IsUnique();
+
+        modelBuilder.Entity<LicenciaTecnica>()
+            .HasIndex(x => x.Estado);
+
+        modelBuilder.Entity<LicenciaTecnica>()
+            .HasIndex(x => x.FechaVencimiento);
     }
 }
