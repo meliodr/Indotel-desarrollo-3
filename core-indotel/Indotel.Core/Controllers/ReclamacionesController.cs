@@ -91,7 +91,7 @@ public class ReclamacionesController : ControllerBase
 
         var reclamacion = new Reclamacion
         {
-            NumeroExpediente = $"IND-{DateTime.UtcNow:yyyyMMddHHmmss}",
+            NumeroExpediente = await GenerarNumeroExpediente(),
             CiudadanoId = request.CiudadanoId,
             PrestadoraId = request.PrestadoraId,
             ServicioTelecomId = request.ServicioTelecomId,
@@ -189,6 +189,22 @@ public class ReclamacionesController : ControllerBase
         await RegistrarHistorial(id, estadoAnterior, estadoNuevo, "Respuesta registrada por la prestadora");
 
         return Ok(respuesta);
+    }
+
+    private async Task<string> GenerarNumeroExpediente()
+    {
+        for (var intento = 0; intento < 10; intento++)
+        {
+            var numero = $"IND-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Random.Shared.Next(100, 999)}";
+            var existe = await _db.Reclamaciones.AnyAsync(x => x.NumeroExpediente == numero);
+
+            if (!existe)
+            {
+                return numero;
+            }
+        }
+
+        return $"IND-{DateTime.UtcNow:yyyyMMddHHmmssfffffff}-{Guid.NewGuid():N}";
     }
 
     private async Task RegistrarHistorial(int reclamacionId, string estadoAnterior, string estadoNuevo, string comentario)
