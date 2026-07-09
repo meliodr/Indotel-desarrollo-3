@@ -31,7 +31,8 @@ public class ReportesController : ControllerBase
             vencidas = await _db.Reclamaciones.CountAsync(x => x.EstaVencida),
             respondidasPrestadora = await _db.Reclamaciones.CountAsync(x => x.FechaRespuestaPrestadora != null),
             resueltas = await _db.Reclamaciones.CountAsync(x => x.Estado == "RESUELTA"),
-            cerradasFinales = await _db.Reclamaciones.CountAsync(x => x.Estado == "CERRADA")
+            cerradasFinales = await _db.Reclamaciones.CountAsync(x => x.Estado == "CERRADA"),
+            resolucionesInstitucionales = await _db.ResolucionesInstitucionales.CountAsync()
         };
 
         return Ok(data);
@@ -143,6 +144,35 @@ public class ReportesController : ControllerBase
             respondidasPrestadora = await query.CountAsync(x => x.FechaRespuestaPrestadora != null),
             resueltas = await query.CountAsync(x => x.FechaResolucion != null),
             cerradas = await query.CountAsync(x => x.FechaCierre != null)
+        };
+
+        return Ok(data);
+    }
+
+    [HttpGet("resoluciones")]
+    public async Task<IActionResult> Resoluciones()
+    {
+        var porEstado = await _db.ResolucionesInstitucionales
+            .GroupBy(x => x.Estado)
+            .Select(x => new { estado = x.Key, total = x.Count() })
+            .OrderByDescending(x => x.total)
+            .ToListAsync();
+
+        var porTipo = await _db.ResolucionesInstitucionales
+            .GroupBy(x => x.TipoResolucionId)
+            .Select(x => new { tipoResolucionId = x.Key, total = x.Count() })
+            .OrderByDescending(x => x.total)
+            .ToListAsync();
+
+        var data = new
+        {
+            total = await _db.ResolucionesInstitucionales.CountAsync(),
+            borrador = await _db.ResolucionesInstitucionales.CountAsync(x => x.Estado == "BORRADOR"),
+            aprobadas = await _db.ResolucionesInstitucionales.CountAsync(x => x.Estado == "APROBADA"),
+            publicadas = await _db.ResolucionesInstitucionales.CountAsync(x => x.Estado == "PUBLICADA"),
+            archivadas = await _db.ResolucionesInstitucionales.CountAsync(x => x.Estado == "ARCHIVADA"),
+            porEstado,
+            porTipo
         };
 
         return Ok(data);
