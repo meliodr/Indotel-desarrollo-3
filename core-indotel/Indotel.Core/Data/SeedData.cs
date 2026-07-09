@@ -45,6 +45,16 @@ public static class SeedData
             );
         }
 
+        if (!await db.TiposResolucion.AnyAsync())
+        {
+            db.TiposResolucion.AddRange(
+                new TipoResolucion { Nombre = "Reclamacion", Descripcion = "Resolucion institucional vinculada a un expediente de reclamacion" },
+                new TipoResolucion { Nombre = "Prestadora", Descripcion = "Resolucion institucional vinculada a una prestadora regulada" },
+                new TipoResolucion { Nombre = "Autorizacion", Descripcion = "Resolucion de aprobacion, rechazo o condicionamiento de una autorizacion" },
+                new TipoResolucion { Nombre = "Licencia Tecnica", Descripcion = "Resolucion vinculada a licencias tecnicas o uso de espectro" }
+            );
+        }
+
         await db.SaveChangesAsync();
 
         var adminRole = await db.Roles.FirstAsync(x => x.Nombre == "Administrador");
