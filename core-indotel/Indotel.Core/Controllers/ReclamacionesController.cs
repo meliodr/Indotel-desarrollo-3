@@ -48,6 +48,64 @@ public class ReclamacionesController : ControllerBase
         return Ok(data);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor")]
+    [HttpGet("sla/vencidas")]
+    public async Task<IActionResult> GetVencidas()
+    {
+        var ahora = DateTime.UtcNow;
+
+        var data = await _db.Reclamaciones
+            .Include(x => x.TipoReclamacion)
+            .Include(x => x.MotivoReclamacion)
+            .Where(x => x.EstaVencida ||
+                        (x.FechaLimiteRespuesta != null &&
+                         x.FechaRespuestaPrestadora == null &&
+                         ahora > x.FechaLimiteRespuesta.Value))
+            .OrderBy(x => x.FechaLimiteRespuesta)
+            .ToListAsync();
+
+        return Ok(data);
+    }
+
+    [Authorize(Roles = "Administrador,AnalistaDAU")]
+    [HttpPost("sla/marcar-vencidas")]
+    public async Task<IActionResult> MarcarVencidas()
+    {
+        var ahora = DateTime.UtcNow;
+        var vencidas = await _db.Reclamaciones
+            .Where(x => x.Estado == ReclamacionEstados.EnviadaAPrestadora &&
+                        x.FechaLimiteRespuesta != null &&
+                        x.FechaRespuestaPrestadora == null &&
+                        ahora > x.FechaLimiteRespuesta.Value &&
+                        !x.EstaVencida)
+            .ToListAsync();
+
+        var userIdText = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        int.TryParse(userIdText, out var userId);
+
+        foreach (var reclamacion in vencidas)
+        {
+            var estadoAnterior = reclamacion.Estado;
+            reclamacion.Estado = ReclamacionEstados.Vencida;
+            reclamacion.EstaVencida = true;
+            reclamacion.FechaMarcadaVencida = ahora;
+
+            _db.HistorialReclamaciones.Add(new HistorialReclamacion
+            {
+                ReclamacionId = reclamacion.Id,
+                EstadoAnterior = estadoAnterior,
+                EstadoNuevo = ReclamacionEstados.Vencida,
+                Comentario = "Reclamacion marcada como vencida por SLA",
+                UsuarioId = userId,
+                FechaCambio = ahora
+            });
+        }
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new { cantidad = vencidas.Count });
+    }
+
     [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
@@ -228,6 +286,7 @@ public class ReclamacionesController : ControllerBase
         }
 
         reclamacion.Estado = estadoNuevo;
+        AplicarSlaPorCambioEstado(reclamacion, estadoNuevo);
 
         if (estadoNuevo == ReclamacionEstados.Cerrada || estadoNuevo == ReclamacionEstados.Resuelta)
         {
@@ -287,6 +346,8 @@ public class ReclamacionesController : ControllerBase
 
         _db.RespuestasPrestadora.Add(respuesta);
         reclamacion.Estado = estadoNuevo;
+        reclamacion.FechaRespuestaPrestadora = DateTime.UtcNow;
+        reclamacion.EstaVencida = false;
 
         await _db.SaveChangesAsync();
         await RegistrarHistorial(id, estadoAnterior, estadoNuevo, "Respuesta registrada por la prestadora");
@@ -308,6 +369,32 @@ public class ReclamacionesController : ControllerBase
         }
 
         return $"IND-{DateTime.UtcNow:yyyyMMddHHmmssfffffff}-{Guid.NewGuid():N}";
+    }
+
+    private static void AplicarSlaPorCambioEstado(Reclamacion reclamacion, string estadoNuevo)
+    {
+        var ahora = DateTime.UtcNow;
+
+        if (estadoNuevo == ReclamacionEstados.EnviadaAPrestadora)
+        {
+            reclamacion.FechaEnvioPrestadora ??= ahora;
+            reclamacion.DiasHabilesSla ??= ReclamacionSla.DiasHabilesRespuestaPrestadora;
+            reclamacion.FechaLimiteRespuesta ??= ReclamacionSlaService.SumarDiasHabiles(ahora, reclamacion.DiasHabilesSla.Value);
+            reclamacion.EstaVencida = false;
+            reclamacion.FechaMarcadaVencida = null;
+        }
+
+        if (estadoNuevo == ReclamacionEstados.RespondidaPorPrestadora)
+        {
+            reclamacion.FechaRespuestaPrestadora ??= ahora;
+            reclamacion.EstaVencida = false;
+        }
+
+        if (estadoNuevo == ReclamacionEstados.Vencida)
+        {
+            reclamacion.EstaVencida = true;
+            reclamacion.FechaMarcadaVencida ??= ahora;
+        }
     }
 
     private async Task<bool> PuedeVerReclamacion(Reclamacion reclamacion)
