@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Indotel.Core.Data;
 using Indotel.Core.Models;
 using Indotel.Core.Services;
@@ -35,8 +36,10 @@ public class DocumentosController : ControllerBase
     [HttpGet("reclamaciones/{reclamacionId:int}/documentos")]
     public async Task<IActionResult> GetByReclamacion(int reclamacionId)
     {
-        var reclamacionExiste = await _db.Reclamaciones.AnyAsync(x => x.Id == reclamacionId);
-        if (!reclamacionExiste) return NotFound(new { mensaje = "Reclamacion no encontrada" });
+        var reclamacion = await _db.Reclamaciones.FindAsync(reclamacionId);
+        if (reclamacion is null) return NotFound(new { mensaje = "Reclamacion no encontrada" });
+
+        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
 
         var documentos = await _db.DocumentosReclamacion
             .Where(x => x.ReclamacionId == reclamacionId)
@@ -52,6 +55,8 @@ public class DocumentosController : ControllerBase
     {
         var reclamacion = await _db.Reclamaciones.FindAsync(reclamacionId);
         if (reclamacion is null) return NotFound(new { mensaje = "Reclamacion no encontrada" });
+
+        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
 
         if (ReclamacionEstadoService.EsFinal(reclamacion.Estado))
         {
@@ -119,5 +124,49 @@ public class DocumentosController : ControllerBase
         await _db.SaveChangesAsync();
 
         return Ok(new { mensaje = "Documento eliminado correctamente" });
+    }
+
+    private async Task<bool> PuedeVerReclamacion(Reclamacion reclamacion)
+    {
+        if (User.IsInRole("Administrador") || User.IsInRole("AnalistaDAU") || User.IsInRole("Auditor"))
+        {
+            return true;
+        }
+
+        if (User.IsInRole("Ciudadano"))
+        {
+            var ciudadanoId = await ObtenerCiudadanoIdActual();
+            return ciudadanoId == reclamacion.CiudadanoId;
+        }
+
+        if (User.IsInRole("Prestadora"))
+        {
+            var prestadoraId = await ObtenerPrestadoraIdActual();
+            return prestadoraId == reclamacion.PrestadoraId;
+        }
+
+        return false;
+    }
+
+    private async Task<int?> ObtenerCiudadanoIdActual()
+    {
+        var correo = User.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(correo)) return null;
+
+        return await _db.Ciudadanos
+            .Where(x => x.Correo == correo && x.Activo)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task<int?> ObtenerPrestadoraIdActual()
+    {
+        var correo = User.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(correo)) return null;
+
+        return await _db.Prestadoras
+            .Where(x => x.Correo == correo && x.Activo)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync();
     }
 }
