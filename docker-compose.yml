@@ -1,0 +1,14 @@
+services:
+  indotel-sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: indotel-sqlserver
+    env_file:
+      - docker.env
+    ports:
+      - "1433:1433"
+    volumes:
+      - indotel_sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+
+volumes:
+  indotel_sqlserver_data:

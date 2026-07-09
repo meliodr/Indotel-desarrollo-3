@@ -18,3 +18,4 @@ appsettings.Development.json
 TestResults/
 coverage/
 *.log
+docker.env
