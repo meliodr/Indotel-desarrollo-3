@@ -21,6 +21,7 @@ public class IndotelDbContext : DbContext
     public DbSet<RespuestaPrestadora> RespuestasPrestadora => Set<RespuestaPrestadora>();
     public DbSet<HistorialReclamacion> HistorialReclamaciones => Set<HistorialReclamacion>();
     public DbSet<Auditoria> Auditorias => Set<Auditoria>();
+    public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,5 +67,17 @@ public class IndotelDbContext : DbContext
 
         modelBuilder.Entity<Auditoria>()
             .HasIndex(x => x.Accion);
+
+        modelBuilder.Entity<Notificacion>()
+            .HasIndex(x => x.FechaCreacion);
+
+        modelBuilder.Entity<Notificacion>()
+            .HasIndex(x => x.CiudadanoId);
+
+        modelBuilder.Entity<Notificacion>()
+            .HasIndex(x => x.PrestadoraId);
+
+        modelBuilder.Entity<Notificacion>()
+            .HasIndex(x => x.ReclamacionId);
     }
 }
