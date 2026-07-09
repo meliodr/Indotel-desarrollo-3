@@ -1,0 +1,28 @@
+name: Core INDOTEL CI
+
+on:
+  push:
+    branches:
+      - core
+  pull_request:
+    branches:
+      - core
+
+jobs:
+  build-core:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore core-indotel/Indotel.Core/Indotel.Core.csproj
+
+      - name: Build
+        run: dotnet build core-indotel/Indotel.Core/Indotel.Core.csproj --configuration Release --no-restore
