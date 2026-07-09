@@ -33,6 +33,27 @@ public class CiudadanosController : ControllerBase
         return ciudadano is null ? NotFound() : Ok(ciudadano);
     }
 
+    [HttpGet("cedula/{cedula}")]
+    public async Task<IActionResult> GetByCedula(string cedula)
+    {
+        var ciudadano = await _db.Ciudadanos.FirstOrDefaultAsync(x => x.Cedula == cedula);
+        return ciudadano is null ? NotFound(new { mensaje = "No existe un ciudadano con esta cedula" }) : Ok(ciudadano);
+    }
+
+    [HttpGet("{id:int}/reclamaciones")]
+    public async Task<IActionResult> GetReclamacionesByCiudadano(int id)
+    {
+        var ciudadanoExiste = await _db.Ciudadanos.AnyAsync(x => x.Id == id);
+        if (!ciudadanoExiste) return NotFound(new { mensaje = "Ciudadano no encontrado" });
+
+        var data = await _db.Reclamaciones
+            .Where(x => x.CiudadanoId == id)
+            .OrderByDescending(x => x.Id)
+            .ToListAsync();
+
+        return Ok(data);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CiudadanoCreateDto request)
     {
@@ -55,5 +76,22 @@ public class CiudadanosController : ControllerBase
         await _db.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetById), new { id = ciudadano.Id }, ciudadano);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, CiudadanoUpdateDto request)
+    {
+        var ciudadano = await _db.Ciudadanos.FindAsync(id);
+        if (ciudadano is null) return NotFound(new { mensaje = "Ciudadano no encontrado" });
+
+        ciudadano.Nombres = request.Nombres;
+        ciudadano.Apellidos = request.Apellidos;
+        ciudadano.Telefono = request.Telefono;
+        ciudadano.Correo = request.Correo;
+        ciudadano.Direccion = request.Direccion;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(ciudadano);
     }
 }
