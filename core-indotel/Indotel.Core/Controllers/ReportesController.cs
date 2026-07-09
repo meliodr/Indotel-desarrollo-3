@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Indotel.Core.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora")]
 [ApiController]
 [Route("api/reportes")]
 public class ReportesController : ControllerBase
