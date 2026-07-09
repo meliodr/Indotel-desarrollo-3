@@ -24,6 +24,17 @@ public class Reclamacion
     public int? DiasHabilesSla { get; set; }
     public bool EstaVencida { get; set; }
     public DateTime? FechaMarcadaVencida { get; set; }
+    public DateTime? FechaResolucion { get; set; }
+    public string ResultadoResolucion { get; set; } = string.Empty;
+    public string ComentarioResolucion { get; set; } = string.Empty;
+    public string FundamentoResolucion { get; set; } = string.Empty;
+    public string AccionOrdenada { get; set; } = string.Empty;
+    public decimal? MontoAjuste { get; set; }
+    public int? UsuarioResolucionId { get; set; }
+    public string MotivoCierre { get; set; } = string.Empty;
+    public string ComentarioCierre { get; set; } = string.Empty;
+    public bool? ConformidadCiudadano { get; set; }
+    public int? UsuarioCierreId { get; set; }
 
     public TipoReclamacion? TipoReclamacion { get; set; }
     public MotivoReclamacion? MotivoReclamacion { get; set; }
