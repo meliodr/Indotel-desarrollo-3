@@ -20,6 +20,7 @@ public class ReclamacionesController : ControllerBase
         _db = db;
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -27,6 +28,7 @@ public class ReclamacionesController : ControllerBase
         return Ok(data);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -34,6 +36,7 @@ public class ReclamacionesController : ControllerBase
         return reclamacion is null ? NotFound() : Ok(reclamacion);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet("expediente/{numero}")]
     public async Task<IActionResult> GetByNumeroExpediente(string numero)
     {
@@ -41,6 +44,7 @@ public class ReclamacionesController : ControllerBase
         return reclamacion is null ? NotFound(new { mensaje = "No existe una reclamacion con este numero de expediente" }) : Ok(reclamacion);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet("{id:int}/historial")]
     public async Task<IActionResult> GetHistorial(int id)
     {
@@ -55,6 +59,7 @@ public class ReclamacionesController : ControllerBase
         return Ok(data);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet("{id:int}/respuestas")]
     public async Task<IActionResult> GetRespuestas(int id)
     {
@@ -69,6 +74,7 @@ public class ReclamacionesController : ControllerBase
         return Ok(data);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU,Ciudadano")]
     [HttpPost]
     public async Task<IActionResult> Create(ReclamacionCreateDto request)
     {
@@ -100,6 +106,7 @@ public class ReclamacionesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = reclamacion.Id }, reclamacion);
     }
 
+    [Authorize(Roles = "Administrador,AnalistaDAU")]
     [HttpPut("{id:int}/estado")]
     [HttpPatch("{id:int}/estado")]
     public async Task<IActionResult> CambiarEstado(int id, CambiarEstadoReclamacionDto request)
@@ -127,6 +134,7 @@ public class ReclamacionesController : ControllerBase
         return Ok(reclamacion);
     }
 
+    [Authorize(Roles = "Administrador,Prestadora")]
     [HttpPost("{id:int}/respuesta-prestadora")]
     public async Task<IActionResult> RegistrarRespuestaPrestadora(int id, RespuestaPrestadoraCreateDto request)
     {
