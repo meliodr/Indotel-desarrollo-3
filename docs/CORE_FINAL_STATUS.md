@@ -12,7 +12,7 @@ Porcentajes actuales:
 ```text
 Core academico/demo: 100%
 Core funcional probado: 100%
-Core produccion real estimado: 77%
+Core produccion real estimado: 80%
 ```
 
 El Core no se declara como produccion completa. Se declara como una base funcional y probada, con plan formal para evolucionar a produccion real.
@@ -49,10 +49,15 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - RBAC fase 1 por roles.
 - RBAC basico por dueno real para ciudadanos.
 - Proteccion de documentos por dueno real.
+- Gestion completa basica de prestadoras.
+- Validacion de RNC duplicado.
+- Activacion/desactivacion de prestadoras.
+- Consulta de reclamaciones por prestadora.
 - Reportes basicos.
 - Script de pruebas funcionales.
 - Evidencia formal de pruebas.
 - Evidencia RBAC por dueno real.
+- Evidencia de gestion de prestadoras.
 - Plan de produccion real.
 - Checklist de produccion real.
 
@@ -76,7 +81,17 @@ GET /api/catalogos/roles
 GET /api/catalogos/servicios
 GET /api/catalogos/prestadoras
 GET /api/servicios
+```
+
+### Prestadoras
+
+```text
 GET /api/prestadoras
+GET /api/prestadoras/{id}
+POST /api/prestadoras
+PUT /api/prestadoras/{id}
+PATCH /api/prestadoras/{id}/estado
+GET /api/prestadoras/{id}/reclamaciones
 ```
 
 ### Usuarios
@@ -179,6 +194,20 @@ Ciudadano A lista solo sus reclamaciones = OK
 Ciudadano B intenta ver documentos de A = 403 OK
 ```
 
+### Gestion de prestadoras
+
+```text
+Listar prestadoras = 200 OK
+Crear prestadora = 201 OK
+Consultar prestadora por ID = 200 OK
+RNC duplicado = 409 OK
+Actualizar prestadora = 200 OK
+Desactivar prestadora = 200 OK
+Reactivar prestadora = 200 OK
+Ver reclamaciones de prestadora = 200 OK
+Catalogo antiguo /api/catalogos/prestadoras = 200 OK
+```
+
 ## Evidencia de pruebas
 
 Documentos de evidencia:
@@ -186,6 +215,7 @@ Documentos de evidencia:
 ```text
 docs/CORE_TEST_RESULTS.md
 docs/CORE_RBAC_OWNER_TEST_RESULTS.md
+docs/CORE_PRESTADORAS_TEST_RESULTS.md
 ```
 
 Resultado documentado:
@@ -197,6 +227,7 @@ API corriendo en http://localhost:5085
 Endpoints base respondiendo
 Auth publica ciudadana probada
 RBAC por dueno real probado
+Gestion de prestadoras probada
 Flujo completo probado
 Documentos/evidencias probado
 Consulta por expediente probada
@@ -226,6 +257,7 @@ Documentos principales:
 docs/CORE_FINAL_STATUS.md
 docs/CORE_TEST_RESULTS.md
 docs/CORE_RBAC_OWNER_TEST_RESULTS.md
+docs/CORE_PRESTADORAS_TEST_RESULTS.md
 docs/CORE_PRODUCTION_PLAN.md
 docs/CORE_PRODUCTION_CHECKLIST.md
 docs/CORE_NEXT_IMPLEMENTATION_PLAN.md
@@ -244,7 +276,6 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 - Bloqueo por intentos fallidos.
 - Recuperacion de contrasena estricta con token hasheado e invalidable.
 - RBAC fase 2 estricto con `CiudadanoId` y `PrestadoraId` en Usuario.
-- Gestion completa de prestadoras.
 - Gestion completa de servicios telecom.
 - Tipos, motivos y clasificacion de reclamaciones.
 - SLA regulatorio.
@@ -264,4 +295,4 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 
 El Core queda listo para defensa academica y con una ruta clara para evolucionar a produccion real.
 
-La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica y RBAC por dueno real ciudadano.
+La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano y gestion basica completa de prestadoras.
