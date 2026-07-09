@@ -19,3 +19,4 @@ TestResults/
 coverage/
 *.log
 docker.env
+uploads/
