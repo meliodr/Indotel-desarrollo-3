@@ -14,6 +14,8 @@ public class IndotelDbContext : DbContext
     public DbSet<Ciudadano> Ciudadanos => Set<Ciudadano>();
     public DbSet<Prestadora> Prestadoras => Set<Prestadora>();
     public DbSet<ServicioTelecom> ServiciosTelecom => Set<ServicioTelecom>();
+    public DbSet<TipoReclamacion> TiposReclamacion => Set<TipoReclamacion>();
+    public DbSet<MotivoReclamacion> MotivosReclamacion => Set<MotivoReclamacion>();
     public DbSet<Reclamacion> Reclamaciones => Set<Reclamacion>();
     public DbSet<DocumentoReclamacion> DocumentosReclamacion => Set<DocumentoReclamacion>();
     public DbSet<RespuestaPrestadora> RespuestasPrestadora => Set<RespuestaPrestadora>();
@@ -34,6 +36,18 @@ public class IndotelDbContext : DbContext
 
         modelBuilder.Entity<Prestadora>()
             .HasIndex(x => x.Rnc)
+            .IsUnique();
+
+        modelBuilder.Entity<ServicioTelecom>()
+            .HasIndex(x => x.Nombre)
+            .IsUnique();
+
+        modelBuilder.Entity<TipoReclamacion>()
+            .HasIndex(x => x.Nombre)
+            .IsUnique();
+
+        modelBuilder.Entity<MotivoReclamacion>()
+            .HasIndex(x => new { x.TipoReclamacionId, x.Nombre })
             .IsUnique();
 
         modelBuilder.Entity<Reclamacion>()
