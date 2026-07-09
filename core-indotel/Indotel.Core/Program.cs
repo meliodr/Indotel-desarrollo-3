@@ -43,6 +43,8 @@ else
     app.UseHttpsRedirection();
 }
 
+await SeedData.InitializeAsync(app.Services);
+
 app.UseCors("DevCors");
 app.UseAuthorization();
 app.MapControllers();
