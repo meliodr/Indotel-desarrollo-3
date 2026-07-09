@@ -165,7 +165,7 @@ public class DocumentosController : ControllerBase
         if (string.IsNullOrWhiteSpace(correo)) return null;
 
         return await _db.Prestadoras
-            .Where(x => x.Correo == correo && x.Activo)
+            .Where(x => x.Correo == correo && x.Activa)
             .Select(x => (int?)x.Id)
             .FirstOrDefaultAsync();
     }
