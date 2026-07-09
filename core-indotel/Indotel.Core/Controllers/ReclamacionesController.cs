@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using Indotel.Core.Constants;
 using Indotel.Core.Data;
 using Indotel.Core.DTOs;
 using Indotel.Core.Models;
+using Indotel.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -95,13 +97,13 @@ public class ReclamacionesController : ControllerBase
             ServicioTelecomId = request.ServicioTelecomId,
             Titulo = request.Titulo,
             Descripcion = request.Descripcion,
-            Estado = "RECIBIDA"
+            Estado = ReclamacionEstados.Recibida
         };
 
         _db.Reclamaciones.Add(reclamacion);
         await _db.SaveChangesAsync();
 
-        await RegistrarHistorial(reclamacion.Id, string.Empty, "RECIBIDA", "Reclamacion registrada");
+        await RegistrarHistorial(reclamacion.Id, string.Empty, ReclamacionEstados.Recibida, "Reclamacion registrada");
 
         return CreatedAtAction(nameof(GetById), new { id = reclamacion.Id }, reclamacion);
     }
@@ -114,22 +116,34 @@ public class ReclamacionesController : ControllerBase
         var reclamacion = await _db.Reclamaciones.FindAsync(id);
         if (reclamacion is null) return NotFound();
 
-        var estadosPermitidos = new[] { "RECIBIDA", "VALIDADA", "ENVIADA_A_PRESTADORA", "RESPONDIDA_POR_PRESTADORA", "EN_REVISION", "RESUELTA", "CERRADA", "RECHAZADA" };
-        if (!estadosPermitidos.Contains(request.EstadoNuevo))
+        var estadoNuevo = ReclamacionEstadoService.NormalizarEstado(request.EstadoNuevo);
+        var estadoAnterior = ReclamacionEstadoService.NormalizarEstado(reclamacion.Estado);
+
+        if (!ReclamacionEstadoService.ExisteEstado(estadoNuevo))
         {
             return BadRequest(new { mensaje = "Estado no permitido" });
         }
 
-        var estadoAnterior = reclamacion.Estado;
-        reclamacion.Estado = request.EstadoNuevo;
+        if (!ReclamacionEstadoService.PuedeCambiar(estadoAnterior, estadoNuevo))
+        {
+            return Conflict(new
+            {
+                mensaje = ReclamacionEstadoService.CrearMensajeTransicionInvalida(estadoAnterior, estadoNuevo),
+                estadoActual = estadoAnterior,
+                estadoSolicitado = estadoNuevo,
+                codigo = "TRANSICION_ESTADO_INVALIDA"
+            });
+        }
 
-        if (request.EstadoNuevo == "CERRADA" || request.EstadoNuevo == "RESUELTA")
+        reclamacion.Estado = estadoNuevo;
+
+        if (estadoNuevo == ReclamacionEstados.Cerrada || estadoNuevo == ReclamacionEstados.Resuelta)
         {
             reclamacion.FechaCierre = DateTime.UtcNow;
         }
 
         await _db.SaveChangesAsync();
-        await RegistrarHistorial(id, estadoAnterior, request.EstadoNuevo, request.Comentario);
+        await RegistrarHistorial(id, estadoAnterior, estadoNuevo, request.Comentario);
 
         return Ok(reclamacion);
     }
@@ -146,6 +160,20 @@ public class ReclamacionesController : ControllerBase
             return BadRequest(new { mensaje = "La prestadora no corresponde a esta reclamacion" });
         }
 
+        var estadoAnterior = ReclamacionEstadoService.NormalizarEstado(reclamacion.Estado);
+        var estadoNuevo = ReclamacionEstados.RespondidaPorPrestadora;
+
+        if (!ReclamacionEstadoService.PuedeCambiar(estadoAnterior, estadoNuevo))
+        {
+            return Conflict(new
+            {
+                mensaje = ReclamacionEstadoService.CrearMensajeTransicionInvalida(estadoAnterior, estadoNuevo),
+                estadoActual = estadoAnterior,
+                estadoSolicitado = estadoNuevo,
+                codigo = "TRANSICION_ESTADO_INVALIDA"
+            });
+        }
+
         var respuesta = new RespuestaPrestadora
         {
             ReclamacionId = id,
@@ -155,12 +183,10 @@ public class ReclamacionesController : ControllerBase
         };
 
         _db.RespuestasPrestadora.Add(respuesta);
-
-        var estadoAnterior = reclamacion.Estado;
-        reclamacion.Estado = "RESPONDIDA_POR_PRESTADORA";
+        reclamacion.Estado = estadoNuevo;
 
         await _db.SaveChangesAsync();
-        await RegistrarHistorial(id, estadoAnterior, "RESPONDIDA_POR_PRESTADORA", "Respuesta registrada por la prestadora");
+        await RegistrarHistorial(id, estadoAnterior, estadoNuevo, "Respuesta registrada por la prestadora");
 
         return Ok(respuesta);
     }
