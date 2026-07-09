@@ -57,5 +57,14 @@ public class IndotelDbContext : DbContext
         modelBuilder.Entity<Reclamacion>()
             .Property(x => x.MontoAjuste)
             .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Auditoria>()
+            .HasIndex(x => x.Fecha);
+
+        modelBuilder.Entity<Auditoria>()
+            .HasIndex(x => new { x.Entidad, x.EntidadId });
+
+        modelBuilder.Entity<Auditoria>()
+            .HasIndex(x => x.Accion);
     }
 }
