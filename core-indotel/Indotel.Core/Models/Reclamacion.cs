@@ -18,6 +18,12 @@ public class Reclamacion
     public string Estado { get; set; } = "RECIBIDA";
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public DateTime? FechaCierre { get; set; }
+    public DateTime? FechaEnvioPrestadora { get; set; }
+    public DateTime? FechaLimiteRespuesta { get; set; }
+    public DateTime? FechaRespuestaPrestadora { get; set; }
+    public int? DiasHabilesSla { get; set; }
+    public bool EstaVencida { get; set; }
+    public DateTime? FechaMarcadaVencida { get; set; }
 
     public TipoReclamacion? TipoReclamacion { get; set; }
     public MotivoReclamacion? MotivoReclamacion { get; set; }
