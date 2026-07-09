@@ -80,8 +80,7 @@ public class ReclamacionesController : ControllerBase
                         !x.EstaVencida)
             .ToListAsync();
 
-        var userIdText = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        int.TryParse(userIdText, out var userId);
+        var userId = ObtenerUsuarioIdActual();
 
         foreach (var reclamacion in vencidas)
         {
@@ -288,13 +287,105 @@ public class ReclamacionesController : ControllerBase
         reclamacion.Estado = estadoNuevo;
         AplicarSlaPorCambioEstado(reclamacion, estadoNuevo);
 
-        if (estadoNuevo == ReclamacionEstados.Cerrada || estadoNuevo == ReclamacionEstados.Resuelta)
+        if (estadoNuevo == ReclamacionEstados.Resuelta)
+        {
+            reclamacion.FechaResolucion ??= DateTime.UtcNow;
+            reclamacion.UsuarioResolucionId ??= ObtenerUsuarioIdActual();
+        }
+
+        if (estadoNuevo == ReclamacionEstados.Cerrada)
         {
             reclamacion.FechaCierre = DateTime.UtcNow;
+            reclamacion.UsuarioCierreId ??= ObtenerUsuarioIdActual();
         }
 
         await _db.SaveChangesAsync();
         await RegistrarHistorial(id, estadoAnterior, estadoNuevo, request.Comentario);
+
+        return Ok(reclamacion);
+    }
+
+    [Authorize(Roles = "Administrador,AnalistaDAU")]
+    [HttpPost("{id:int}/resolver")]
+    public async Task<IActionResult> Resolver(int id, ResolverReclamacionDto request)
+    {
+        var reclamacion = await _db.Reclamaciones.FindAsync(id);
+        if (reclamacion is null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.ResultadoResolucion))
+        {
+            return BadRequest(new { mensaje = "El resultado de resolucion es obligatorio" });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ComentarioResolucion))
+        {
+            return BadRequest(new { mensaje = "El comentario de resolucion es obligatorio" });
+        }
+
+        var estadoAnterior = ReclamacionEstadoService.NormalizarEstado(reclamacion.Estado);
+        var estadoNuevo = ReclamacionEstados.Resuelta;
+
+        if (!ReclamacionEstadoService.PuedeCambiar(estadoAnterior, estadoNuevo))
+        {
+            return Conflict(new
+            {
+                mensaje = ReclamacionEstadoService.CrearMensajeTransicionInvalida(estadoAnterior, estadoNuevo),
+                estadoActual = estadoAnterior,
+                estadoSolicitado = estadoNuevo,
+                codigo = "TRANSICION_ESTADO_INVALIDA"
+            });
+        }
+
+        reclamacion.Estado = estadoNuevo;
+        reclamacion.FechaResolucion = DateTime.UtcNow;
+        reclamacion.ResultadoResolucion = request.ResultadoResolucion.Trim();
+        reclamacion.ComentarioResolucion = request.ComentarioResolucion.Trim();
+        reclamacion.FundamentoResolucion = request.FundamentoResolucion.Trim();
+        reclamacion.AccionOrdenada = request.AccionOrdenada.Trim();
+        reclamacion.MontoAjuste = request.MontoAjuste;
+        reclamacion.UsuarioResolucionId = ObtenerUsuarioIdActual();
+
+        await _db.SaveChangesAsync();
+        await RegistrarHistorial(id, estadoAnterior, estadoNuevo, request.ComentarioResolucion.Trim());
+
+        return Ok(reclamacion);
+    }
+
+    [Authorize(Roles = "Administrador,AnalistaDAU")]
+    [HttpPost("{id:int}/cerrar")]
+    public async Task<IActionResult> Cerrar(int id, CerrarReclamacionDto request)
+    {
+        var reclamacion = await _db.Reclamaciones.FindAsync(id);
+        if (reclamacion is null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.MotivoCierre))
+        {
+            return BadRequest(new { mensaje = "El motivo de cierre es obligatorio" });
+        }
+
+        var estadoAnterior = ReclamacionEstadoService.NormalizarEstado(reclamacion.Estado);
+        var estadoNuevo = ReclamacionEstados.Cerrada;
+
+        if (!ReclamacionEstadoService.PuedeCambiar(estadoAnterior, estadoNuevo))
+        {
+            return Conflict(new
+            {
+                mensaje = ReclamacionEstadoService.CrearMensajeTransicionInvalida(estadoAnterior, estadoNuevo),
+                estadoActual = estadoAnterior,
+                estadoSolicitado = estadoNuevo,
+                codigo = "TRANSICION_ESTADO_INVALIDA"
+            });
+        }
+
+        reclamacion.Estado = estadoNuevo;
+        reclamacion.FechaCierre = DateTime.UtcNow;
+        reclamacion.MotivoCierre = request.MotivoCierre.Trim();
+        reclamacion.ComentarioCierre = request.ComentarioCierre.Trim();
+        reclamacion.ConformidadCiudadano = request.ConformidadCiudadano;
+        reclamacion.UsuarioCierreId = ObtenerUsuarioIdActual();
+
+        await _db.SaveChangesAsync();
+        await RegistrarHistorial(id, estadoAnterior, estadoNuevo, request.MotivoCierre.Trim());
 
         return Ok(reclamacion);
     }
@@ -441,18 +532,22 @@ public class ReclamacionesController : ControllerBase
             .FirstOrDefaultAsync();
     }
 
-    private async Task RegistrarHistorial(int reclamacionId, string estadoAnterior, string estadoNuevo, string comentario)
+    private int ObtenerUsuarioIdActual()
     {
         var userIdText = User.FindFirstValue(ClaimTypes.NameIdentifier);
         int.TryParse(userIdText, out var userId);
+        return userId;
+    }
 
+    private async Task RegistrarHistorial(int reclamacionId, string estadoAnterior, string estadoNuevo, string comentario)
+    {
         _db.HistorialReclamaciones.Add(new HistorialReclamacion
         {
             ReclamacionId = reclamacionId,
             EstadoAnterior = estadoAnterior,
             EstadoNuevo = estadoNuevo,
             Comentario = comentario,
-            UsuarioId = userId,
+            UsuarioId = ObtenerUsuarioIdActual(),
             FechaCambio = DateTime.UtcNow
         });
 
