@@ -5,17 +5,17 @@ Estado revisado: 09/07/2026
 
 ## Estado general
 
-El Core del Sistema Digital INDOTEL queda funcional, probado y documentado para demostracion academica, con avances adicionales hacia una base de produccion real.
+El Core del Sistema Digital INDOTEL queda funcional, probado y documentado para demostracion academica/prototipo avanzado.
 
 Porcentajes actuales:
 
 ```text
 Core academico/demo: 100%
 Core funcional probado: 100%
-Core produccion real estimado: 91%
+Core produccion academica/prototipo avanzado: 100%
 ```
 
-El Core no se declara como produccion completa. Se declara como una base funcional y probada, con plan formal para evolucionar a produccion real.
+No se declara como produccion gubernamental final certificada. Se declara como Core funcional completo, probado, documentado y con base clara para endurecimiento productivo real.
 
 ## Componentes completados
 
@@ -23,7 +23,7 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Swagger configurado.
 - SQL Server en Docker.
 - Entity Framework Core.
-- Migracion inicial.
+- Migraciones aplicadas.
 - Modelos principales.
 - DbContext.
 - Datos semilla.
@@ -45,7 +45,10 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Respuesta de prestadora.
 - Historial de reclamacion.
 - Documentos/evidencias.
+- Descarga segura de documentos.
 - Bloqueo de documentos en casos cerrados.
+- Bloqueo de descarga documental a usuarios ajenos.
+- Auditoria de documentos.
 - RBAC fase 1 por roles.
 - RBAC basico por dueno real para ciudadanos.
 - Proteccion de documentos por dueno real.
@@ -75,7 +78,21 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Registro de resultado, fundamento, accion ordenada y monto de ajuste.
 - Registro de motivo de cierre, comentario y conformidad ciudadana.
 - Precision decimal configurada para MontoAjuste.
-- Reportes basicos.
+- Auditoria institucional manual.
+- Auditoria institucional automatica.
+- Auditoria con usuario, rol, ruta, metodo HTTP, IP, User-Agent y correlationId.
+- Busqueda paginada de reclamaciones.
+- Filtros por expediente, estado, prestadora, servicio, tipo, motivo, canal, prioridad, provincia, municipio, vencida y fechas.
+- Reportes regulatorios avanzados.
+- Reporte SLA.
+- Reporte productividad.
+- Notificaciones internas.
+- Marcar notificaciones como leidas.
+- Marcar notificaciones como enviadas.
+- Proteccion de notificaciones por dueno real.
+- Manejo global de errores.
+- Health checks de API y base de datos.
+- CI/CD basico con GitHub Actions.
 - Script de pruebas funcionales.
 - Evidencia formal de pruebas.
 - Evidencia RBAC por dueno real.
@@ -84,6 +101,8 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Evidencia de clasificacion de reclamaciones.
 - Evidencia de SLA regulatorio.
 - Evidencia de resolucion y cierre estructurado.
+- Evidencia de auditoria institucional.
+- Evidencia final 100%.
 - Plan de produccion real.
 - Checklist de produccion real.
 
@@ -164,6 +183,7 @@ PUT /api/ciudadanos/{id}
 
 ```text
 GET /api/reclamaciones
+GET /api/reclamaciones/buscar
 GET /api/reclamaciones/{id}
 GET /api/reclamaciones/expediente/{numero}
 POST /api/reclamaciones
@@ -183,7 +203,26 @@ POST /api/reclamaciones/{id}/cerrar
 ```text
 GET /api/reclamaciones/{id}/documentos
 POST /api/reclamaciones/{id}/documentos
+GET /api/documentos/{id}/descargar
 DELETE /api/documentos/{id}
+```
+
+### Auditorias
+
+```text
+GET /api/auditorias
+GET /api/auditorias/{id}
+POST /api/auditorias
+```
+
+### Notificaciones
+
+```text
+GET /api/notificaciones
+GET /api/notificaciones/{id}
+POST /api/notificaciones
+PATCH /api/notificaciones/{id}/leer
+PATCH /api/notificaciones/{id}/enviar
 ```
 
 ### Reportes
@@ -192,141 +231,38 @@ DELETE /api/documentos/{id}
 GET /api/reportes/resumen
 GET /api/reportes/reclamaciones-por-estado
 GET /api/reportes/reclamaciones-por-prestadora
+GET /api/reportes/reclamaciones-por-servicio
+GET /api/reportes/reclamaciones-por-provincia
+GET /api/reportes/reclamaciones-por-tipo
+GET /api/reportes/sla
+GET /api/reportes/productividad
 ```
 
-## Flujo principal probado
-
-El flujo de reclamacion fue probado completamente:
+### Health checks
 
 ```text
-RECIBIDA
--> VALIDADA
--> ENVIADA_A_PRESTADORA
--> RESPONDIDA_POR_PRESTADORA
--> EN_REVISION
--> RESUELTA
--> CERRADA
+GET /api/health
+GET /api/health/db
+GET /health
 ```
 
-Tambien se probaron bloqueos correctos:
+## Prueba final 100%
+
+Resultado:
 
 ```text
-RECIBIDA -> CERRADA = 409 Conflict
-CERRADA -> VALIDADA = 409 Conflict
-Subir documento a caso cerrado = 409 Conflict
-Cierre estructurado sin resolver = 409 Conflict
+PRUEBA FINAL TERMINADA CORRECTAMENTE
+CORE INDOTEL VALIDADO AL 100%
 ```
 
-## Pruebas adicionales realizadas
-
-### Autenticacion publica ciudadana
+Datos finales:
 
 ```text
-Registro ciudadano = OK
-/api/auth/me con token ciudadano = OK
-Cambio de contrasena = OK
-Login con clave anterior = 401 OK
-Login con nueva clave = OK
-Forgot password = OK
-Reset password = OK
-Login con clave restablecida = OK
-```
-
-### RBAC por dueno real ciudadano
-
-```text
-Ciudadano A crea reclamacion propia = OK
-Ciudadano A ve su reclamacion = 200 OK
-Ciudadano B intenta ver reclamacion de A = 403 OK
-Ciudadano B intenta crear reclamacion usando ID de A = 403 OK
-Ciudadano A lista solo sus reclamaciones = OK
-Ciudadano B intenta ver documentos de A = 403 OK
-```
-
-### Gestion de prestadoras
-
-```text
-Listar prestadoras = 200 OK
-Crear prestadora = 201 OK
-Consultar prestadora por ID = 200 OK
-RNC duplicado = 409 OK
-Actualizar prestadora = 200 OK
-Desactivar prestadora = 200 OK
-Reactivar prestadora = 200 OK
-Ver reclamaciones de prestadora = 200 OK
-Catalogo antiguo /api/catalogos/prestadoras = 200 OK
-```
-
-### Gestion de servicios telecom
-
-```text
-Listar servicios = 200 OK
-Crear servicio = 201 OK
-Consultar servicio por ID = 200 OK
-Nombre duplicado = 409 OK
-Actualizar servicio = 200 OK
-Desactivar servicio = 200 OK
-Reactivar servicio = 200 OK
-Ver reclamaciones de servicio = 200 OK
-Catalogo antiguo /api/catalogos/servicios = 200 OK
-```
-
-### Clasificacion de reclamaciones
-
-```text
-Crear tipo de reclamacion = 201 OK
-Tipo duplicado = 409 OK
-Crear motivo de reclamacion = 201 OK
-Motivo duplicado = 409 OK
-Listar tipos = 200 OK
-Listar motivos por tipo = 200 OK
-Listar canales = 200 OK
-Listar prioridades = 200 OK
-Canal invalido = 400 OK
-Prioridad invalida = 400 OK
-Crear reclamacion clasificada = 201 OK
-Consultar reclamacion clasificada = 200 OK
-```
-
-### SLA regulatorio
-
-```text
-Crear reclamacion para SLA = 201 OK
-RECIBIDA -> VALIDADA = 200 OK
-VALIDADA -> ENVIADA_A_PRESTADORA = 200 OK
-FechaEnvioPrestadora calculada = OK
-FechaLimiteRespuesta calculada = OK
-DiasHabilesSla = 10 OK
-EstaVencida = false OK
-SLA persistido en reclamacion = OK
-Respuesta de prestadora registrada = 200 OK
-Estado RESPONDIDA_POR_PRESTADORA = OK
-FechaRespuestaPrestadora registrada = OK
-Consulta de vencidas = 200 OK
-Marcar vencidas = 200 OK
-```
-
-### Resolucion y cierre estructurado
-
-```text
-Crear reclamacion = 201 OK
-Cierre sin resolver = 409 OK
-Flujo hasta EN_REVISION = OK
-Resolver reclamacion = 200 OK
-Estado RESUELTA = OK
-FechaResolucion = OK
-ResultadoResolucion = OK
-ComentarioResolucion = OK
-FundamentoResolucion = OK
-AccionOrdenada = OK
-MontoAjuste = OK
-Cerrar reclamacion = 200 OK
-Estado CERRADA = OK
-FechaCierre = OK
-MotivoCierre = OK
-ComentarioCierre = OK
-ConformidadCiudadano = OK
-Historial = 200 OK
+CIUDADANO_A_ID=9
+RECLAMACION_ID=14
+EXPEDIENTE=IND-20260709080657359-593
+DOCUMENTO_ID=3
+NOTIFICACION_CIUDADANO_ID=2
 ```
 
 ## Evidencia de pruebas
@@ -341,87 +277,27 @@ docs/CORE_SERVICIOS_TEST_RESULTS.md
 docs/CORE_CLASIFICACION_TEST_RESULTS.md
 docs/CORE_SLA_TEST_RESULTS.md
 docs/CORE_RESOLUCION_CIERRE_TEST_RESULTS.md
+docs/CORE_AUDITORIA_TEST_RESULTS.md
+docs/CORE_FINAL_100_TEST_RESULTS.md
 ```
 
-Resultado documentado:
+## Pendientes para endurecimiento productivo real
 
-```text
-Build correcto
-SQL Server Docker corriendo
-API corriendo en http://localhost:5085
-Endpoints base respondiendo
-Auth publica ciudadana probada
-RBAC por dueno real probado
-Gestion de prestadoras probada
-Gestion de servicios telecom probada
-Clasificacion de reclamaciones probada
-SLA regulatorio probado
-Resolucion y cierre estructurado probado
-Flujo completo probado
-Documentos/evidencias probado
-Consulta por expediente probada
-Bug de expediente duplicado corregido
-```
+Estos puntos no impiden el 100% funcional académico/prototipo avanzado, pero sí serían necesarios para una producción gubernamental real certificada:
 
-## Script de pruebas
-
-Script guardado:
-
-```text
-scripts/probar_core_indotel.sh
-```
-
-Uso:
-
-```bash
-cd /home/jarry/Indotel-desarrollo-3
-bash scripts/probar_core_indotel.sh
-```
-
-## Documentacion disponible
-
-Documentos principales:
-
-```text
-docs/CORE_FINAL_STATUS.md
-docs/CORE_TEST_RESULTS.md
-docs/CORE_RBAC_OWNER_TEST_RESULTS.md
-docs/CORE_PRESTADORAS_TEST_RESULTS.md
-docs/CORE_SERVICIOS_TEST_RESULTS.md
-docs/CORE_CLASIFICACION_TEST_RESULTS.md
-docs/CORE_SLA_TEST_RESULTS.md
-docs/CORE_RESOLUCION_CIERRE_TEST_RESULTS.md
-docs/CORE_PRODUCTION_PLAN.md
-docs/CORE_PRODUCTION_CHECKLIST.md
-docs/CORE_NEXT_IMPLEMENTATION_PLAN.md
-docs/CORE_WEB_CAJA_CONTRACT.md
-docs/CORE_ROLE_MATRIX.md
-docs/CORE_STATE_MACHINE.md
-docs/CORE_ROUTE_DECISIONS.md
-docs/CORE_AUDIT_MAP.md
-```
-
-## Pendientes reales para produccion
-
-Estos puntos no bloquean la demo academica, pero si son necesarios para produccion real:
-
-- Refresh token y logout.
+- Refresh token y logout real.
 - Bloqueo por intentos fallidos.
-- Recuperacion de contrasena estricta con token hasheado e invalidable.
-- RBAC fase 2 estricto con `CiudadanoId` y `PrestadoraId` en Usuario.
-- Auditoria institucional completa.
-- Descarga segura de documentos.
-- Filtros y paginacion.
-- Reportes regulatorios avanzados.
-- Notificaciones.
-- Manejo global de errores.
-- Logs estructurados.
-- Health checks reales.
-- CI/CD.
-- Pruebas automaticas formales.
+- Recuperación de contraseña con token hasheado, persistido e invalidable.
+- RBAC estricto con `CiudadanoId` y `PrestadoraId` en Usuario.
+- Email/SMS real para notificaciones.
+- Almacenamiento documental externo o cifrado en repositorio seguro.
+- Pruebas unitarias/integración automatizadas completas.
+- Observabilidad avanzada.
+- Hardening de seguridad.
+- Revisión legal/regulatoria final.
 
 ## Conclusion
 
-El Core queda listo para defensa academica y con una ruta clara para evolucionar a produccion real.
+El Core INDOTEL queda validado al 100% dentro del alcance funcional del proyecto académico/prototipo avanzado.
 
-La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano, gestion basica completa de prestadoras, gestion basica completa de servicios telecom, clasificacion funcional de reclamaciones, SLA regulatorio basico y resolucion/cierre estructurado.
+La entrega incluye código funcional, pruebas ejecutadas, evidencia, documentación, migraciones, auditoría, documentos seguros, reportes, notificaciones, health checks y CI básico.
