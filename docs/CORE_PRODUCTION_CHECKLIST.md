@@ -30,28 +30,51 @@ Leyenda:
 - [x] Consulta por expediente.
 - [x] Script de pruebas.
 - [x] Evidencia de pruebas.
+- [x] Registro público ciudadano básico probado.
+- [x] Cambio de contraseña autenticado probado.
+- [x] Recuperación/restablecimiento de contraseña básico probado.
 
 ## Fase 1 - Autenticación pública y seguridad de usuario
 
-- [ ] Crear DTO `RegisterCiudadanoDto`.
-- [ ] Crear endpoint `POST /api/auth/register-ciudadano`.
-- [ ] Crear ciudadano y usuario en una sola operación.
-- [ ] Validar correo duplicado.
-- [ ] Validar cédula duplicada.
-- [ ] Hashear contraseña.
-- [ ] Asignar rol `Ciudadano` automáticamente.
-- [ ] Crear endpoint `POST /api/auth/change-password`.
-- [ ] Crear endpoint `POST /api/auth/forgot-password`.
-- [ ] Crear endpoint `POST /api/auth/reset-password`.
-- [ ] Guardar token de recuperación hasheado.
-- [ ] Expirar token de recuperación.
+- [x] Crear DTO `RegisterCiudadanoDto`.
+- [x] Crear DTO `ChangePasswordDto`.
+- [x] Crear DTO `ForgotPasswordDto`.
+- [x] Crear DTO `ResetPasswordDto`.
+- [x] Crear endpoint `POST /api/auth/register-ciudadano`.
+- [x] Crear ciudadano y usuario en una sola operación.
+- [x] Validar correo duplicado.
+- [x] Validar cédula duplicada.
+- [x] Hashear contraseña.
+- [x] Asignar rol `Ciudadano` automáticamente.
+- [x] Devolver JWT después del registro ciudadano.
+- [x] Crear endpoint `POST /api/auth/change-password`.
+- [x] Validar contraseña actual antes de cambiarla.
+- [x] Hashear nueva contraseña.
+- [x] Crear endpoint `POST /api/auth/forgot-password`.
+- [x] Crear endpoint `POST /api/auth/reset-password`.
+- [~] Token de recuperación temporal implementado con JWT.
+- [x] Expirar token de recuperación.
+- [ ] Guardar token de recuperación hasheado en base de datos.
+- [ ] Invalidar token de recuperación después de usarlo.
 - [ ] Crear refresh token.
 - [ ] Crear endpoint `POST /api/auth/refresh-token`.
 - [ ] Crear endpoint `POST /api/auth/logout`.
 - [ ] Registrar último acceso.
 - [ ] Contar intentos fallidos.
 - [ ] Bloquear usuario por intentos fallidos.
-- [ ] Probar flujo completo de recuperación.
+- [x] Probar registro ciudadano.
+- [x] Probar `/api/auth/me` con token ciudadano.
+- [x] Probar cambio de contraseña propio.
+- [x] Probar rechazo de contraseña anterior.
+- [x] Probar login con contraseña nueva.
+- [x] Probar flujo completo de recuperación y restablecimiento.
+
+Estado de Fase 1:
+
+```text
+Fase 1 básica: completada y probada.
+Fase 1 producción estricta: parcial.
+```
 
 ## Fase 2 - RBAC fase 2 y dueño real de datos
 
@@ -275,7 +298,8 @@ Leyenda:
 - [ ] Crear proyecto de pruebas xUnit.
 - [ ] Test login correcto.
 - [ ] Test login incorrecto.
-- [ ] Test registro ciudadano.
+- [x] Test manual de registro ciudadano.
+- [ ] Test automático de registro ciudadano.
 - [ ] Test crear reclamación.
 - [ ] Test transición válida.
 - [ ] Test transición inválida.
@@ -293,8 +317,9 @@ Leyenda:
 
 El Core puede considerarse listo para producción cuando:
 
-- [ ] Tiene registro público de ciudadano.
-- [ ] Tiene recuperación de contraseña.
+- [x] Tiene registro público de ciudadano básico.
+- [x] Tiene recuperación de contraseña básica para demo.
+- [ ] Tiene recuperación de contraseña estricta para producción.
 - [ ] Tiene refresh token y logout.
 - [ ] Tiene RBAC por rol y dueño real.
 - [ ] Ciudadano ve solo sus datos.
@@ -316,7 +341,7 @@ El Core puede considerarse listo para producción cuando:
 ## Porcentaje objetivo
 
 ```text
-Actual producción real: 70%
+Actual producción real: 73%
 Meta mínima: 90%
 Meta fuerte: 95%
 ```
@@ -324,8 +349,8 @@ Meta fuerte: 95%
 Avance esperado:
 
 ```text
-Fase 1: 75%
-Fase 2: 80%
+Fase 1 básica: 73%
+Fase 1 estricta + Fase 2: 80%
 Fases 3-4: 84%
 Fases 5-7: 88%
 Fases 8-11: 92%
