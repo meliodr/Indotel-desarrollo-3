@@ -12,7 +12,7 @@ Porcentajes actuales:
 ```text
 Core academico/demo: 100%
 Core funcional probado: 100%
-Core produccion real estimado: 86%
+Core produccion real estimado: 89%
 ```
 
 El Core no se declara como produccion completa. Se declara como una base funcional y probada, con plan formal para evolucionar a produccion real.
@@ -63,6 +63,12 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Provincia y municipio en reclamaciones.
 - Validacion de canal y prioridad.
 - Validacion de correspondencia motivo/tipo.
+- SLA regulatorio basico.
+- Fecha de envio a prestadora.
+- Fecha limite de respuesta por dias habiles.
+- Fecha de respuesta de prestadora.
+- Deteccion y marcado de reclamaciones vencidas.
+- Consulta de reclamaciones vencidas.
 - Reportes basicos.
 - Script de pruebas funcionales.
 - Evidencia formal de pruebas.
@@ -70,6 +76,7 @@ El Core no se declara como produccion completa. Se declara como una base funcion
 - Evidencia de gestion de prestadoras.
 - Evidencia de gestion de servicios telecom.
 - Evidencia de clasificacion de reclamaciones.
+- Evidencia de SLA regulatorio.
 - Plan de produccion real.
 - Checklist de produccion real.
 
@@ -158,6 +165,8 @@ PATCH /api/reclamaciones/{id}/estado
 GET /api/reclamaciones/{id}/historial
 GET /api/reclamaciones/{id}/respuestas
 POST /api/reclamaciones/{id}/respuesta-prestadora
+GET /api/reclamaciones/sla/vencidas
+POST /api/reclamaciones/sla/marcar-vencidas
 ```
 
 ### Documentos
@@ -269,6 +278,24 @@ Crear reclamacion clasificada = 201 OK
 Consultar reclamacion clasificada = 200 OK
 ```
 
+### SLA regulatorio
+
+```text
+Crear reclamacion para SLA = 201 OK
+RECIBIDA -> VALIDADA = 200 OK
+VALIDADA -> ENVIADA_A_PRESTADORA = 200 OK
+FechaEnvioPrestadora calculada = OK
+FechaLimiteRespuesta calculada = OK
+DiasHabilesSla = 10 OK
+EstaVencida = false OK
+SLA persistido en reclamacion = OK
+Respuesta de prestadora registrada = 200 OK
+Estado RESPONDIDA_POR_PRESTADORA = OK
+FechaRespuestaPrestadora registrada = OK
+Consulta de vencidas = 200 OK
+Marcar vencidas = 200 OK
+```
+
 ## Evidencia de pruebas
 
 Documentos de evidencia:
@@ -279,6 +306,7 @@ docs/CORE_RBAC_OWNER_TEST_RESULTS.md
 docs/CORE_PRESTADORAS_TEST_RESULTS.md
 docs/CORE_SERVICIOS_TEST_RESULTS.md
 docs/CORE_CLASIFICACION_TEST_RESULTS.md
+docs/CORE_SLA_TEST_RESULTS.md
 ```
 
 Resultado documentado:
@@ -293,6 +321,7 @@ RBAC por dueno real probado
 Gestion de prestadoras probada
 Gestion de servicios telecom probada
 Clasificacion de reclamaciones probada
+SLA regulatorio probado
 Flujo completo probado
 Documentos/evidencias probado
 Consulta por expediente probada
@@ -325,6 +354,7 @@ docs/CORE_RBAC_OWNER_TEST_RESULTS.md
 docs/CORE_PRESTADORAS_TEST_RESULTS.md
 docs/CORE_SERVICIOS_TEST_RESULTS.md
 docs/CORE_CLASIFICACION_TEST_RESULTS.md
+docs/CORE_SLA_TEST_RESULTS.md
 docs/CORE_PRODUCTION_PLAN.md
 docs/CORE_PRODUCTION_CHECKLIST.md
 docs/CORE_NEXT_IMPLEMENTATION_PLAN.md
@@ -343,7 +373,6 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 - Bloqueo por intentos fallidos.
 - Recuperacion de contrasena estricta con token hasheado e invalidable.
 - RBAC fase 2 estricto con `CiudadanoId` y `PrestadoraId` en Usuario.
-- SLA regulatorio.
 - Resolucion y cierre estructurado.
 - Auditoria institucional completa.
 - Descarga segura de documentos.
@@ -360,4 +389,4 @@ Estos puntos no bloquean la demo academica, pero si son necesarios para producci
 
 El Core queda listo para defensa academica y con una ruta clara para evolucionar a produccion real.
 
-La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano, gestion basica completa de prestadoras, gestion basica completa de servicios telecom y clasificacion funcional de reclamaciones.
+La entrega actual no queda improvisada: incluye codigo funcional, pruebas ejecutadas, evidencia, script repetible, plan de produccion, checklist por fases, auth publica basica, RBAC por dueno real ciudadano, gestion basica completa de prestadoras, gestion basica completa de servicios telecom, clasificacion funcional de reclamaciones y SLA regulatorio basico.
