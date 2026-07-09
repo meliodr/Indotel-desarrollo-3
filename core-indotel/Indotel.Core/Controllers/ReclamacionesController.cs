@@ -26,7 +26,10 @@ public class ReclamacionesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var query = _db.Reclamaciones.AsQueryable();
+        var query = _db.Reclamaciones
+            .Include(x => x.TipoReclamacion)
+            .Include(x => x.MotivoReclamacion)
+            .AsQueryable();
 
         if (User.IsInRole("Ciudadano"))
         {
@@ -49,7 +52,11 @@ public class ReclamacionesController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var reclamacion = await _db.Reclamaciones.FindAsync(id);
+        var reclamacion = await _db.Reclamaciones
+            .Include(x => x.TipoReclamacion)
+            .Include(x => x.MotivoReclamacion)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
         if (reclamacion is null) return NotFound();
 
         if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
@@ -61,7 +68,11 @@ public class ReclamacionesController : ControllerBase
     [HttpGet("expediente/{numero}")]
     public async Task<IActionResult> GetByNumeroExpediente(string numero)
     {
-        var reclamacion = await _db.Reclamaciones.FirstOrDefaultAsync(x => x.NumeroExpediente == numero);
+        var reclamacion = await _db.Reclamaciones
+            .Include(x => x.TipoReclamacion)
+            .Include(x => x.MotivoReclamacion)
+            .FirstOrDefaultAsync(x => x.NumeroExpediente == numero);
+
         if (reclamacion is null) return NotFound(new { mensaje = "No existe una reclamacion con este numero de expediente" });
 
         if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
@@ -131,12 +142,51 @@ public class ReclamacionesController : ControllerBase
             return BadRequest(new { mensaje = "Ciudadano, prestadora o servicio no valido" });
         }
 
+        if (!ReclamacionClasificacion.EsCanalValido(request.CanalRecepcion))
+        {
+            return BadRequest(new { mensaje = "Canal de recepcion no permitido" });
+        }
+
+        if (!ReclamacionClasificacion.EsPrioridadValida(request.Prioridad))
+        {
+            return BadRequest(new { mensaje = "Prioridad no permitida" });
+        }
+
+        if (request.TipoReclamacionId is not null)
+        {
+            var tipoExiste = await _db.TiposReclamacion.AnyAsync(x => x.Id == request.TipoReclamacionId.Value && x.Activo);
+            if (!tipoExiste)
+            {
+                return BadRequest(new { mensaje = "Tipo de reclamacion no valido" });
+            }
+        }
+
+        if (request.MotivoReclamacionId is not null)
+        {
+            var motivo = await _db.MotivosReclamacion.FirstOrDefaultAsync(x => x.Id == request.MotivoReclamacionId.Value && x.Activo);
+            if (motivo is null)
+            {
+                return BadRequest(new { mensaje = "Motivo de reclamacion no valido" });
+            }
+
+            if (request.TipoReclamacionId is not null && motivo.TipoReclamacionId != request.TipoReclamacionId.Value)
+            {
+                return BadRequest(new { mensaje = "El motivo no corresponde al tipo de reclamacion" });
+            }
+        }
+
         var reclamacion = new Reclamacion
         {
             NumeroExpediente = await GenerarNumeroExpediente(),
             CiudadanoId = ciudadanoId,
             PrestadoraId = request.PrestadoraId,
             ServicioTelecomId = request.ServicioTelecomId,
+            TipoReclamacionId = request.TipoReclamacionId,
+            MotivoReclamacionId = request.MotivoReclamacionId,
+            CanalRecepcion = ReclamacionClasificacion.Normalizar(request.CanalRecepcion),
+            Prioridad = ReclamacionClasificacion.Normalizar(request.Prioridad),
+            Provincia = request.Provincia.Trim(),
+            Municipio = request.Municipio.Trim(),
             Titulo = request.Titulo,
             Descripcion = request.Descripcion,
             Estado = ReclamacionEstados.Recibida
