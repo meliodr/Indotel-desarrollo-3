@@ -340,7 +340,7 @@ public class AuthController : ControllerBase
             {
                 UsuarioId = usuario.Id,
                 TokenHash = CalcularHashToken(refreshToken),
-                ExpiraEn = refreshExpira.Value,
+                ExpiraEn = refreshExpira,
                 CreadoPorIp = ObtenerIp(),
                 FechaCreacion = DateTime.UtcNow
             });
@@ -353,7 +353,7 @@ public class AuthController : ControllerBase
             Token = token,
             RefreshToken = refreshToken,
             ExpiraEn = expiraEn,
-            RefreshTokenExpiraEn = refreshExpira.Value,
+            RefreshTokenExpiraEn = refreshExpira,
             Usuario = new UsuarioSesionDto
             {
                 Id = usuario.Id,
