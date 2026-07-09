@@ -78,6 +78,54 @@ No migrations were applied. The database is already up to date.
 | `GET /api/reclamaciones` | 200 |
 | `GET /api/reportes/resumen` | 200 |
 
+## Prueba de autenticación pública ciudadana
+
+Prueba ejecutada después de implementar Fase 1 básica de autenticación pública.
+
+Ciudadano creado durante la prueba:
+
+```text
+Correo ciudadano: ciudadano.1783579911536929251@indotel.test
+Cedula ciudadano: 4021783579911536929251
+```
+
+Resultados:
+
+| Acción | Resultado esperado | Resultado real |
+|---|---:|---:|
+| Registrar ciudadano | 200 | OK |
+| Consultar `/api/auth/me` con token ciudadano | 200 | OK |
+| Cambiar contraseña propia | 200 | OK |
+| Login con contraseña anterior | 401 | OK |
+| Login con contraseña nueva | 200 | OK |
+| Solicitar recuperación de contraseña | 200 | OK |
+| Restablecer contraseña con token | 200 | OK |
+| Login con contraseña restablecida | 200 | OK |
+
+Endpoints probados:
+
+```text
+POST /api/auth/register-ciudadano
+GET /api/auth/me
+POST /api/auth/change-password
+POST /api/auth/login
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+```
+
+Conclusión:
+
+```text
+AUTH PUBLICA BASICA FUNCIONANDO
+```
+
+Nota de producción:
+
+```text
+El endpoint forgot-password devuelve el token en la respuesta solo para demo y pruebas.
+En producción real debe enviarse por correo y guardarse/inválidarse de forma más estricta.
+```
+
 ## Prueba de flujo de reclamación
 
 Reclamación creada durante la prueba:
@@ -199,6 +247,7 @@ El Core está listo para demo académica con los siguientes módulos probados:
 
 ```text
 Autenticación JWT
+Autenticación pública ciudadana básica
 Catálogos
 Usuarios
 Ciudadanos
@@ -216,7 +265,7 @@ Estado recomendado para presentación:
 ```text
 Core académico: 100%
 Core funcional probado: 98% - 100%
-Core producción real estimado: 70%
+Core producción real estimado: 73%
 ```
 
 ## Pendientes posteriores
@@ -224,6 +273,8 @@ Core producción real estimado: 70%
 Estos puntos quedan como mejoras de segunda fase:
 
 ```text
+Refresh token y logout
+Bloqueo por intentos fallidos
 Auditoría automática completa
 Filtros y paginación
 RBAC fase 2 con CiudadanoId y PrestadoraId en Usuario
