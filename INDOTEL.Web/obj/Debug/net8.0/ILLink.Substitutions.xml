@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<linker>
+  <assembly fullname="INDOTEL.Web">
+    <resource name="FSharpSignatureData.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedData.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpSignatureDataB.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedDataB.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpOptimizationData.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedData.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpOptimizationDataB.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedDataB.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpOptimizationInfo.INDOTEL.Web" action="remove"></resource>
+    <resource name="FSharpSignatureInfo.INDOTEL.Web" action="remove"></resource>
+  </assembly>
+</linker>

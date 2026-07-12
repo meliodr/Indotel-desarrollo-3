@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Envío Exitoso - INDOTEL";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="card shadow-sm border-0 p-4">
+                <div class="card-body">
+                    <i class="bi bi-check-circle-fill text-success fs-1 mb-3 d-block"></i>
+                    <h3 class="fw-bold text-dark">¡Reclamación Registrada!</h3>
+                    <p class="text-muted">Tu solicitud ha sido recibida y procesada correctamente en el sistema central.</p>
+
+                    <div class="bg-light p-3 rounded my-4">
+                        <span class="text-secondary d-block small fw-semibold text-uppercase">Número de Expediente</span>
+                        <h4 class="fw-bold text-primary mb-0 mt-1">@ViewBag.NumeroExpediente</h4>
+                    </div>
+
+                    <p class="small text-muted mb-4">Puedes usar este número para dar seguimiento continuo desde tu panel privado.</p>
+
+                    <a asp-controller="Ciudadano" asp-action="Index" class="btn btn-primary px-5 fw-bold">
+                        Ir a Mi Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

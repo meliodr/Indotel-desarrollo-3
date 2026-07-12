@@ -1,0 +1,63 @@
+﻿@model INDOTEL.WEB.Models.CrearReclamacionViewModel
+
+@{
+    ViewData["Title"] = "Nueva Reclamación - INDOTEL";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0 fw-bold">Registrar Nueva Reclamación</h4>
+                    <small>Indique la prestadora y el inconveniente presentado</small>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Crear" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger p-2 small" role="alert"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PrestadoraId" class="form-label fw-semibold">Empresa Prestadora</label>
+                                <select asp-for="PrestadoraId" class="form-select" required>
+                                    <option value="">Seleccione una empresa</option>
+                                    @foreach (var p in Model.Prestadoras)
+                                    {
+                                        <option value="@p.Id">@p.NombreComercial</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="PrestadoraId" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ServicioId" class="form-label fw-semibold">Servicio Afectado</label>
+                                <select asp-for="ServicioId" class="form-select" required>
+                                    <option value="">Seleccione el servicio</option>
+                                    @foreach (var s in Model.Servicios)
+                                    {
+                                        <option value="@s.Id">@s.Nombre</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="ServicioId" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Descripcion" class="form-label fw-semibold">Detalle de la Reclamación</label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="4" placeholder="Escriba aquí los detalles del problema con el servicio..." required></textarea>
+                            <span asp-validation-for="Descripcion" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-controller="Ciudadano" asp-action="Index" class="btn btn-light px-4 fw-semibold">Cancelar</a>
+                            <button type="submit" class="btn btn-primary px-4 fw-bold">Enviar Reclamación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

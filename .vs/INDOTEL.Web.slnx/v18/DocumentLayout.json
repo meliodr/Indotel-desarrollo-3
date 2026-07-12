@@ -1,0 +1,389 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\wwwroot\\css\\site.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\wwwroot\\css\\site.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\reclamacion\\crear.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\reclamacion\\crear.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\auth\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\auth\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\ciudadano\\notificaciones.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\ciudadano\\notificaciones.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\models\\notificacionmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\models\\notificacionmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\controllers\\ciudadanocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\controllers\\ciudadanocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\reclamacion\\detalle.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\reclamacion\\detalle.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\models\\detallemodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\models\\detallemodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\reclamacion\\exito.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\reclamacion\\exito.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\ciudadano\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\ciudadano\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\controllers\\reclamacioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\controllers\\reclamacioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\models\\reclamacionmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\models\\reclamacionmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\models\\dashboardmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\models\\dashboardmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\views\\auth\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\views\\auth\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|c:\\users\\ivanj\\onedrive\\escritorio\\studio\\proyecto final software 3\\indotel.web\\indotel.web\\models\\authmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D1F65E8-3226-72B7-2F33-1AF9C249EB62}|INDOTEL.WEB\\INDOTEL.WEB.csproj|solutionrelative:indotel.web\\models\\authmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 20,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{6d4078d1-5951-4ed1-ac0e-0a8099c1cce5}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c64b9c2-e352-428e-a56d-0ace190b99a6}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:1:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:1:0:{e8b06f52-6d01-11d2-aa7d-00c04f990343}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "site.css",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\wwwroot\\css\\site.css",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\wwwroot\\css\\site.css",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\wwwroot\\css\\site.css",
+              "RelativeToolTip": "INDOTEL.Web\\wwwroot\\css\\site.css",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAD8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-07-11T22:17:37.671Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Home\\Index.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Home\\Index.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Home\\Index.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Home\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFkAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T22:13:21.637Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Shared\\_Layout.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Shared\\_Layout.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Shared\\_Layout.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFAAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T21:56:32.788Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Crear.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Reclamacion\\Crear.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Reclamacion\\Crear.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Reclamacion\\Crear.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Reclamacion\\Crear.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAACAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T21:34:36.046Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Register.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Auth\\Register.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Auth\\Register.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Auth\\Register.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Auth\\Register.cshtml",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAACEAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T20:08:14.994Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Notificaciones.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Ciudadano\\Notificaciones.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Ciudadano\\Notificaciones.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Ciudadano\\Notificaciones.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Ciudadano\\Notificaciones.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T21:55:35.857Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "NotificacionModels.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\NotificacionModels.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Models\\NotificacionModels.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\NotificacionModels.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Models\\NotificacionModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T21:52:41.415Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "CiudadanoController.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Controllers\\CiudadanoController.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Controllers\\CiudadanoController.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Controllers\\CiudadanoController.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Controllers\\CiudadanoController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T20:22:31.661Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\appsettings.json",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\appsettings.json",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\appsettings.json",
+              "RelativeToolTip": "INDOTEL.Web\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAADAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-07-11T18:55:57.584Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Detalle.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Reclamacion\\Detalle.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Reclamacion\\Detalle.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Reclamacion\\Detalle.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Reclamacion\\Detalle.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T21:41:15.061Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "DetalleModels.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\DetalleModels.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Models\\DetalleModels.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\DetalleModels.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Models\\DetalleModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T21:38:53.207Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Exito.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Reclamacion\\Exito.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Reclamacion\\Exito.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Reclamacion\\Exito.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Reclamacion\\Exito.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T21:36:56.151Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Ciudadano\\Index.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Ciudadano\\Index.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Ciudadano\\Index.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Ciudadano\\Index.cshtml",
+              "ViewState": "AgIAAGkAAAAAAAAAAAAAAHUAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T20:23:46.334Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "ReclamacionController.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Controllers\\ReclamacionController.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Controllers\\ReclamacionController.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Controllers\\ReclamacionController.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Controllers\\ReclamacionController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T21:33:11.771Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "ReclamacionModels.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\ReclamacionModels.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Models\\ReclamacionModels.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\ReclamacionModels.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Models\\ReclamacionModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T21:32:18.007Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "DashboardModels.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\DashboardModels.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Models\\DashboardModels.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\DashboardModels.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Models\\DashboardModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T20:21:36.029Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "Login.cshtml",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Auth\\Login.cshtml",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Views\\Auth\\Login.cshtml",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Views\\Auth\\Login.cshtml",
+              "RelativeToolTip": "INDOTEL.Web\\Views\\Auth\\Login.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-07-11T20:02:38.169Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Controllers\\AuthController.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAAJsAAAAAAAAAAAAcwKwAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T19:59:19.037Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Program.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Program.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Program.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAABEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T18:59:21.662Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "AuthModels.cs",
+              "DocumentMoniker": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\AuthModels.cs",
+              "RelativeDocumentMoniker": "INDOTEL.Web\\Models\\AuthModels.cs",
+              "ToolTip": "C:\\Users\\ivanj\\OneDrive\\Escritorio\\Studio\\Proyecto Final Software 3\\INDOTEL.Web\\INDOTEL.Web\\Models\\AuthModels.cs",
+              "RelativeToolTip": "INDOTEL.Web\\Models\\AuthModels.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAADwvyUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-11T18:56:45.108Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

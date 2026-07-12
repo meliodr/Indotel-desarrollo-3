@@ -1,0 +1,90 @@
+﻿@{
+    ViewData["Title"] = "Portal de Reclamaciones - INDOTEL";
+}
+
+<!-- Sección Hero / Banner Principal -->
+<div class="bg-primary text-white py-5 mb-5 rounded-3 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
+    <div class="container py-4 text-center">
+        <h1 class="display-4 fw-bold mb-3">Portal Digital de Reclamaciones</h1>
+        <p class="lead mb-4 mx-auto" style="max-width: 700px;">
+            Bienvenido al sistema oficial del Instituto Dominicano de las Telecomunicaciones (INDOTEL).
+            Protegemos tus derechos como usuario de los servicios de telefonía, internet y televisión por cable.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a asp-controller="Auth" asp-action="Login" class="btn btn-light btn-lg px-4 fw-bold text-primary shadow-sm">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+            </a>
+            <a asp-controller="Auth" asp-action="Register" class="btn btn-outline-light btn-lg px-4 fw-semibold">
+                Crear una Cuenta
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de Pasos / Flujo del Proceso -->
+<div class="container my-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-dark">¿Cómo funciona el proceso?</h2>
+        <p class="text-muted">Conoce los tres sencillos pasos para someter y dar seguimiento a tu caso</p>
+    </div>
+
+    <div class="row g-4 text-center">
+        <!-- Paso 1 -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 p-4 shadow-sm bg-white">
+                <div class="card-body">
+                    <div class="badge bg-primary-subtle text-primary p-3 rounded-circle mb-3 fs-3">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-2">1. Crea tu Cuenta</h4>
+                    <p class="text-muted small mb-0">
+                        Regístrate de forma rápida utilizando tu Cédula de Identidad y datos de contacto mínimos para validar tu identidad.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paso 2 -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 p-4 shadow-sm bg-white">
+                <div class="card-body">
+                    <div class="badge bg-warning-subtle text-warning p-3 rounded-circle mb-3 fs-3">
+                        <i class="bi bi-file-earmark-medical-fill"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-2">2. Registra el Caso</h4>
+                    <p class="text-muted small mb-0">
+                        Selecciona la empresa prestadora, el servicio afectado (Internet, Cable, Celular) y detalla brevemente el inconveniente.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paso 3 -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 p-4 shadow-sm bg-white">
+                <div class="card-body">
+                    <div class="badge bg-success-subtle text-success p-3 rounded-circle mb-3 fs-3">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-2">3. Da Seguimiento</h4>
+                    <p class="text-muted small mb-0">
+                        Recibe un número de expediente único para consultar en tiempo real el historial de las acciones tomadas por el personal de INDOTEL.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de Información / Soporte Institucional -->
+<div class="row bg-light rounded-3 p-4 p-md-5 align-items-center mt-5 mx-0 shadow-sm">
+    <div class="col-md-8 text-center text-md-start">
+        <h4 class="fw-bold text-dark mb-2">¿Necesitas asistencia técnica remota?</h4>
+        <p class="text-muted mb-md-0">Recuerda que antes de reportar con INDOTEL, debes haber agotado el reclamo inicial con tu empresa prestadora.</p>
+    </div>
+    <div class="col-md-4 text-center text-md-end">
+        <a href="https://www.indotel.gob.do" target="_blank" class="btn btn-outline-secondary fw-semibold">
+            <i class="bi bi-globe me-2"></i>Visitar Web Institucional
+        </a>
+    </div>
+</div>
