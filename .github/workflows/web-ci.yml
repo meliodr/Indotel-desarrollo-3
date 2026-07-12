@@ -1,0 +1,28 @@
+name: Web CI
+
+on:
+  push:
+    branches: [web]
+  pull_request:
+    paths:
+      - "INDOTEL.Web/**"
+      - ".github/workflows/web-ci.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore INDOTEL.Web/INDOTEL.WEB.csproj
+
+      - name: Build
+        run: dotnet build INDOTEL.Web/INDOTEL.WEB.csproj --configuration Release --no-restore
