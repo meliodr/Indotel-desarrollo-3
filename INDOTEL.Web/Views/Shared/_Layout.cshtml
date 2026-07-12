@@ -1,6 +1,7 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var esCiudadanoAutenticado = User.Identity?.IsAuthenticated == true && User.IsInRole("Ciudadano");
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -32,7 +33,7 @@
                             </a>
                         </li>
 
-                        @if (User.Identity?.IsAuthenticated == true)
+                        @if (esCiudadanoAutenticado)
                         {
                             <li class="nav-item">
                                 <a class="nav-link @(currentController == "Ciudadano" && currentAction == "Index" ? "active fw-bold text-white" : "text-white-50")"
@@ -57,17 +58,27 @@
                     </ul>
 
                     <ul class="navbar-nav">
-                        @if (User.Identity?.IsAuthenticated == true)
+                        @if (esCiudadanoAutenticado)
                         {
                             <li class="nav-item d-flex align-items-center">
                                 <span class="text-white-50 me-3 small">
-                                    <i class="bi bi-person-circle"></i> @User.Identity.Name
+                                    <i class="bi bi-person-circle"></i> @User.Identity!.Name
                                 </span>
                                 <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-link nav-link text-white-50 border-0 py-0 m-0 align-baseline">
                                         Cerrar Sesión
                                     </button>
+                                </form>
+                            </li>
+                        }
+                        else if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item d-flex align-items-center gap-2">
+                                <span class="text-warning small">Perfil no permitido en este portal</span>
+                                <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-light">Cerrar Sesión</button>
                                 </form>
                             </li>
                         }
