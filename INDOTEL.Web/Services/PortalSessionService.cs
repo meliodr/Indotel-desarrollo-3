@@ -143,16 +143,14 @@ namespace INDOTEL.WEB.Services
 
         public async Task CerrarSesionAsync(CancellationToken cancellationToken = default)
         {
-            var token = HttpContext.User.FindFirstValue("JWToken");
-            var refreshToken = HttpContext.User.FindFirstValue("RefreshToken");
-
             try
             {
-                if (!string.IsNullOrWhiteSpace(token) && !string.IsNullOrWhiteSpace(refreshToken))
-                {
-                    var client = _httpClientFactory.CreateClient("IndotelCore");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var client = await CrearClienteAutorizadoAsync(cancellationToken);
+                var refreshToken = HttpContext.User.FindFirstValue("RefreshToken");
 
+                if (client.DefaultRequestHeaders.Authorization is not null &&
+                    !string.IsNullOrWhiteSpace(refreshToken))
+                {
                     var contenido = new StringContent(
                         JsonSerializer.Serialize(new LogoutRequest { RefreshToken = refreshToken }),
                         Encoding.UTF8,
