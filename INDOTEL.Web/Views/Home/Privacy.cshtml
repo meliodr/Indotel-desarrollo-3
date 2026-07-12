@@ -1,6 +1,96 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "Privacidad";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-4 px-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-shield-lock-fill fs-2"></i>
+                        <div>
+                            <h1 class="h3 fw-bold mb-1">Política de Privacidad</h1>
+                            <p class="mb-0 text-white-50">Portal Ciudadano del Sistema Digital INDOTEL</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <p class="lead text-secondary">
+                        Este portal utiliza la información suministrada por el ciudadano únicamente para registrar,
+                        gestionar y dar seguimiento a sus reclamaciones y comunicaciones relacionadas.
+                    </p>
+
+                    <hr class="my-4" />
+
+                    <section class="mb-4">
+                        <h2 class="h5 fw-bold text-dark">
+                            <i class="bi bi-person-vcard text-primary me-2"></i>Datos que se registran
+                        </h2>
+                        <p class="text-muted mb-0">
+                            Se pueden registrar datos de identificación, contacto, información de la reclamación,
+                            documentos anexos y el historial de acciones realizadas dentro del expediente.
+                        </p>
+                    </section>
+
+                    <section class="mb-4">
+                        <h2 class="h5 fw-bold text-dark">
+                            <i class="bi bi-clipboard-check text-primary me-2"></i>Uso de la información
+                        </h2>
+                        <p class="text-muted mb-0">
+                            La información se utiliza para validar la identidad del usuario, crear expedientes,
+                            consultar su estado, emitir notificaciones y mantener la trazabilidad institucional.
+                        </p>
+                    </section>
+
+                    <section class="mb-4">
+                        <h2 class="h5 fw-bold text-dark">
+                            <i class="bi bi-lock text-primary me-2"></i>Seguridad y acceso
+                        </h2>
+                        <p class="text-muted mb-0">
+                            El acceso a las funciones privadas requiere autenticación. Cada usuario solo puede consultar
+                            la información que le corresponde según su perfil y los permisos asignados.
+                        </p>
+                    </section>
+
+                    <section class="mb-4">
+                        <h2 class="h5 fw-bold text-dark">
+                            <i class="bi bi-file-earmark-lock text-primary me-2"></i>Documentos y evidencias
+                        </h2>
+                        <p class="text-muted mb-0">
+                            Los documentos anexados forman parte del expediente y se conservan para sustentar la reclamación,
+                            las respuestas recibidas y las decisiones tomadas durante el proceso.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 class="h5 fw-bold text-dark">
+                            <i class="bi bi-envelope-check text-primary me-2"></i>Consultas sobre privacidad
+                        </h2>
+                        <p class="text-muted mb-0">
+                            Para solicitar aclaraciones sobre el tratamiento de sus datos, el ciudadano puede utilizar
+                            los canales institucionales oficiales de INDOTEL.
+                        </p>
+                    </section>
+                </div>
+
+                <div class="card-footer bg-light border-0 px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <small class="text-muted">Última actualización: julio de 2026</small>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a asp-controller="Ciudadano" asp-action="Index" class="btn btn-primary btn-sm fw-semibold">
+                            <i class="bi bi-arrow-left me-1"></i>Volver a Mi Panel
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary btn-sm fw-semibold">
+                            <i class="bi bi-arrow-left me-1"></i>Volver al Inicio
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
