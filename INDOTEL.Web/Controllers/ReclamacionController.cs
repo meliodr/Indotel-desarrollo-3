@@ -1,21 +1,32 @@
 using INDOTEL.WEB.Models;
+using INDOTEL.WEB.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
-using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
 namespace INDOTEL.WEB.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Ciudadano")]
     public class ReclamacionController : Controller
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private const long MaxFileSizeBytes = 5 * 1024 * 1024;
 
-        public ReclamacionController(IHttpClientFactory httpClientFactory)
+        private static readonly HashSet<string> ExtensionesPermitidas = new(
+            StringComparer.OrdinalIgnoreCase)
         {
-            _httpClientFactory = httpClientFactory;
+            ".pdf",
+            ".jpg",
+            ".jpeg",
+            ".png"
+        };
+
+        private readonly PortalSessionService _portalSession;
+
+        public ReclamacionController(PortalSessionService portalSession)
+        {
+            _portalSession = portalSession;
         }
 
         [HttpGet]
@@ -38,12 +49,17 @@ namespace INDOTEL.WEB.Controllers
 
             try
             {
-                var client = CrearClienteAutorizado();
+                var client = await _portalSession.CrearClienteAutorizadoAsync();
                 var perfilResponse = await client.GetAsync("/api/ciudadanos/me");
 
                 if (perfilResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     return RedirectToAction("Login", "Auth");
+                }
+
+                if (perfilResponse.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    return Forbid();
                 }
 
                 if (!perfilResponse.IsSuccessStatusCode)
@@ -103,6 +119,11 @@ namespace INDOTEL.WEB.Controllers
                     return RedirectToAction("Login", "Auth");
                 }
 
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    return Forbid();
+                }
+
                 ModelState.AddModelError(
                     string.Empty,
                     await LeerMensajeApi(response) ?? "La reclamación fue rechazada por el servicio central.");
@@ -130,7 +151,7 @@ namespace INDOTEL.WEB.Controllers
 
             try
             {
-                var client = CrearClienteAutorizado();
+                var client = await _portalSession.CrearClienteAutorizadoAsync();
                 var response = await client.GetAsync($"/api/reclamaciones/{id}");
 
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -151,7 +172,7 @@ namespace INDOTEL.WEB.Controllers
                 if (!response.IsSuccessStatusCode)
                 {
                     ViewBag.ErrorCore = await LeerMensajeApi(response) ?? "No se pudo cargar el expediente.";
-                    return View(new ReclamacionDetalleViewModel());
+                    return View(new ReclamacionDetalleViewModel { Id = id });
                 }
 
                 var responseString = await response.Content.ReadAsStringAsync();
@@ -162,7 +183,7 @@ namespace INDOTEL.WEB.Controllers
                 if (reclamacion is null)
                 {
                     ViewBag.ErrorCore = "El detalle del expediente llegó vacío.";
-                    return View(new ReclamacionDetalleViewModel());
+                    return View(new ReclamacionDetalleViewModel { Id = id });
                 }
 
                 var viewModel = new ReclamacionDetalleViewModel
@@ -215,32 +236,133 @@ namespace INDOTEL.WEB.Controllers
             return View(new ReclamacionDetalleViewModel { Id = id });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> SubirDocumento(int reclamacionId, IFormFile? archivo)
+        {
+            if (reclamacionId <= 0)
+            {
+                return NotFound();
+            }
+
+            if (archivo is null || archivo.Length == 0)
+            {
+                TempData["ErrorDocumento"] = "Seleccione un archivo antes de continuar.";
+                return RedirectToAction(nameof(Detalle), new { id = reclamacionId });
+            }
+
+            if (archivo.Length > MaxFileSizeBytes)
+            {
+                TempData["ErrorDocumento"] = "El archivo no puede superar 5 MB.";
+                return RedirectToAction(nameof(Detalle), new { id = reclamacionId });
+            }
+
+            var extension = Path.GetExtension(archivo.FileName);
+            if (!ExtensionesPermitidas.Contains(extension))
+            {
+                TempData["ErrorDocumento"] = "Formato no permitido. Solo se aceptan PDF, JPG, JPEG o PNG.";
+                return RedirectToAction(nameof(Detalle), new { id = reclamacionId });
+            }
+
+            try
+            {
+                var client = await _portalSession.CrearClienteAutorizadoAsync();
+                using var formulario = new MultipartFormDataContent();
+                using var contenidoArchivo = new StreamContent(archivo.OpenReadStream());
+
+                if (MediaTypeHeaderValue.TryParse(archivo.ContentType, out var tipoContenido))
+                {
+                    contenidoArchivo.Headers.ContentType = tipoContenido;
+                }
+                else
+                {
+                    contenidoArchivo.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                }
+
+                formulario.Add(
+                    contenidoArchivo,
+                    "archivo",
+                    Path.GetFileName(archivo.FileName));
+
+                var response = await client.PostAsync(
+                    $"/api/reclamaciones/{reclamacionId}/documentos",
+                    formulario);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessDocumento"] = "Documento agregado correctamente al expediente.";
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    TempData["ErrorDocumento"] =
+                        await LeerMensajeApi(response) ?? "No fue posible cargar el documento.";
+                }
+            }
+            catch (HttpRequestException)
+            {
+                TempData["ErrorDocumento"] = "No se pudo establecer conexión con el servicio central.";
+            }
+
+            return RedirectToAction(nameof(Detalle), new { id = reclamacionId });
+        }
+
         [HttpGet]
-        public async Task<IActionResult> DescargarDocumento(int id)
+        public async Task<IActionResult> DescargarDocumento(int id, int reclamacionId = 0)
         {
             if (id <= 0)
             {
                 return NotFound();
             }
 
-            var client = CrearClienteAutorizado();
-            var response = await client.GetAsync($"/api/documentos/{id}/descargar");
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                return response.StatusCode == System.Net.HttpStatusCode.Forbidden
-                    ? Forbid()
-                    : NotFound();
+                var client = await _portalSession.CrearClienteAutorizadoAsync();
+                var response = await client.GetAsync($"/api/documentos/{id}/descargar");
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    return Forbid();
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["ErrorDocumento"] = "El documento solicitado no está disponible.";
+                    return reclamacionId > 0
+                        ? RedirectToAction(nameof(Detalle), new { id = reclamacionId })
+                        : NotFound();
+                }
+
+                var contenido = await response.Content.ReadAsByteArrayAsync();
+                var tipoContenido = response.Content.Headers.ContentType?.MediaType
+                                    ?? "application/octet-stream";
+                var nombreArchivo = response.Content.Headers.ContentDisposition?.FileNameStar
+                                    ?? response.Content.Headers.ContentDisposition?.FileName
+                                    ?? $"documento-{id}";
+
+                nombreArchivo = nombreArchivo.Trim('"');
+                return File(contenido, tipoContenido, nombreArchivo);
             }
-
-            var contenido = await response.Content.ReadAsByteArrayAsync();
-            var tipoContenido = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
-            var nombreArchivo = response.Content.Headers.ContentDisposition?.FileNameStar
-                                ?? response.Content.Headers.ContentDisposition?.FileName
-                                ?? $"documento-{id}";
-
-            nombreArchivo = nombreArchivo.Trim('"');
-            return File(contenido, tipoContenido, nombreArchivo);
+            catch (HttpRequestException)
+            {
+                TempData["ErrorDocumento"] = "No se pudo descargar el documento por un problema de conexión.";
+                return reclamacionId > 0
+                    ? RedirectToAction(nameof(Detalle), new { id = reclamacionId })
+                    : RedirectToAction("Index", "Ciudadano");
+            }
         }
 
         [HttpGet]
@@ -254,7 +376,7 @@ namespace INDOTEL.WEB.Controllers
         {
             try
             {
-                var client = CrearClienteAutorizado();
+                var client = await _portalSession.CrearClienteAutorizadoAsync();
                 var prestadorasResponse = await client.GetAsync("/api/catalogos/prestadoras");
                 var serviciosResponse = await client.GetAsync("/api/catalogos/servicios");
 
@@ -289,7 +411,7 @@ namespace INDOTEL.WEB.Controllers
             }
         }
 
-        private async Task CompletarNombresCatalogos(
+        private static async Task CompletarNombresCatalogos(
             HttpClient client,
             ReclamacionDetalleViewModel model,
             int prestadoraId,
@@ -312,19 +434,6 @@ namespace INDOTEL.WEB.Controllers
                 model.Servicio = servicios?.FirstOrDefault(x => x.Id == servicioId)?.Nombre
                                   ?? model.Servicio;
             }
-        }
-
-        private HttpClient CrearClienteAutorizado()
-        {
-            var client = _httpClientFactory.CreateClient("IndotelCore");
-            var token = User.FindFirstValue("JWToken");
-
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            return client;
         }
 
         private static JsonSerializerOptions OpcionesJson() => new()
