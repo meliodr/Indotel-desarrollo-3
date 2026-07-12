@@ -1,34 +1,37 @@
-﻿@model INDOTEL.WEB.Models.ReclamacionDetalleViewModel
+@model INDOTEL.WEB.Models.ReclamacionDetalleViewModel
 
 @{
     ViewData["Title"] = "Detalle del Expediente - INDOTEL";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var estadoNormalizado = (Model.Estado ?? string.Empty).ToUpperInvariant();
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-            <a asp-controller="Ciudadano" asp-action="Index" class="btn btn-sm btn-outline-secondary mb-2 fw-semibold">
-                ← Volver al Panel
-            </a>
-            <h2 class="fw-bold text-dark mb-0">Expediente: @Model.NumeroExpediente</h2>
+            <a asp-controller="Ciudadano" asp-action="Index" class="btn btn-sm btn-outline-secondary mb-2 fw-semibold">← Volver al Panel</a>
+            <h2 class="fw-bold text-dark mb-0">Expediente: @(string.IsNullOrWhiteSpace(Model.NumeroExpediente) ? "No disponible" : Model.NumeroExpediente)</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.Titulo))
+            {
+                <p class="text-muted mb-0 mt-1">@Model.Titulo</p>
+            }
         </div>
         <div>
-            @if (Model.Estado.ToLower() == "resuelto")
+            @if (estadoNormalizado is "RESUELTA" or "CERRADA")
             {
-                <span class="badge bg-success border border-success px-3 py-2 fs-6">Resuelto</span>
+                <span class="badge bg-success border border-success px-3 py-2 fs-6">@estadoNormalizado</span>
             }
-            else
+            else if (!string.IsNullOrWhiteSpace(estadoNormalizado))
             {
-                <span class="badge bg-warning text-dark border border-warning px-3 py-2 fs-6">@Model.Estado</span>
+                <span class="badge bg-warning text-dark border border-warning px-3 py-2 fs-6">@estadoNormalizado.Replace("_", " ")</span>
             }
         </div>
     </div>
 
-    @if (ViewBag.AvisoRed != null)
+    @if (ViewBag.ErrorCore != null)
     {
-        <div class="alert alert-info py-2 px-3 small mb-4" role="alert">
-            <i class="bi bi-info-circle-fill me-2"></i> @ViewBag.AvisoRed
+        <div class="alert alert-warning py-2 px-3 small mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@ViewBag.ErrorCore
         </div>
     }
 
@@ -51,14 +54,12 @@
 
                     <div class="mb-3">
                         <span class="text-muted d-block small fw-semibold">Fecha de Registro</span>
-                        <span class="text-dark">@Model.FechaCreacion.ToString("dd/MM/yyyy hh:mm tt")</span>
+                        <span class="text-dark">@(Model.FechaCreacion == default ? "No disponible" : Model.FechaCreacion.ToLocalTime().ToString("dd/MM/yyyy hh:mm tt"))</span>
                     </div>
 
                     <div>
                         <span class="text-muted d-block small fw-semibold">Descripción del Inconveniente</span>
-                        <p class="text-dark bg-light p-3 rounded mt-1 mb-0 border-start border-primary border-3 small">
-                            @Model.Descripcion
-                        </p>
+                        <p class="text-dark bg-light p-3 rounded mt-1 mb-0 border-start border-primary border-3 small">@Model.Descripcion</p>
                     </div>
                 </div>
             </div>
@@ -67,18 +68,18 @@
                 <div class="card-body p-4">
                     <h5 class="fw-bold text-secondary mb-3 pb-2 border-bottom">Documentos y Evidencias</h5>
 
-                    @if (Model.Documentos != null && Model.Documentos.Any())
+                    @if (Model.Documentos.Any())
                     {
                         <ul class="list-group list-group-flush">
                             @foreach (var doc in Model.Documentos)
                             {
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
                                     <div>
                                         <i class="bi bi-file-earmark-text text-primary fs-5 me-2"></i>
                                         <span class="fw-semibold text-dark small">@doc.NombreArchivo</span>
-                                        <span class="badge bg-light text-muted border ms-2 px-2 py-0.5" style="font-size: 0.75rem;">@doc.TipoDocumento</span>
+                                        <span class="badge bg-light text-muted border ms-2">@doc.TipoDocumento</span>
                                     </div>
-                                    <a href="#" class="btn btn-sm btn-light border fw-bold text-secondary text-decoration-none">
+                                    <a asp-action="DescargarDocumento" asp-route-id="@doc.Id" class="btn btn-sm btn-light border fw-bold text-secondary">
                                         Descargar
                                     </a>
                                 </li>
@@ -98,21 +99,18 @@
                 <div class="card-body p-4">
                     <h5 class="fw-bold text-secondary mb-4 pb-2 border-bottom">Historial de Seguimiento</h5>
 
-                    @if (Model.Historial != null && Model.Historial.Any())
+                    @if (Model.Historial.Any())
                     {
                         <div class="position-relative ps-3 border-start border-2 border-light-subtle ms-2">
                             @foreach (var hito in Model.Historial.OrderByDescending(h => h.FechaCambio))
                             {
                                 <div class="mb-4 position-relative">
                                     <div class="position-absolute bg-primary rounded-circle" style="width: 12px; height: 12px; left: -22px; top: 4px; border: 2px solid white;"></div>
-
-                                    <div class="d-flex justify-content-between align-items-baseline">
-                                        <span class="fw-bold text-dark small">Cambio a: @hito.Estado</span>
-                                        <small class="text-muted" style="font-size: 0.75rem;">@hito.FechaCambio.ToString("dd/MM/yyyy")</small>
+                                    <div class="d-flex justify-content-between align-items-baseline gap-2">
+                                        <span class="fw-bold text-dark small">Cambio a: @hito.Estado.Replace("_", " ")</span>
+                                        <small class="text-muted text-nowrap" style="font-size: 0.75rem;">@hito.FechaCambio.ToLocalTime().ToString("dd/MM/yyyy")</small>
                                     </div>
-                                    <p class="text-muted small mt-1 mb-0 bg-light p-2 rounded">
-                                        @hito.Comentario
-                                    </p>
+                                    <p class="text-muted small mt-1 mb-0 bg-light p-2 rounded">@hito.Comentario</p>
                                 </div>
                             }
                         </div>
