@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Acceso no autorizado";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body p-5">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-lock-fill text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <h1 class="h3 fw-bold text-dark">Acceso no autorizado</h1>
+                    <p class="text-muted mb-4">
+                        Esta sección está reservada para ciudadanos autenticados. Los perfiles internos deben utilizar el módulo correspondiente.
+                    </p>
+                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary fw-semibold">
+                            Volver al Inicio
+                        </a>
+                        <a asp-controller="Auth" asp-action="Login" class="btn btn-primary fw-semibold">
+                            Iniciar Sesión como Ciudadano
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
