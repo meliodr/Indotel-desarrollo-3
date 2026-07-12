@@ -2,6 +2,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace INDOTEL.WEB.Models
 {
+    public class CiudadanoPerfilDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string Nombres { get; set; } = string.Empty;
+        public string Apellidos { get; set; } = string.Empty;
+        public string Correo { get; set; } = string.Empty;
+    }
+
     public class PrestadoraDto
     {
         public int Id { get; set; }
