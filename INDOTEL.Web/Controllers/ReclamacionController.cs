@@ -39,10 +39,35 @@ namespace INDOTEL.WEB.Controllers
             try
             {
                 var client = CrearClienteAutorizado();
+                var perfilResponse = await client.GetAsync("/api/ciudadanos/me");
+
+                if (perfilResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                if (!perfilResponse.IsSuccessStatusCode)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        await LeerMensajeApi(perfilResponse) ?? "No se pudo identificar el perfil ciudadano de la sesión.");
+                    await CargarCatalogos(model);
+                    return View(model);
+                }
+
+                var perfilJson = await perfilResponse.Content.ReadAsStringAsync();
+                var perfil = JsonSerializer.Deserialize<CiudadanoPerfilDto>(perfilJson, OpcionesJson());
+
+                if (perfil is null || perfil.Id <= 0)
+                {
+                    ModelState.AddModelError(string.Empty, "El perfil ciudadano recibido no es válido.");
+                    await CargarCatalogos(model);
+                    return View(model);
+                }
 
                 var dataEnviar = new
                 {
-                    CiudadanoId = 0,
+                    CiudadanoId = perfil.Id,
                     model.PrestadoraId,
                     ServicioTelecomId = model.ServicioId,
                     TipoReclamacionId = (int?)null,
@@ -73,8 +98,6 @@ namespace INDOTEL.WEB.Controllers
                     return RedirectToAction(nameof(Exito));
                 }
 
-                var mensajeApi = await LeerMensajeApi(response);
-
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     return RedirectToAction("Login", "Auth");
@@ -82,7 +105,7 @@ namespace INDOTEL.WEB.Controllers
 
                 ModelState.AddModelError(
                     string.Empty,
-                    mensajeApi ?? "La reclamación fue rechazada por el servicio central.");
+                    await LeerMensajeApi(response) ?? "La reclamación fue rechazada por el servicio central.");
             }
             catch (HttpRequestException)
             {
