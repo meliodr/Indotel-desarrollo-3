@@ -1,0 +1,17 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# .NET build output
+**/bin/
+**/obj/
+
+# Local configuration and logs
+*.log
+.env
+appsettings.Development.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
