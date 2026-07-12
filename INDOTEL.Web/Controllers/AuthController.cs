@@ -22,7 +22,7 @@ namespace INDOTEL.WEB.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            // Si el usuario ya está autenticado, lo mandamos al Panel Ciudadano
+            
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Ciudadano");
@@ -44,17 +44,17 @@ namespace INDOTEL.WEB.Controllers
             {
                 var client = _httpClientFactory.CreateClient("IndotelCore");
 
-                // Serializamos la petición en formato JSON
+                
                 var jsonContent = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
 
-                // Consumimos el endpoint especificado en el documento contrato
+               
                 var response = await client.PostAsync("/api/auth/login", jsonContent);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
 
-                    // Deserializamos usando opciones ignorando mayúsculas/minúsculas para evitar problemas de formato
+                    
                     var loginResult = JsonSerializer.Deserialize<LoginResponse>(responseString, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
@@ -62,13 +62,13 @@ namespace INDOTEL.WEB.Controllers
 
                     if (loginResult != null && !string.IsNullOrEmpty(loginResult.Token))
                     {
-                        // Creamos la identidad del usuario basada en los datos devueltos por la API
+                        
                         var claims = new List<Claim>
                         {
                             new Claim(ClaimTypes.NameIdentifier, loginResult.Usuario.Id.ToString()),
                             new Claim(ClaimTypes.Name, $"{loginResult.Usuario.Nombres} {loginResult.Usuario.Apellidos}"),
                             new Claim(ClaimTypes.Email, loginResult.Usuario.Correo),
-                            new Claim("JWToken", loginResult.Token), // Guardamos el JWT para futuras llamadas HTTP seguras
+                            new Claim("JWToken", loginResult.Token), 
                             new Claim("RefreshToken", loginResult.RefreshToken)
                         };
 
@@ -80,10 +80,10 @@ namespace INDOTEL.WEB.Controllers
                             ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
                         };
 
-                        // Iniciamos sesión local en nuestra app web
+                        
                         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
 
-                        // Redirigimos al panel del ciudadano (lo crearemos más adelante)
+                        
                         return RedirectToAction("Index", "Ciudadano");
                     }
                 }
@@ -138,12 +138,12 @@ namespace INDOTEL.WEB.Controllers
                 var client = _httpClientFactory.CreateClient("IndotelCore");
                 var jsonContent = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
 
-                // Consumimos el endpoint del Core detallado en el documento
+                
                 var response = await client.PostAsync("/api/auth/register-ciudadano", jsonContent);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Registro exitoso: Guardamos un mensaje temporal y redirigimos al Login
+                    
                     TempData["SuccessMessage"] = "Registro completado con éxito. Ya puedes iniciar sesión.";
                     return RedirectToAction("Login");
                 }
@@ -177,7 +177,7 @@ namespace INDOTEL.WEB.Controllers
         [HttpPost]
         public async Task<IActionResult> Logout()
         {
-            // Limpiamos la cookie local de la Web
+          
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Auth");
         }

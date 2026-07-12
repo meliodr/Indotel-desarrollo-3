@@ -19,7 +19,7 @@ namespace INDOTEL.WEB.Controllers
         // GET: /Ciudadano
         public async Task<IActionResult> Index()
         {
-            // Extraemos los datos del ciudadano guardados en los Claims de la cookie
+            
             var ciudadanoId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var nombreCompleto = User.Identity?.Name ?? "Ciudadano";
 
@@ -33,15 +33,13 @@ namespace INDOTEL.WEB.Controllers
             {
                 var client = _httpClientFactory.CreateClient("IndotelCore");
 
-                // Agregamos el Token JWT en la cabecera HTTP para la autorización con el Core
+                
                 var token = User.FindFirstValue("JWToken");
                 if (!string.IsNullOrEmpty(token))
                 {
                     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 }
-
-                // Consumimos el endpoint para obtener las reclamaciones del ciudadano
-                // Nota: Usamos la ruta base descrita en el contrato mínimo (orden 5)
+                
                 var response = await client.GetAsync($"/api/ciudadanos/{ciudadanoId}/reclamaciones");
 
                 if (response.IsSuccessStatusCode)
@@ -60,7 +58,7 @@ namespace INDOTEL.WEB.Controllers
             }
             catch (Exception)
             {
-                // Si falla el Core, mostramos la vista con una lista vacía y una alerta oculta o manejada
+                
                 ViewBag.ErrorCore = "No se pudieron cargar tus reclamaciones en este momento.";
             }
 
@@ -83,7 +81,6 @@ namespace INDOTEL.WEB.Controllers
                     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 }
 
-                // Consumimos el endpoint del contrato
                 var response = await client.GetAsync("/api/notificaciones");
 
                 if (response.IsSuccessStatusCode)
@@ -106,7 +103,6 @@ namespace INDOTEL.WEB.Controllers
             }
             catch (Exception)
             {
-                // En desarrollo local sin el Core, cargamos datos de prueba limpios
                 CargarSimulacionNotificaciones(listado);
             }
 

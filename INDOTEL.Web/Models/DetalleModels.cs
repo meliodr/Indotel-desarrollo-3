@@ -1,6 +1,6 @@
 ﻿namespace INDOTEL.WEB.Models
 {
-    // Para mapear cada hito en la línea de tiempo del caso
+    // Para mapear cada hito en la linea de tiempo del caso
     public class HistorialEstadoDto
     {
         public int Id { get; set; }

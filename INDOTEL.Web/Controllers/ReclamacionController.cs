@@ -27,11 +27,6 @@ namespace INDOTEL.WEB.Controllers
             {
                 var client = _httpClientFactory.CreateClient("IndotelCore");
 
-                // En una app real, aquí llamaríamos a los endpoints de catálogos:
-                // var responseP = await client.GetAsync("/api/catalogos/prestadoras");
-                // var responseS = await client.GetAsync("/api/catalogos/servicios");
-
-                // Carga de placeholders estáticos simulando la respuesta mientras el Core se conecta
                 viewModel.Prestadoras = new List<PrestadoraDto>
                 {
                     new PrestadoraDto { Id = 1, NombreComercial = "Claro" },
@@ -63,7 +58,6 @@ namespace INDOTEL.WEB.Controllers
             {
                 var client = _httpClientFactory.CreateClient("IndotelCore");
 
-                // Extraemos el ID del ciudadano autenticado y el Token JWT
                 var ciudadanoId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var token = User.FindFirstValue("JWToken");
 
@@ -72,7 +66,6 @@ namespace INDOTEL.WEB.Controllers
                     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 }
 
-                // Armamos el objeto tal cual lo espera el Core (añadiendo el dueño/ciudadano)
                 var dataEnviar = new
                 {
                     CiudadanoId = int.Parse(ciudadanoId ?? "0"),
@@ -83,7 +76,6 @@ namespace INDOTEL.WEB.Controllers
 
                 var jsonContent = new StringContent(JsonSerializer.Serialize(dataEnviar), Encoding.UTF8, "application/json");
 
-                // Consumimos el endpoint crítico
                 var response = await client.PostAsync("/api/reclamaciones", jsonContent);
 
                 if (response.IsSuccessStatusCode)
@@ -91,7 +83,6 @@ namespace INDOTEL.WEB.Controllers
                     var responseString = await response.Content.ReadAsStringAsync();
                     var resultado = JsonSerializer.Deserialize<CrearReclamacionResponse>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                    // Guardamos el número de expediente para mostrárselo al usuario
                     TempData["NuevoExpediente"] = resultado?.NumeroExpediente ?? "IND-GENERANDO";
                     return RedirectToAction("Exito");
                 }
@@ -105,7 +96,6 @@ namespace INDOTEL.WEB.Controllers
                 ModelState.AddModelError(string.Empty, "Error de comunicación con el servicio central.");
             }
 
-            // Si algo falla, rellenamos los selectores para no romper la vista
             model.Prestadoras = new List<PrestadoraDto>
             {
                 new PrestadoraDto { Id = 1, NombreComercial = "Claro" },
@@ -136,7 +126,6 @@ namespace INDOTEL.WEB.Controllers
                     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 }
 
-                // Consumimos el endpoint detallado en el contrato mínimo
                 var response = await client.GetAsync($"/api/reclamaciones/{id}");
 
                 if (response.IsSuccessStatusCode)
@@ -154,13 +143,11 @@ namespace INDOTEL.WEB.Controllers
                 }
                 else
                 {
-                    // Si el Core no responde con éxito o el caso no existe en el Core, usamos simulación para desarrollo
                     CargarSimulacionDetalle(viewModel, id);
                 }
             }
             catch (Exception)
             {
-                // En caso de caída de red, cargamos la simulación para permitir revisar la UI sin trabas
                 CargarSimulacionDetalle(viewModel, id);
                 ViewBag.AvisoRed = "Nota: Mostrando datos de simulación local (servidor central desconectado).";
             }
