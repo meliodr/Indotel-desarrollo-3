@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Portal de Reclamaciones - INDOTEL";
 }
 
@@ -9,14 +9,32 @@
             Bienvenido al sistema oficial del Instituto Dominicano de las Telecomunicaciones (INDOTEL).
             Protegemos tus derechos como usuario de los servicios de telefonía, internet y televisión por cable.
         </p>
-        <div class="d-flex justify-content-center gap-3">
-            <a asp-controller="Auth" asp-action="Login" class="btn btn-light btn-lg px-4 fw-bold text-primary shadow-sm">
-                <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
-            </a>
-            <a asp-controller="Auth" asp-action="Register" class="btn btn-outline-light btn-lg px-4 fw-semibold">
-                Crear una Cuenta
-            </a>
-        </div>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a asp-controller="Ciudadano" asp-action="Index" class="btn btn-light btn-lg px-4 fw-bold text-primary shadow-sm">
+                    <i class="bi bi-speedometer2 me-2"></i>Ir a Mi Panel
+                </a>
+                <a asp-controller="Reclamacion" asp-action="Crear" class="btn btn-outline-light btn-lg px-4 fw-semibold">
+                    <i class="bi bi-plus-circle me-2"></i>Nueva Reclamación
+                </a>
+            </div>
+            <p class="small text-white-50 mt-3 mb-0">
+                Sesión iniciada como <strong class="text-white">@User.Identity.Name</strong>
+            </p>
+        }
+        else
+        {
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a asp-controller="Auth" asp-action="Login" class="btn btn-light btn-lg px-4 fw-bold text-primary shadow-sm">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                </a>
+                <a asp-controller="Auth" asp-action="Register" class="btn btn-outline-light btn-lg px-4 fw-semibold">
+                    Crear una Cuenta
+                </a>
+            </div>
+        }
     </div>
 </div>
 
@@ -27,7 +45,6 @@
     </div>
 
     <div class="row g-4 text-center">
-
         <div class="col-md-4">
             <div class="card h-100 border-0 p-4 shadow-sm bg-white">
                 <div class="card-body">
@@ -78,7 +95,7 @@
         <p class="text-muted mb-md-0">Recuerda que antes de reportar con INDOTEL, debes haber agotado el reclamo inicial con tu empresa prestadora.</p>
     </div>
     <div class="col-md-4 text-center text-md-end">
-        <a href="https://www.indotel.gob.do" target="_blank" class="btn btn-outline-secondary fw-semibold">
+        <a href="https://www.indotel.gob.do" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary fw-semibold">
             <i class="bi bi-globe me-2"></i>Visitar Web Institucional
         </a>
     </div>
