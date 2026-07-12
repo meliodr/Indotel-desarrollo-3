@@ -4,6 +4,7 @@
     ViewData["Title"] = "Detalle del Expediente - INDOTEL";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var estadoNormalizado = (Model.Estado ?? string.Empty).ToUpperInvariant();
+    var permiteDocumentos = estadoNormalizado is not "CERRADA" and not "RECHAZADA" and not "ARCHIVADA";
 }
 
 <div class="container mt-4">
@@ -27,6 +28,20 @@
             }
         </div>
     </div>
+
+    @if (TempData["SuccessDocumento"] is string successDocumento)
+    {
+        <div class="alert alert-success py-2 px-3 small mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@successDocumento
+        </div>
+    }
+
+    @if (TempData["ErrorDocumento"] is string errorDocumento)
+    {
+        <div class="alert alert-warning py-2 px-3 small mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@errorDocumento
+        </div>
+    }
 
     @if (ViewBag.ErrorCore != null)
     {
@@ -66,21 +81,63 @@
 
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <h5 class="fw-bold text-secondary mb-3 pb-2 border-bottom">Documentos y Evidencias</h5>
+                    <div class="d-flex justify-content-between align-items-center gap-3 mb-3 pb-2 border-bottom">
+                        <h5 class="fw-bold text-secondary mb-0">Documentos y Evidencias</h5>
+                        <span class="badge bg-light text-secondary border">Máximo 5 MB</span>
+                    </div>
+
+                    @if (permiteDocumentos && Model.Id > 0)
+                    {
+                        <form asp-action="SubirDocumento"
+                              method="post"
+                              enctype="multipart/form-data"
+                              class="bg-light border rounded p-3 mb-4">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="reclamacionId" value="@Model.Id" />
+                            <label for="archivo" class="form-label fw-semibold small">Agregar evidencia</label>
+                            <div class="input-group">
+                                <input id="archivo"
+                                       name="archivo"
+                                       type="file"
+                                       class="form-control"
+                                       accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                       required />
+                                <button type="submit" class="btn btn-primary fw-semibold">
+                                    <i class="bi bi-cloud-arrow-up me-1"></i>Subir
+                                </button>
+                            </div>
+                            <div class="form-text">Formatos permitidos: PDF, JPG, JPEG y PNG.</div>
+                        </form>
+                    }
+                    else if (!permiteDocumentos)
+                    {
+                        <div class="alert alert-secondary small py-2" role="alert">
+                            Este expediente ya no permite agregar documentos por su estado actual.
+                        </div>
+                    }
 
                     @if (Model.Documentos.Any())
                     {
                         <ul class="list-group list-group-flush">
                             @foreach (var doc in Model.Documentos)
                             {
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <li class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 px-0 py-3">
                                     <div>
                                         <i class="bi bi-file-earmark-text text-primary fs-5 me-2"></i>
                                         <span class="fw-semibold text-dark small">@doc.NombreArchivo</span>
                                         <span class="badge bg-light text-muted border ms-2">@doc.TipoDocumento</span>
+                                        @if (doc.FechaSubida != default)
+                                        {
+                                            <small class="text-muted d-block ms-4 mt-1">
+                                                Subido el @doc.FechaSubida.ToLocalTime().ToString("dd/MM/yyyy hh:mm tt")
+                                            </small>
+                                        }
                                     </div>
-                                    <a asp-action="DescargarDocumento" asp-route-id="@doc.Id" class="btn btn-sm btn-light border fw-bold text-secondary">
-                                        Descargar
+                                    <a asp-action="DescargarDocumento"
+                                       asp-route-id="@doc.Id"
+                                       asp-route-reclamacionId="@Model.Id"
+                                       class="btn btn-sm btn-outline-secondary fw-bold">
+                                        <i class="bi bi-download me-1"></i>Descargar
                                     </a>
                                 </li>
                             }
