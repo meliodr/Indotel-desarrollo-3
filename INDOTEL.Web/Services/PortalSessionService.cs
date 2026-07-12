@@ -131,6 +131,7 @@ namespace INDOTEL.WEB.Services
             }
             catch (HttpRequestException)
             {
+                await CerrarSesionLocalAsync();
                 return false;
             }
             catch (JsonException)
