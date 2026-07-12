@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using INDOTEL.WEB.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
-using INDOTEL.WEB.Models;
 
 namespace INDOTEL.WEB.Controllers
 {
-    //[Authorize] // Protege todo el controlador
+    [Authorize]
     public class CiudadanoController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -16,56 +17,47 @@ namespace INDOTEL.WEB.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        // GET: /Ciudadano
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
-            
-            var ciudadanoId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var nombreCompleto = User.Identity?.Name ?? "Ciudadano";
-
             var viewModel = new DashboardViewModel
             {
-                NombreCiudadano = nombreCompleto,
-                Reclamaciones = new List<ReclamacionDto>()
+                NombreCiudadano = User.Identity?.Name ?? "Ciudadano"
             };
 
             try
             {
-                var client = _httpClientFactory.CreateClient("IndotelCore");
-
-                
-                var token = User.FindFirstValue("JWToken");
-                if (!string.IsNullOrEmpty(token))
-                {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                }
-                
-                var response = await client.GetAsync($"/api/ciudadanos/{ciudadanoId}/reclamaciones");
+                var client = CrearClienteAutorizado();
+                var response = await client.GetAsync("/api/reclamaciones");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
-                    var listaReclamaciones = JsonSerializer.Deserialize<List<ReclamacionDto>>(responseString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    if (listaReclamaciones != null)
-                    {
-                        viewModel.Reclamaciones = listaReclamaciones;
-                    }
+                    viewModel.Reclamaciones = JsonSerializer.Deserialize<List<ReclamacionDto>>(
+                        responseString,
+                        OpcionesJson()) ?? new List<ReclamacionDto>();
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+                else
+                {
+                    ViewBag.ErrorCore = "No se pudieron cargar tus reclamaciones en este momento.";
                 }
             }
-            catch (Exception)
+            catch (HttpRequestException)
             {
-                
-                ViewBag.ErrorCore = "No se pudieron cargar tus reclamaciones en este momento.";
+                ViewBag.ErrorCore = "No se pudo establecer conexión con el servicio central.";
+            }
+            catch (JsonException)
+            {
+                ViewBag.ErrorCore = "La respuesta de reclamaciones no pudo ser interpretada.";
             }
 
             return View(viewModel);
         }
 
-        // GET: /Ciudadano/Notificaciones
         [HttpGet]
         public async Task<IActionResult> Notificaciones()
         {
@@ -73,47 +65,55 @@ namespace INDOTEL.WEB.Controllers
 
             try
             {
-                var client = _httpClientFactory.CreateClient("IndotelCore");
-                var token = User.FindFirstValue("JWToken");
-
-                if (!string.IsNullOrEmpty(token))
-                {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                }
-
-                var response = await client.GetAsync("/api/notificaciones");
+                var client = CrearClienteAutorizado();
+                var response = await client.GetAsync("/api/notificaciones?page=1&pageSize=50");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonSerializer.Deserialize<List<NotificacionDto>>(responseString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
+                    var resultado = JsonSerializer.Deserialize<NotificacionesResponseDto>(
+                        responseString,
+                        OpcionesJson());
 
-                    if (resultado != null)
-                    {
-                        listado = resultado;
-                    }
+                    listado = resultado?.Data ?? new List<NotificacionDto>();
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Auth");
                 }
                 else
                 {
-                    CargarSimulacionNotificaciones(listado);
+                    ViewBag.ErrorCore = "No se pudieron cargar las notificaciones.";
                 }
             }
-            catch (Exception)
+            catch (HttpRequestException)
             {
-                CargarSimulacionNotificaciones(listado);
+                ViewBag.ErrorCore = "No se pudo establecer conexión con el servicio central.";
+            }
+            catch (JsonException)
+            {
+                ViewBag.ErrorCore = "La respuesta de notificaciones no pudo ser interpretada.";
             }
 
             return View(listado);
         }
 
-        private void CargarSimulacionNotificaciones(List<NotificacionDto> lista)
+        private HttpClient CrearClienteAutorizado()
         {
-            lista.Add(new NotificacionDto { Id = 1, Mensaje = "Su reclamación No. IND-2026-0001 ha cambiado de estado a 'En Proceso'.", Fecha = DateTime.Now.AddDays(-1), Leida = false });
-            lista.Add(new NotificacionDto { Id = 2, Mensaje = "Bienvenido al nuevo Portal Ciudadano del Sistema Digital INDOTEL.", Fecha = DateTime.Now.AddDays(-5), Leida = true });
+            var client = _httpClientFactory.CreateClient("IndotelCore");
+            var token = User.FindFirstValue("JWToken");
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            return client;
         }
 
+        private static JsonSerializerOptions OpcionesJson() => new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
     }
 }
