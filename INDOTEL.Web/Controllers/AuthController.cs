@@ -1,10 +1,7 @@
 using INDOTEL.WEB.Models;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using INDOTEL.WEB.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
-using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -13,10 +10,14 @@ namespace INDOTEL.WEB.Controllers
     public class AuthController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly PortalSessionService _portalSession;
 
-        public AuthController(IHttpClientFactory httpClientFactory)
+        public AuthController(
+            IHttpClientFactory httpClientFactory,
+            PortalSessionService portalSession)
         {
             _httpClientFactory = httpClientFactory;
+            _portalSession = portalSession;
         }
 
         [HttpGet]
@@ -24,7 +25,9 @@ namespace INDOTEL.WEB.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction("Index", "Ciudadano");
+                return User.IsInRole("Ciudadano")
+                    ? RedirectToAction("Index", "Ciudadano")
+                    : RedirectToAction(nameof(AccessDenied));
             }
 
             return View();
@@ -72,44 +75,22 @@ namespace INDOTEL.WEB.Controllers
                 var responseString = await response.Content.ReadAsStringAsync();
                 var loginResult = JsonSerializer.Deserialize<LoginResponse>(responseString, OpcionesJson());
 
-                if (loginResult is null ||
-                    string.IsNullOrWhiteSpace(loginResult.Token) ||
-                    string.IsNullOrWhiteSpace(loginResult.RefreshToken) ||
-                    loginResult.Usuario is null)
+                if (!PortalSessionService.EsRespuestaLoginValida(loginResult))
                 {
                     ModelState.AddModelError(string.Empty, "La respuesta de autenticación recibida no es válida.");
                     return View(model);
                 }
 
-                var claims = new List<Claim>
+                if (!loginResult!.Usuario.Rol.Equals("Ciudadano", StringComparison.OrdinalIgnoreCase))
                 {
-                    new(ClaimTypes.NameIdentifier, loginResult.Usuario.Id.ToString()),
-                    new(ClaimTypes.Name, loginResult.Usuario.NombreCompleto),
-                    new(ClaimTypes.Email, loginResult.Usuario.Correo),
-                    new(ClaimTypes.Role, loginResult.Usuario.Rol),
-                    new("JWToken", loginResult.Token),
-                    new("RefreshToken", loginResult.RefreshToken),
-                    new("TokenExpiraEn", loginResult.ExpiraEn.ToUniversalTime().ToString("O")),
-                    new("RefreshTokenExpiraEn", loginResult.RefreshTokenExpiraEn.ToUniversalTime().ToString("O"))
-                };
+                    await _portalSession.RevocarRespuestaLoginAsync(loginResult);
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "Este portal es exclusivo para ciudadanos. Los perfiles internos deben utilizar su módulo correspondiente.");
+                    return View(model);
+                }
 
-                var claimsIdentity = new ClaimsIdentity(
-                    claims,
-                    CookieAuthenticationDefaults.AuthenticationScheme);
-
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = true,
-                    AllowRefresh = false,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
-                };
-
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties);
-
+                await _portalSession.IniciarSesionAsync(loginResult);
                 return RedirectToAction("Index", "Ciudadano");
             }
             catch (HttpRequestException)
@@ -129,7 +110,9 @@ namespace INDOTEL.WEB.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction("Index", "Ciudadano");
+                return User.IsInRole("Ciudadano")
+                    ? RedirectToAction("Index", "Ciudadano")
+                    : RedirectToAction(nameof(AccessDenied));
             }
 
             return View();
@@ -156,6 +139,14 @@ namespace INDOTEL.WEB.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var registroResult = JsonSerializer.Deserialize<LoginResponse>(responseString, OpcionesJson());
+
+                    if (PortalSessionService.EsRespuestaLoginValida(registroResult))
+                    {
+                        await _portalSession.RevocarRespuestaLoginAsync(registroResult!);
+                    }
+
                     TempData["SuccessMessage"] = "Registro completado con éxito. Ya puedes iniciar sesión.";
                     return RedirectToAction(nameof(Login));
                 }
@@ -179,6 +170,10 @@ namespace INDOTEL.WEB.Controllers
             {
                 ModelState.AddModelError(string.Empty, "No se pudo establecer conexión con el servicio central.");
             }
+            catch (JsonException)
+            {
+                ModelState.AddModelError(string.Empty, "La respuesta del servicio central no pudo ser interpretada.");
+            }
 
             return View(model);
         }
@@ -188,35 +183,14 @@ namespace INDOTEL.WEB.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            try
-            {
-                var token = User.FindFirstValue("JWToken");
-                var refreshToken = User.FindFirstValue("RefreshToken");
-
-                if (!string.IsNullOrWhiteSpace(token) && !string.IsNullOrWhiteSpace(refreshToken))
-                {
-                    var client = _httpClientFactory.CreateClient("IndotelCore");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                    var request = new LogoutRequest { RefreshToken = refreshToken };
-                    var jsonContent = new StringContent(
-                        JsonSerializer.Serialize(request),
-                        Encoding.UTF8,
-                        "application/json");
-
-                    await client.PostAsync("/api/auth/logout", jsonContent);
-                }
-            }
-            catch (HttpRequestException)
-            {
-                // La sesión local debe cerrarse incluso si el servicio central no responde.
-            }
-            finally
-            {
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            }
-
+            await _portalSession.CerrarSesionAsync();
             return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
         }
 
         private static JsonSerializerOptions OpcionesJson() => new()
