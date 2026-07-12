@@ -6,10 +6,11 @@ on:
   pull_request:
     paths:
       - "INDOTEL.Web/**"
+      - "INDOTEL.Web.Tests/**"
       - ".github/workflows/web-ci.yml"
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +22,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Restore
+      - name: Restore Web
         run: dotnet restore INDOTEL.Web/INDOTEL.WEB.csproj
 
-      - name: Build
+      - name: Restore Tests
+        run: dotnet restore INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj
+
+      - name: Build Web
         run: dotnet build INDOTEL.Web/INDOTEL.WEB.csproj --configuration Release --no-restore
+
+      - name: Test Web
+        run: dotnet test INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj --configuration Release --no-restore --verbosity normal
