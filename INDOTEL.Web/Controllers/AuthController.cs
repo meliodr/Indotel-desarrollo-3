@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using INDOTEL.WEB.Models;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using INDOTEL.WEB.Models;
 
 namespace INDOTEL.WEB.Controllers
 {
@@ -12,25 +14,22 @@ namespace INDOTEL.WEB.Controllers
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        // Inyectamos el HttpClientFactory configurado en Program.cs
         public AuthController(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
         }
 
-        // GET: /Auth/Login
         [HttpGet]
         public IActionResult Login()
         {
-            
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (User.Identity?.IsAuthenticated == true)
             {
                 return RedirectToAction("Index", "Ciudadano");
             }
+
             return View();
         }
 
-        // POST: /Auth/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginRequest model)
@@ -43,87 +42,99 @@ namespace INDOTEL.WEB.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("IndotelCore");
+                var jsonContent = new StringContent(
+                    JsonSerializer.Serialize(model),
+                    Encoding.UTF8,
+                    "application/json");
 
-                
-                var jsonContent = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
-
-               
                 var response = await client.PostAsync("/api/auth/login", jsonContent);
 
-                if (response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
+                    var mensajeApi = await LeerMensajeApi(response);
 
-                    
-                    var loginResult = JsonSerializer.Deserialize<LoginResponse>(responseString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    if (loginResult != null && !string.IsNullOrEmpty(loginResult.Token))
-                    {
-                        
-                        var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.NameIdentifier, loginResult.Usuario.Id.ToString()),
-                            new Claim(ClaimTypes.Name, $"{loginResult.Usuario.Nombres} {loginResult.Usuario.Apellidos}"),
-                            new Claim(ClaimTypes.Email, loginResult.Usuario.Correo),
-                            new Claim("JWToken", loginResult.Token), 
-                            new Claim("RefreshToken", loginResult.RefreshToken)
-                        };
-
-                        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                        var authProperties = new AuthenticationProperties
-                        {
-                            IsPersistent = true, // Mantiene la cookie activa
-                            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
-                        };
-
-                        
-                        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-
-                        
-                        return RedirectToAction("Index", "Ciudadano");
-                    }
-                }
-                else
-                {
-                    // Manejo de errores según la tabla del documento (ej. 401 Credenciales incorrectas, 423 Bloqueado)
                     if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     {
-                        ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos.");
+                        ModelState.AddModelError(string.Empty, mensajeApi ?? "Correo o contraseña incorrectos.");
                     }
                     else if ((int)response.StatusCode == 423)
                     {
-                        ModelState.AddModelError(string.Empty, "Usuario bloqueado temporalmente por intentos fallidos.");
+                        ModelState.AddModelError(string.Empty, mensajeApi ?? "Usuario bloqueado temporalmente por intentos fallidos.");
                     }
                     else
                     {
-                        ModelState.AddModelError(string.Empty, "Error al intentar iniciar sesión. Inténtelo más tarde.");
+                        ModelState.AddModelError(string.Empty, mensajeApi ?? "No fue posible iniciar sesión en este momento.");
                     }
+
+                    return View(model);
                 }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                var loginResult = JsonSerializer.Deserialize<LoginResponse>(responseString, OpcionesJson());
+
+                if (loginResult is null ||
+                    string.IsNullOrWhiteSpace(loginResult.Token) ||
+                    string.IsNullOrWhiteSpace(loginResult.RefreshToken) ||
+                    loginResult.Usuario is null)
+                {
+                    ModelState.AddModelError(string.Empty, "La respuesta de autenticación recibida no es válida.");
+                    return View(model);
+                }
+
+                var claims = new List<Claim>
+                {
+                    new(ClaimTypes.NameIdentifier, loginResult.Usuario.Id.ToString()),
+                    new(ClaimTypes.Name, loginResult.Usuario.NombreCompleto),
+                    new(ClaimTypes.Email, loginResult.Usuario.Correo),
+                    new(ClaimTypes.Role, loginResult.Usuario.Rol),
+                    new("JWToken", loginResult.Token),
+                    new("RefreshToken", loginResult.RefreshToken),
+                    new("TokenExpiraEn", loginResult.ExpiraEn.ToUniversalTime().ToString("O")),
+                    new("RefreshTokenExpiraEn", loginResult.RefreshTokenExpiraEn.ToUniversalTime().ToString("O"))
+                };
+
+                var claimsIdentity = new ClaimsIdentity(
+                    claims,
+                    CookieAuthenticationDefaults.AuthenticationScheme);
+
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    AllowRefresh = false,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
+                };
+
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
+
+                return RedirectToAction("Index", "Ciudadano");
             }
-            catch (Exception)
+            catch (HttpRequestException)
             {
-                ModelState.AddModelError(string.Empty, "Hubo un problema de conexión con el servidor central.");
+                ModelState.AddModelError(string.Empty, "No se pudo establecer conexión con el servicio central.");
+            }
+            catch (JsonException)
+            {
+                ModelState.AddModelError(string.Empty, "La respuesta del servicio central no pudo ser interpretada.");
             }
 
             return View(model);
         }
 
-        // GET: /Auth/Register
         [HttpGet]
         public IActionResult Register()
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (User.Identity?.IsAuthenticated == true)
             {
                 return RedirectToAction("Index", "Ciudadano");
             }
+
             return View();
         }
 
-        // POST: /Auth/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterCiudadanoRequest model)
@@ -136,35 +147,35 @@ namespace INDOTEL.WEB.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("IndotelCore");
-                var jsonContent = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
+                var jsonContent = new StringContent(
+                    JsonSerializer.Serialize(model),
+                    Encoding.UTF8,
+                    "application/json");
 
-                
                 var response = await client.PostAsync("/api/auth/register-ciudadano", jsonContent);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    
                     TempData["SuccessMessage"] = "Registro completado con éxito. Ya puedes iniciar sesión.";
-                    return RedirectToAction("Login");
+                    return RedirectToAction(nameof(Login));
+                }
+
+                var mensajeApi = await LeerMensajeApi(response);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                {
+                    ModelState.AddModelError(string.Empty, mensajeApi ?? "La cédula o el correo ya se encuentran registrados.");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    ModelState.AddModelError(string.Empty, mensajeApi ?? "Los datos enviados no son válidos.");
                 }
                 else
                 {
-                    // Manejo de errores específicos según el documento (ej: 409 Conflicto si el correo o cédula ya existen)
-                    if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
-                    {
-                        ModelState.AddModelError(string.Empty, "La cédula o el correo electrónico ya se encuentran registrados.");
-                    }
-                    else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
-                    {
-                        ModelState.AddModelError(string.Empty, "Los datos enviados son incorrectos. Verifique el formato.");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError(string.Empty, "Ocurrió un error en el servidor al procesar el registro.");
-                    }
+                    ModelState.AddModelError(string.Empty, mensajeApi ?? "No fue posible completar el registro.");
                 }
             }
-            catch (Exception)
+            catch (HttpRequestException)
             {
                 ModelState.AddModelError(string.Empty, "No se pudo establecer conexión con el servicio central.");
             }
@@ -172,14 +183,62 @@ namespace INDOTEL.WEB.Controllers
             return View(model);
         }
 
-
-        // POST: /Auth/Logout
+        [Authorize]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-          
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login", "Auth");
+            try
+            {
+                var token = User.FindFirstValue("JWToken");
+                var refreshToken = User.FindFirstValue("RefreshToken");
+
+                if (!string.IsNullOrWhiteSpace(token) && !string.IsNullOrWhiteSpace(refreshToken))
+                {
+                    var client = _httpClientFactory.CreateClient("IndotelCore");
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                    var request = new LogoutRequest { RefreshToken = refreshToken };
+                    var jsonContent = new StringContent(
+                        JsonSerializer.Serialize(request),
+                        Encoding.UTF8,
+                        "application/json");
+
+                    await client.PostAsync("/api/auth/logout", jsonContent);
+                }
+            }
+            catch (HttpRequestException)
+            {
+                // La sesión local debe cerrarse incluso si el servicio central no responde.
+            }
+            finally
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+
+            return RedirectToAction(nameof(Login));
+        }
+
+        private static JsonSerializerOptions OpcionesJson() => new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        private static async Task<string?> LeerMensajeApi(HttpResponseMessage response)
+        {
+            try
+            {
+                var contenido = await response.Content.ReadAsStringAsync();
+                using var documento = JsonDocument.Parse(contenido);
+
+                return documento.RootElement.TryGetProperty("mensaje", out var mensaje)
+                    ? mensaje.GetString()
+                    : null;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
