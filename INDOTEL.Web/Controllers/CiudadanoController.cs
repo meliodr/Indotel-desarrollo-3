@@ -1,20 +1,19 @@
 using INDOTEL.WEB.Models;
+using INDOTEL.WEB.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
-using System.Security.Claims;
 using System.Text.Json;
 
 namespace INDOTEL.WEB.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Ciudadano")]
     public class CiudadanoController : Controller
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly PortalSessionService _portalSession;
 
-        public CiudadanoController(IHttpClientFactory httpClientFactory)
+        public CiudadanoController(PortalSessionService portalSession)
         {
-            _httpClientFactory = httpClientFactory;
+            _portalSession = portalSession;
         }
 
         [HttpGet]
@@ -27,7 +26,7 @@ namespace INDOTEL.WEB.Controllers
 
             try
             {
-                var client = CrearClienteAutorizado();
+                var client = await _portalSession.CrearClienteAutorizadoAsync();
                 var response = await client.GetAsync("/api/reclamaciones");
 
                 if (response.IsSuccessStatusCode)
@@ -40,6 +39,10 @@ namespace INDOTEL.WEB.Controllers
                 else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     return RedirectToAction("Login", "Auth");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    return Forbid();
                 }
                 else
                 {
@@ -65,7 +68,7 @@ namespace INDOTEL.WEB.Controllers
 
             try
             {
-                var client = CrearClienteAutorizado();
+                var client = await _portalSession.CrearClienteAutorizadoAsync();
                 var response = await client.GetAsync("/api/notificaciones?page=1&pageSize=50");
 
                 if (response.IsSuccessStatusCode)
@@ -80,6 +83,10 @@ namespace INDOTEL.WEB.Controllers
                 else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     return RedirectToAction("Login", "Auth");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    return Forbid();
                 }
                 else
                 {
@@ -98,17 +105,48 @@ namespace INDOTEL.WEB.Controllers
             return View(listado);
         }
 
-        private HttpClient CrearClienteAutorizado()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarcarNotificacionLeida(int id)
         {
-            var client = _httpClientFactory.CreateClient("IndotelCore");
-            var token = User.FindFirstValue("JWToken");
-
-            if (!string.IsNullOrWhiteSpace(token))
+            if (id <= 0)
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                TempData["ErrorNotificacion"] = "La notificación seleccionada no es válida.";
+                return RedirectToAction(nameof(Notificaciones));
             }
 
-            return client;
+            try
+            {
+                var client = await _portalSession.CrearClienteAutorizadoAsync();
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Patch,
+                    $"/api/notificaciones/{id}/leer");
+
+                var response = await client.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessNotificacion"] = "Notificación marcada como leída.";
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    TempData["ErrorNotificacion"] = "No fue posible actualizar la notificación.";
+                }
+            }
+            catch (HttpRequestException)
+            {
+                TempData["ErrorNotificacion"] = "No se pudo establecer conexión con el servicio central.";
+            }
+
+            return RedirectToAction(nameof(Notificaciones));
         }
 
         private static JsonSerializerOptions OpcionesJson() => new()
