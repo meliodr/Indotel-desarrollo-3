@@ -1,6 +1,7 @@
-﻿using INDOTEL.WEB.Models;
+using INDOTEL.WEB.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -17,174 +18,312 @@ namespace INDOTEL.WEB.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        // GET: /Reclamacion/Crear
         [HttpGet]
         public async Task<IActionResult> Crear()
         {
             var viewModel = new CrearReclamacionViewModel();
-
-            try
-            {
-                var client = _httpClientFactory.CreateClient("IndotelCore");
-
-                viewModel.Prestadoras = new List<PrestadoraDto>
-                {
-                    new PrestadoraDto { Id = 1, NombreComercial = "Claro" },
-                    new PrestadoraDto { Id = 2, NombreComercial = "Altice" },
-                    new PrestadoraDto { Id = 3, NombreComercial = "Viva" }
-                };
-
-                viewModel.Servicios = new List<ServicioTelecomDto>
-                {
-                    new ServicioTelecomDto { Id = 1, Nombre = "Internet Fijo / Móvil" },
-                    new ServicioTelecomDto { Id = 2, Nombre = "Telefonía Móvil" },
-                    new ServicioTelecomDto { Id = 3, Nombre = "Televisión por Cable" }
-                };
-            }
-            catch (Exception)
-            {
-                ModelState.AddModelError(string.Empty, "Error al cargar los catálogos del sistema.");
-            }
-
+            await CargarCatalogos(viewModel);
             return View(viewModel);
         }
 
-        // POST: /Reclamacion/Crear
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(CrearReclamacionViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                await CargarCatalogos(model);
+                return View(model);
+            }
+
             try
             {
-                var client = _httpClientFactory.CreateClient("IndotelCore");
-
-                var ciudadanoId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var token = User.FindFirstValue("JWToken");
-
-                if (!string.IsNullOrEmpty(token))
-                {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                }
+                var client = CrearClienteAutorizado();
 
                 var dataEnviar = new
                 {
-                    CiudadanoId = int.Parse(ciudadanoId ?? "0"),
+                    CiudadanoId = 0,
                     model.PrestadoraId,
-                    model.ServicioId,
+                    ServicioTelecomId = model.ServicioId,
+                    TipoReclamacionId = (int?)null,
+                    MotivoReclamacionId = (int?)null,
+                    CanalRecepcion = "WEB",
+                    Prioridad = "MEDIA",
+                    model.Provincia,
+                    model.Municipio,
+                    model.Titulo,
                     model.Descripcion
                 };
 
-                var jsonContent = new StringContent(JsonSerializer.Serialize(dataEnviar), Encoding.UTF8, "application/json");
+                var jsonContent = new StringContent(
+                    JsonSerializer.Serialize(dataEnviar),
+                    Encoding.UTF8,
+                    "application/json");
 
                 var response = await client.PostAsync("/api/reclamaciones", jsonContent);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonSerializer.Deserialize<CrearReclamacionResponse>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var resultado = JsonSerializer.Deserialize<CrearReclamacionResponse>(
+                        responseString,
+                        OpcionesJson());
 
-                    TempData["NuevoExpediente"] = resultado?.NumeroExpediente ?? "IND-GENERANDO";
-                    return RedirectToAction("Exito");
+                    TempData["NuevoExpediente"] = resultado?.NumeroExpediente ?? "Expediente generado";
+                    return RedirectToAction(nameof(Exito));
                 }
-                else
+
+                var mensajeApi = await LeerMensajeApi(response);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    ModelState.AddModelError(string.Empty, "El Core rechazó la reclamación. Verifique las reglas del caso.");
+                    return RedirectToAction("Login", "Auth");
                 }
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    mensajeApi ?? "La reclamación fue rechazada por el servicio central.");
             }
-            catch (Exception)
+            catch (HttpRequestException)
             {
-                ModelState.AddModelError(string.Empty, "Error de comunicación con el servicio central.");
+                ModelState.AddModelError(string.Empty, "No se pudo establecer conexión con el servicio central.");
+            }
+            catch (JsonException)
+            {
+                ModelState.AddModelError(string.Empty, "La respuesta recibida no pudo ser interpretada.");
             }
 
-            model.Prestadoras = new List<PrestadoraDto>
-            {
-                new PrestadoraDto { Id = 1, NombreComercial = "Claro" },
-                new PrestadoraDto { Id = 2, NombreComercial = "Altice" }
-            };
-            model.Servicios = new List<ServicioTelecomDto>
-            {
-                new ServicioTelecomDto { Id = 1, Nombre = "Internet Fijo / Móvil" },
-                new ServicioTelecomDto { Id = 2, Nombre = "Telefonía Móvil" }
-            };
-
+            await CargarCatalogos(model);
             return View(model);
         }
 
-        // GET: /Reclamacion/Detalle/{id}
         [HttpGet]
         public async Task<IActionResult> Detalle(int id)
         {
-            var viewModel = new ReclamacionDetalleViewModel();
+            if (id <= 0)
+            {
+                return NotFound();
+            }
 
             try
             {
-                var client = _httpClientFactory.CreateClient("IndotelCore");
-                var token = User.FindFirstValue("JWToken");
-
-                if (!string.IsNullOrEmpty(token))
-                {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                }
-
+                var client = CrearClienteAutorizado();
                 var response = await client.GetAsync($"/api/reclamaciones/{id}");
 
-                if (response.IsSuccessStatusCode)
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonSerializer.Deserialize<ReclamacionDetalleViewModel>(responseString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
+                    return NotFound();
+                }
 
-                    if (resultado != null)
-                    {
-                        viewModel = resultado;
-                    }
-                }
-                else
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
                 {
-                    CargarSimulacionDetalle(viewModel, id);
+                    return Forbid();
                 }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    ViewBag.ErrorCore = await LeerMensajeApi(response) ?? "No se pudo cargar el expediente.";
+                    return View(new ReclamacionDetalleViewModel());
+                }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                var reclamacion = JsonSerializer.Deserialize<ReclamacionApiDto>(
+                    responseString,
+                    OpcionesJson());
+
+                if (reclamacion is null)
+                {
+                    ViewBag.ErrorCore = "El detalle del expediente llegó vacío.";
+                    return View(new ReclamacionDetalleViewModel());
+                }
+
+                var viewModel = new ReclamacionDetalleViewModel
+                {
+                    Id = reclamacion.Id,
+                    NumeroExpediente = reclamacion.NumeroExpediente,
+                    Titulo = reclamacion.Titulo,
+                    Descripcion = reclamacion.Descripcion,
+                    Estado = reclamacion.Estado,
+                    FechaCreacion = reclamacion.FechaCreacion,
+                    Prestadora = $"Prestadora #{reclamacion.PrestadoraId}",
+                    Servicio = $"Servicio #{reclamacion.ServicioTelecomId}"
+                };
+
+                await CompletarNombresCatalogos(
+                    client,
+                    viewModel,
+                    reclamacion.PrestadoraId,
+                    reclamacion.ServicioTelecomId);
+
+                var historialResponse = await client.GetAsync($"/api/reclamaciones/{id}/historial");
+                if (historialResponse.IsSuccessStatusCode)
+                {
+                    var historialJson = await historialResponse.Content.ReadAsStringAsync();
+                    viewModel.Historial = JsonSerializer.Deserialize<List<HistorialEstadoDto>>(
+                        historialJson,
+                        OpcionesJson()) ?? new List<HistorialEstadoDto>();
+                }
+
+                var documentosResponse = await client.GetAsync($"/api/reclamaciones/{id}/documentos");
+                if (documentosResponse.IsSuccessStatusCode)
+                {
+                    var documentosJson = await documentosResponse.Content.ReadAsStringAsync();
+                    viewModel.Documentos = JsonSerializer.Deserialize<List<DocumentoAnexoDto>>(
+                        documentosJson,
+                        OpcionesJson()) ?? new List<DocumentoAnexoDto>();
+                }
+
+                return View(viewModel);
             }
-            catch (Exception)
+            catch (HttpRequestException)
             {
-                CargarSimulacionDetalle(viewModel, id);
-                ViewBag.AvisoRed = "Nota: Mostrando datos de simulación local (servidor central desconectado).";
+                ViewBag.ErrorCore = "No se pudo establecer conexión con el servicio central.";
+            }
+            catch (JsonException)
+            {
+                ViewBag.ErrorCore = "La respuesta del expediente no pudo ser interpretada.";
             }
 
-            return View(viewModel);
+            return View(new ReclamacionDetalleViewModel { Id = id });
         }
 
-        // Método auxiliar para no romper la UI en pruebas locales sin el Core activo
-        private void CargarSimulacionDetalle(ReclamacionDetalleViewModel model, int id)
+        [HttpGet]
+        public async Task<IActionResult> DescargarDocumento(int id)
         {
-            model.Id = id;
-            model.NumeroExpediente = $"IND-2026-{id:D4}";
-            model.Prestadora = "Claro";
-            model.Servicio = "Internet Fijo / Móvil";
-            model.Descripcion = "El servicio presenta intermitencias constantes y la velocidad recibida no corresponde al plan contratado.";
-            model.Estado = "En Proceso";
-            model.FechaCreacion = DateTime.Now.AddDays(-5);
+            if (id <= 0)
+            {
+                return NotFound();
+            }
 
-            model.Historial = new List<HistorialEstadoDto>
-    {
-        new HistorialEstadoDto { Id = 1, Estado = "Abierto", Comentario = "Reclamación recibida formalmente a través del Portal Ciudadano.", FechaCambio = DateTime.Now.AddDays(-5) },
-        new HistorialEstadoDto { Id = 2, Estado = "En Proceso", Comentario = "El caso ha sido asignado al departamento de inspección de telecomunicaciones.", FechaCambio = DateTime.Now.AddDays(-3) }
-    };
+            var client = CrearClienteAutorizado();
+            var response = await client.GetAsync($"/api/documentos/{id}/descargar");
 
-            model.Documentos = new List<DocumentoAnexoDto>
-    {
-        new DocumentoAnexoDto { Id = 101, NombreArchivo = "Evidencia_Contrato.pdf", TipoDocumento = "Evidencia Ciudadana" },
-        new DocumentoAnexoDto { Id = 102, NombreArchivo = "Prueba_Velocidad.png", TipoDocumento = "Evidencia Ciudadana" }
-    };
+            if (!response.IsSuccessStatusCode)
+            {
+                return response.StatusCode == System.Net.HttpStatusCode.Forbidden
+                    ? Forbid()
+                    : NotFound();
+            }
+
+            var contenido = await response.Content.ReadAsByteArrayAsync();
+            var tipoContenido = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+            var nombreArchivo = response.Content.Headers.ContentDisposition?.FileNameStar
+                                ?? response.Content.Headers.ContentDisposition?.FileName
+                                ?? $"documento-{id}";
+
+            nombreArchivo = nombreArchivo.Trim('"');
+            return File(contenido, tipoContenido, nombreArchivo);
         }
 
-        // GET: /Reclamacion/Exito
         [HttpGet]
         public IActionResult Exito()
         {
             ViewBag.NumeroExpediente = TempData["NuevoExpediente"];
             return View();
+        }
+
+        private async Task CargarCatalogos(CrearReclamacionViewModel model)
+        {
+            try
+            {
+                var client = CrearClienteAutorizado();
+                var prestadorasResponse = await client.GetAsync("/api/catalogos/prestadoras");
+                var serviciosResponse = await client.GetAsync("/api/catalogos/servicios");
+
+                if (prestadorasResponse.IsSuccessStatusCode)
+                {
+                    var json = await prestadorasResponse.Content.ReadAsStringAsync();
+                    model.Prestadoras = JsonSerializer.Deserialize<List<PrestadoraDto>>(
+                        json,
+                        OpcionesJson()) ?? new List<PrestadoraDto>();
+                }
+
+                if (serviciosResponse.IsSuccessStatusCode)
+                {
+                    var json = await serviciosResponse.Content.ReadAsStringAsync();
+                    model.Servicios = JsonSerializer.Deserialize<List<ServicioTelecomDto>>(
+                        json,
+                        OpcionesJson()) ?? new List<ServicioTelecomDto>();
+                }
+
+                if (!prestadorasResponse.IsSuccessStatusCode || !serviciosResponse.IsSuccessStatusCode)
+                {
+                    ModelState.AddModelError(string.Empty, "No fue posible cargar todos los catálogos del sistema.");
+                }
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(string.Empty, "No se pudo establecer conexión para cargar los catálogos.");
+            }
+            catch (JsonException)
+            {
+                ModelState.AddModelError(string.Empty, "Los catálogos recibidos no pudieron ser interpretados.");
+            }
+        }
+
+        private async Task CompletarNombresCatalogos(
+            HttpClient client,
+            ReclamacionDetalleViewModel model,
+            int prestadoraId,
+            int servicioId)
+        {
+            var prestadorasResponse = await client.GetAsync("/api/catalogos/prestadoras");
+            if (prestadorasResponse.IsSuccessStatusCode)
+            {
+                var json = await prestadorasResponse.Content.ReadAsStringAsync();
+                var prestadoras = JsonSerializer.Deserialize<List<PrestadoraDto>>(json, OpcionesJson());
+                model.Prestadora = prestadoras?.FirstOrDefault(x => x.Id == prestadoraId)?.NombreComercial
+                                   ?? model.Prestadora;
+            }
+
+            var serviciosResponse = await client.GetAsync("/api/catalogos/servicios");
+            if (serviciosResponse.IsSuccessStatusCode)
+            {
+                var json = await serviciosResponse.Content.ReadAsStringAsync();
+                var servicios = JsonSerializer.Deserialize<List<ServicioTelecomDto>>(json, OpcionesJson());
+                model.Servicio = servicios?.FirstOrDefault(x => x.Id == servicioId)?.Nombre
+                                  ?? model.Servicio;
+            }
+        }
+
+        private HttpClient CrearClienteAutorizado()
+        {
+            var client = _httpClientFactory.CreateClient("IndotelCore");
+            var token = User.FindFirstValue("JWToken");
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            return client;
+        }
+
+        private static JsonSerializerOptions OpcionesJson() => new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        private static async Task<string?> LeerMensajeApi(HttpResponseMessage response)
+        {
+            try
+            {
+                var contenido = await response.Content.ReadAsStringAsync();
+                using var documento = JsonDocument.Parse(contenido);
+
+                return documento.RootElement.TryGetProperty("mensaje", out var mensaje)
+                    ? mensaje.GetString()
+                    : null;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
