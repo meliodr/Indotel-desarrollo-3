@@ -5,6 +5,22 @@
   "Jwt": {
     "Issuer": "Indotel.Core",
     "Audience": "Indotel.Clients",
-    "Key": "COLOCA_AQUI_UNA_CLAVE_LOCAL_DE_32_CARACTERES_O_MAS"
+    "Key": "COLOCA_AQUI_UNA_CLAVE_LOCAL_DE_32_CARACTERES_O_MAS",
+    "AccessTokenMinutes": 30,
+    "RefreshTokenDays": 7
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "http://localhost:5234"
+    ]
+  },
+  "SeedData": {
+    "Enabled": true
+  },
+  "Database": {
+    "ApplyMigrationsOnStartup": true
+  },
+  "Security": {
+    "ExposeResetTokenInResponse": true
   }
 }
