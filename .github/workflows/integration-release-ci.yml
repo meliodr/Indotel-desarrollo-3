@@ -1,0 +1,140 @@
+name: Integracion y Release CI
+
+on:
+  push:
+    branches: [integracion]
+  pull_request:
+    branches: [integracion]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-linux:
+    name: Core, Gateway, Web y pruebas Caja
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.128
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            **/packages.lock.json
+
+      - name: Permisos de scripts
+        run: chmod +x scripts/*.sh
+
+      - name: Validacion consolidada Sprint 5
+        env:
+          GITHUB_REF_NAME: integracion
+        run: bash scripts/validar_sprint5_integracion.sh
+
+      - name: Validacion estructural Sprint 6
+        run: bash scripts/validar_sprint6_despliegue.sh
+
+  runtime-e2e:
+    name: E2E Web Gateway Core SQL
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    needs: validate-linux
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.128
+
+      - name: Permisos de scripts
+        run: chmod +x scripts/*.sh
+
+      - name: Compilar componentes Linux
+        run: |
+          dotnet restore core-indotel/Indotel.Core/Indotel.Core.csproj
+          dotnet build core-indotel/Indotel.Core/Indotel.Core.csproj -c Release --no-restore
+          dotnet restore api-gateway/Indotel.ApiGateway/Indotel.ApiGateway.csproj
+          dotnet build api-gateway/Indotel.ApiGateway/Indotel.ApiGateway.csproj -c Release --no-restore
+          dotnet restore INDOTEL.Web/INDOTEL.WEB.csproj
+          dotnet build INDOTEL.Web/INDOTEL.WEB.csproj -c Release --no-restore
+
+      - name: Pruebas runtime y fallas controladas
+        env:
+          INDOTEL_SQL_PASSWORD: Sprint5Sql-Local-2026!
+          INDOTEL_ADMIN_PASSWORD: Sprint5Admin-Local-2026!
+          INDOTEL_JWT_KEY: Sprint5_Jwt_Local_0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz
+        run: bash scripts/probar_sprint5_runtime.sh
+
+      - name: Adjuntar logs en fallo
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint5-runtime-logs
+          path: /tmp/indotel-sprint5-runtime
+          if-no-files-found: ignore
+
+  caja-windows:
+    name: Caja Windows build test publish
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.128
+
+      - name: Restore Caja
+        run: dotnet restore "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj"
+
+      - name: Build Caja
+        run: dotnet build "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --no-restore
+
+      - name: Test Caja
+        run: dotnet test "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj" --configuration Release --collect:"XPlat Code Coverage"
+
+      - name: Publish Caja win-x64
+        run: dotnet publish "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --runtime win-x64 --self-contained false --output artifacts/caja
+
+      - name: Upload Caja
+        uses: actions/upload-artifact@v4
+        with:
+          name: indotel-caja-win-x64
+          path: artifacts/caja
+
+  docker-images:
+    name: Build imagenes release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: validate-linux
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preparar variables de validacion
+        run: |
+          cp deploy/.env.release.example /tmp/indotel-release.env
+          sed -i \
+            -e 's/CAMBIAR_CLAVE_SQL_DE_16_O_MAS/ReleaseSql-Validacion-2026!/' \
+            -e 's/CAMBIAR_CLAVE_JWT_ALEATORIA_DE_64_O_MAS/ReleaseJwt_0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz/' \
+            -e 's/CAMBIAR_CLAVE_ADMIN_SEGURA/ReleaseAdmin-Validacion-2026!/' \
+            /tmp/indotel-release.env
+
+      - name: Validar Compose
+        run: docker compose --env-file /tmp/indotel-release.env -f deploy/docker-compose.release.yml config --quiet
+
+      - name: Build Core Gateway Web
+        run: docker compose --env-file /tmp/indotel-release.env -f deploy/docker-compose.release.yml build core gateway web
