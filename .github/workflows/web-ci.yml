@@ -7,6 +7,7 @@ on:
     paths:
       - "INDOTEL.Web/**"
       - "INDOTEL.Web.Tests/**"
+      - "scripts/validar_sprint3_web.sh"
       - ".github/workflows/web-ci.yml"
 
 jobs:
@@ -31,5 +32,11 @@ jobs:
       - name: Build Web
         run: dotnet build INDOTEL.Web/INDOTEL.WEB.csproj --configuration Release --no-restore
 
+      - name: Build Tests
+        run: dotnet build INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj --configuration Release --no-restore
+
       - name: Test Web
-        run: dotnet test INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj --configuration Release --no-restore --verbosity normal
+        run: dotnet test INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj --configuration Release --no-build --collect:"XPlat Code Coverage" --verbosity normal
+
+      - name: Publish Web
+        run: dotnet publish INDOTEL.Web/INDOTEL.WEB.csproj --configuration Release --no-restore --output /tmp/indotel-web
