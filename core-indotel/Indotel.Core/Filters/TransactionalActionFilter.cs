@@ -86,13 +86,9 @@ public sealed class TransactionalActionFilter : IAsyncActionFilter
     private static int ObtenerStatusCode(IActionResult? result) => result switch
     {
         ObjectResult objectResult => objectResult.StatusCode ?? StatusCodes.Status200OK,
-        StatusCodeResult statusCodeResult => statusCodeResult.StatusCode,
         ForbidResult => StatusCodes.Status403Forbidden,
         ChallengeResult => StatusCodes.Status401Unauthorized,
-        NotFoundResult => StatusCodes.Status404NotFound,
-        BadRequestResult => StatusCodes.Status400BadRequest,
-        ConflictResult => StatusCodes.Status409Conflict,
-        UnauthorizedResult => StatusCodes.Status401Unauthorized,
+        StatusCodeResult statusCodeResult => statusCodeResult.StatusCode,
         _ => StatusCodes.Status200OK
     };
 }
