@@ -9,7 +9,7 @@ on:
       - core
 
 jobs:
-  build-core:
+  build-and-test-core:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +21,14 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore
+      - name: Restore Core
         run: dotnet restore core-indotel/Indotel.Core/Indotel.Core.csproj
 
-      - name: Build
+      - name: Restore tests
+        run: dotnet restore core-indotel/Indotel.Core.Tests/Indotel.Core.Tests.csproj
+
+      - name: Build Core
         run: dotnet build core-indotel/Indotel.Core/Indotel.Core.csproj --configuration Release --no-restore
+
+      - name: Test Core
+        run: dotnet test core-indotel/Indotel.Core.Tests/Indotel.Core.Tests.csproj --configuration Release --no-restore --verbosity normal
