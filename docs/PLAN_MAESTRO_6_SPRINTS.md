@@ -213,5 +213,5 @@ Dejar el sistema reproducible, entregable y defendible.
 
 # Estado actual
 
-- Sprint 1: implementación de hardening realizada en la rama `core`; requiere validación final de compilación, pruebas y ejecución local.
+- Sprint 1: implementación completada; restauración, compilación Release, 20 pruebas automáticas y publicación de comprobación aprobadas sobre el commit `6704e0a`. Permanecen las pruebas manuales de integración para el cierre funcional definitivo.
 - Sprints 2 a 6: pendientes.
