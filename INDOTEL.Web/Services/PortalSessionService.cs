@@ -104,7 +104,7 @@ public sealed class PortalSessionService
         var sessionId = Guid.NewGuid().ToString("N");
         var state = CrearTokenState(loginResult);
         await _tokenStore.SaveAsync(sessionId, state, cancellationToken);
-        await GuardarCookieAsync(loginResult, sessionId, cancellationToken);
+        await GuardarCookieAsync(loginResult, sessionId);
     }
 
     public async Task<PortalRefreshResult> RenovarSesionAsync(
@@ -178,7 +178,7 @@ public sealed class PortalSessionService
                 sessionId,
                 CrearTokenState(loginResult),
                 cancellationToken);
-            await GuardarCookieAsync(loginResult, sessionId, cancellationToken);
+            await GuardarCookieAsync(loginResult, sessionId);
 
             return PortalRefreshResult.Success;
         }
@@ -238,7 +238,7 @@ public sealed class PortalSessionService
         }
         catch (GatewayUnavailableException)
         {
-            // La revocación remota puede completarse después; la sesión local se elimina siempre.
+            // La sesión local se elimina aunque la revocación remota no responda.
         }
         finally
         {
@@ -290,8 +290,7 @@ public sealed class PortalSessionService
 
     private async Task GuardarCookieAsync(
         LoginResponse loginResult,
-        string sessionId,
-        CancellationToken cancellationToken)
+        string sessionId)
     {
         var principal = CrearPrincipal(loginResult, sessionId);
         var expiraCookie = ConvertirAFechaUtc(loginResult.RefreshTokenExpiraEn);
@@ -308,16 +307,12 @@ public sealed class PortalSessionService
             ExpiresUtc = expiraCookie
         };
 
-        await HttpContext.SignOutAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            propiedades: null);
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         HttpContext.User = principal;
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             principal,
             propiedades);
-
-        cancellationToken.ThrowIfCancellationRequested();
     }
 
     private static ClaimsPrincipal CrearPrincipal(
@@ -370,7 +365,6 @@ public sealed class PortalSessionService
         if (!string.IsNullOrWhiteSpace(sessionId))
         {
             await _tokenStore.RemoveAsync(sessionId, cancellationToken);
-            RefreshLocks.TryRemove(sessionId, out _);
         }
 
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
