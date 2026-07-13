@@ -1,0 +1,2 @@
+RESULTADO_MSBUILD=DIAGNOSTICO_NO_GENERADO
+El paso de compilación no dejó el archivo esperado.
