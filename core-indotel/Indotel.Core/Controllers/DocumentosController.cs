@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Indotel.Core.Data;
+using Indotel.Core.Helpers;
 using Indotel.Core.Models;
 using Indotel.Core.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,11 +12,12 @@ namespace Indotel.Core.Controllers;
 [Authorize]
 [ApiController]
 [Route("api")]
-public class DocumentosController : ControllerBase
+public sealed class DocumentosController : ControllerBase
 {
     private const long MaxFileSizeBytes = 5 * 1024 * 1024;
 
-    private static readonly string[] ExtensionesPermitidas =
+    private static readonly HashSet<string> ExtensionesPermitidas = new(
+        StringComparer.OrdinalIgnoreCase)
     {
         ".pdf",
         ".jpg",
@@ -25,227 +27,372 @@ public class DocumentosController : ControllerBase
 
     private readonly IndotelDbContext _db;
     private readonly IWebHostEnvironment _environment;
+    private readonly CurrentUserService _currentUser;
 
-    public DocumentosController(IndotelDbContext db, IWebHostEnvironment environment)
+    public DocumentosController(
+        IndotelDbContext db,
+        IWebHostEnvironment environment,
+        CurrentUserService currentUser)
     {
         _db = db;
         _environment = environment;
+        _currentUser = currentUser;
     }
 
     [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet("reclamaciones/{reclamacionId:int}/documentos")]
-    public async Task<IActionResult> GetByReclamacion(int reclamacionId)
+    public async Task<IActionResult> GetByReclamacion(
+        int reclamacionId,
+        CancellationToken cancellationToken)
     {
-        var reclamacion = await _db.Reclamaciones.FindAsync(reclamacionId);
-        if (reclamacion is null) return NotFound(new { mensaje = "Reclamacion no encontrada" });
+        var reclamacion = await _db.Reclamaciones
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == reclamacionId, cancellationToken);
 
-        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
+        if (reclamacion is null)
+        {
+            return Problema(
+                StatusCodes.Status404NotFound,
+                "RECLAMACION_NO_ENCONTRADA",
+                "Reclamacion no encontrada");
+        }
+
+        if (!await _currentUser.PuedeVerReclamacionAsync(reclamacion, cancellationToken))
+        {
+            return Problema(
+                StatusCodes.Status403Forbidden,
+                "RECLAMACION_SIN_ACCESO",
+                "No tiene permiso para consultar los documentos de esta reclamacion");
+        }
 
         var documentos = await _db.DocumentosReclamacion
+            .AsNoTracking()
             .Where(x => x.ReclamacionId == reclamacionId)
             .OrderByDescending(x => x.FechaSubida)
-            .ToListAsync();
+            .Select(x => new
+            {
+                x.Id,
+                x.ReclamacionId,
+                x.NombreArchivo,
+                x.TipoContenido,
+                x.FechaSubida
+            })
+            .ToListAsync(cancellationToken);
 
         return Ok(documentos);
     }
 
     [Authorize(Roles = "Administrador,AnalistaDAU,Auditor,Prestadora,Ciudadano")]
     [HttpGet("documentos/{id:int}/descargar")]
-    public async Task<IActionResult> Descargar(int id)
+    public async Task<IActionResult> Descargar(int id, CancellationToken cancellationToken)
     {
-        var documento = await _db.DocumentosReclamacion.FindAsync(id);
-        if (documento is null) return NotFound(new { mensaje = "Documento no encontrado" });
+        var documento = await _db.DocumentosReclamacion
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        var reclamacion = await _db.Reclamaciones.FindAsync(documento.ReclamacionId);
-        if (reclamacion is null) return NotFound(new { mensaje = "Reclamacion no encontrada" });
+        if (documento is null)
+        {
+            return Problema(
+                StatusCodes.Status404NotFound,
+                "DOCUMENTO_NO_ENCONTRADO",
+                "Documento no encontrado");
+        }
 
-        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
+        var reclamacion = await _db.Reclamaciones
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == documento.ReclamacionId, cancellationToken);
+
+        if (reclamacion is null)
+        {
+            return Problema(
+                StatusCodes.Status404NotFound,
+                "RECLAMACION_NO_ENCONTRADA",
+                "Reclamacion no encontrada");
+        }
+
+        if (!await _currentUser.PuedeVerReclamacionAsync(reclamacion, cancellationToken))
+        {
+            return Problema(
+                StatusCodes.Status403Forbidden,
+                "DOCUMENTO_SIN_ACCESO",
+                "No tiene permiso para descargar este documento");
+        }
 
         var rutaFisica = ObtenerRutaFisicaSegura(documento.RutaArchivo);
         if (rutaFisica is null)
         {
-            await RegistrarAuditoria("Documento", id.ToString(), "DESCARGA_DOCUMENTO_BLOQUEADA", "WARN", "Ruta de documento invalida", string.Empty, string.Empty);
-            return BadRequest(new { mensaje = "Ruta de documento invalida" });
+            await RegistrarAuditoriaAsync(
+                "Documento",
+                id.ToString(),
+                "DESCARGA_DOCUMENTO_BLOQUEADA",
+                "WARN",
+                "Ruta de documento invalida",
+                cancellationToken);
+
+            return Problema(
+                StatusCodes.Status400BadRequest,
+                "RUTA_DOCUMENTO_INVALIDA",
+                "Ruta de documento invalida");
         }
 
         if (!System.IO.File.Exists(rutaFisica))
         {
-            await RegistrarAuditoria("Documento", id.ToString(), "DESCARGA_DOCUMENTO_NO_ENCONTRADO", "WARN", "Archivo fisico no encontrado", string.Empty, string.Empty);
-            return NotFound(new { mensaje = "Archivo fisico no encontrado" });
+            await RegistrarAuditoriaAsync(
+                "Documento",
+                id.ToString(),
+                "DESCARGA_DOCUMENTO_NO_ENCONTRADO",
+                "WARN",
+                "Archivo fisico no encontrado",
+                cancellationToken);
+
+            return Problema(
+                StatusCodes.Status404NotFound,
+                "ARCHIVO_FISICO_NO_ENCONTRADO",
+                "Archivo fisico no encontrado");
         }
 
-        await RegistrarAuditoria("Documento", id.ToString(), "DESCARGA_DOCUMENTO", "INFO", $"Documento descargado: {documento.NombreArchivo}", string.Empty, string.Empty);
+        await RegistrarAuditoriaAsync(
+            "Documento",
+            id.ToString(),
+            "DESCARGA_DOCUMENTO",
+            "INFO",
+            $"Documento descargado: {documento.NombreArchivo}",
+            cancellationToken);
 
         var tipoContenido = string.IsNullOrWhiteSpace(documento.TipoContenido)
             ? "application/octet-stream"
             : documento.TipoContenido;
-
         var nombreDescarga = string.IsNullOrWhiteSpace(documento.NombreArchivo)
             ? $"documento-{documento.Id}{Path.GetExtension(rutaFisica)}"
             : Path.GetFileName(documento.NombreArchivo);
 
-        var bytes = await System.IO.File.ReadAllBytesAsync(rutaFisica);
-        return File(bytes, tipoContenido, nombreDescarga);
+        return PhysicalFile(rutaFisica, tipoContenido, nombreDescarga, enableRangeProcessing: true);
     }
 
     [Authorize(Roles = "Administrador,AnalistaDAU,Ciudadano")]
+    [RequestSizeLimit(MaxFileSizeBytes + 1024 * 1024)]
     [HttpPost("reclamaciones/{reclamacionId:int}/documentos")]
-    public async Task<IActionResult> Upload(int reclamacionId, IFormFile? archivo)
+    public async Task<IActionResult> Upload(
+        int reclamacionId,
+        IFormFile? archivo,
+        CancellationToken cancellationToken)
     {
-        var reclamacion = await _db.Reclamaciones.FindAsync(reclamacionId);
-        if (reclamacion is null) return NotFound(new { mensaje = "Reclamacion no encontrada" });
+        var reclamacion = await _db.Reclamaciones
+            .FirstOrDefaultAsync(x => x.Id == reclamacionId, cancellationToken);
 
-        if (!await PuedeVerReclamacion(reclamacion)) return Forbid();
+        if (reclamacion is null)
+        {
+            return Problema(
+                StatusCodes.Status404NotFound,
+                "RECLAMACION_NO_ENCONTRADA",
+                "Reclamacion no encontrada");
+        }
+
+        if (!await _currentUser.PuedeVerReclamacionAsync(reclamacion, cancellationToken))
+        {
+            return Problema(
+                StatusCodes.Status403Forbidden,
+                "RECLAMACION_SIN_ACCESO",
+                "No tiene permiso para agregar documentos a esta reclamacion");
+        }
 
         if (ReclamacionEstadoService.EsFinal(reclamacion.Estado))
         {
-            return Conflict(new { mensaje = "No se pueden subir documentos a una reclamacion cerrada, rechazada o archivada" });
+            return Problema(
+                StatusCodes.Status409Conflict,
+                "RECLAMACION_FINALIZADA",
+                "No se pueden subir documentos a una reclamacion cerrada, rechazada o archivada");
         }
 
         if (archivo is null || archivo.Length == 0)
         {
-            return BadRequest(new { mensaje = "Debe enviar un archivo" });
+            return Problema(
+                StatusCodes.Status400BadRequest,
+                "ARCHIVO_OBLIGATORIO",
+                "Debe enviar un archivo");
         }
 
         if (archivo.Length > MaxFileSizeBytes)
         {
-            return BadRequest(new { mensaje = "El archivo no puede superar 5MB" });
+            return Problema(
+                StatusCodes.Status400BadRequest,
+                "ARCHIVO_DEMASIADO_GRANDE",
+                "El archivo no puede superar 5MB");
         }
 
-        var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
-        if (!ExtensionesPermitidas.Contains(extension))
+        var nombreOriginal = Path.GetFileName(archivo.FileName ?? string.Empty);
+        var extension = Path.GetExtension(nombreOriginal).ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(nombreOriginal) || !ExtensionesPermitidas.Contains(extension))
         {
-            return BadRequest(new { mensaje = "Tipo de archivo no permitido. Solo PDF, JPG, JPEG o PNG" });
+            return Problema(
+                StatusCodes.Status400BadRequest,
+                "TIPO_ARCHIVO_NO_PERMITIDO",
+                "Tipo de archivo no permitido. Solo PDF, JPG, JPEG o PNG");
+        }
+
+        await using var input = archivo.OpenReadStream();
+        var (contenidoValido, tipoContenidoReal) = await FileSignatureValidator.ValidarAsync(
+            input,
+            extension,
+            cancellationToken);
+
+        if (!contenidoValido)
+        {
+            return Problema(
+                StatusCodes.Status400BadRequest,
+                "CONTENIDO_ARCHIVO_INVALIDO",
+                "El contenido del archivo no corresponde con su extension");
         }
 
         var nombreSeguro = $"{Guid.NewGuid():N}{extension}";
         var carpetaRelativa = Path.Combine("uploads", "reclamaciones", reclamacionId.ToString());
         var carpetaFisica = Path.Combine(_environment.ContentRootPath, carpetaRelativa);
-
         Directory.CreateDirectory(carpetaFisica);
 
         var rutaFisica = Path.Combine(carpetaFisica, nombreSeguro);
-        await using (var stream = System.IO.File.Create(rutaFisica))
+
+        try
         {
-            await archivo.CopyToAsync(stream);
+            await using (var output = new FileStream(
+                             rutaFisica,
+                             FileMode.CreateNew,
+                             FileAccess.Write,
+                             FileShare.None,
+                             81920,
+                             useAsync: true))
+            {
+                await input.CopyToAsync(output, cancellationToken);
+            }
+
+            await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+
+            var documento = new DocumentoReclamacion
+            {
+                ReclamacionId = reclamacionId,
+                NombreArchivo = nombreOriginal,
+                TipoContenido = tipoContenidoReal,
+                RutaArchivo = Path.Combine(carpetaRelativa, nombreSeguro).Replace("\\", "/"),
+                FechaSubida = DateTime.UtcNow
+            };
+
+            _db.DocumentosReclamacion.Add(documento);
+            _db.Auditorias.Add(CrearAuditoria(
+                "Documento",
+                "PENDIENTE",
+                "SUBIR_DOCUMENTO",
+                "INFO",
+                $"Documento subido a reclamacion {reclamacionId}"));
+
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return CreatedAtAction(nameof(GetByReclamacion), new { reclamacionId }, new
+            {
+                documento.Id,
+                documento.ReclamacionId,
+                documento.NombreArchivo,
+                documento.TipoContenido,
+                documento.FechaSubida
+            });
         }
-
-        var documento = new DocumentoReclamacion
+        catch
         {
-            ReclamacionId = reclamacionId,
-            NombreArchivo = Path.GetFileName(archivo.FileName),
-            TipoContenido = archivo.ContentType,
-            RutaArchivo = Path.Combine(carpetaRelativa, nombreSeguro).Replace("\\", "/"),
-            FechaSubida = DateTime.UtcNow
-        };
+            if (System.IO.File.Exists(rutaFisica))
+            {
+                System.IO.File.Delete(rutaFisica);
+            }
 
-        _db.DocumentosReclamacion.Add(documento);
-        await _db.SaveChangesAsync();
-
-        await RegistrarAuditoria("Documento", documento.Id.ToString(), "SUBIR_DOCUMENTO", "INFO", $"Documento subido a reclamacion {reclamacionId}", string.Empty, string.Empty);
-
-        return CreatedAtAction(nameof(GetByReclamacion), new { reclamacionId }, documento);
+            throw;
+        }
     }
 
     [Authorize(Roles = "Administrador,AnalistaDAU")]
     [HttpDelete("documentos/{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var documento = await _db.DocumentosReclamacion.FindAsync(id);
-        if (documento is null) return NotFound(new { mensaje = "Documento no encontrado" });
+        var documento = await _db.DocumentosReclamacion
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (documento is null)
+        {
+            return Problema(
+                StatusCodes.Status404NotFound,
+                "DOCUMENTO_NO_ENCONTRADO",
+                "Documento no encontrado");
+        }
 
         var rutaFisica = ObtenerRutaFisicaSegura(documento.RutaArchivo);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        _db.DocumentosReclamacion.Remove(documento);
+        _db.Auditorias.Add(CrearAuditoria(
+            "Documento",
+            id.ToString(),
+            "ELIMINAR_DOCUMENTO",
+            "WARN",
+            "Documento eliminado"));
+        await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         if (rutaFisica is not null && System.IO.File.Exists(rutaFisica))
         {
             System.IO.File.Delete(rutaFisica);
         }
 
-        _db.DocumentosReclamacion.Remove(documento);
-        await _db.SaveChangesAsync();
+        return Ok(new
+        {
+            mensaje = "Documento eliminado correctamente",
+            correlationId = HttpContext.TraceIdentifier
+        });
+    }
 
-        await RegistrarAuditoria("Documento", id.ToString(), "ELIMINAR_DOCUMENTO", "WARN", "Documento eliminado", string.Empty, string.Empty);
-
-        return Ok(new { mensaje = "Documento eliminado correctamente" });
+    private ObjectResult Problema(int status, string codigo, string mensaje)
+    {
+        return ApiProblemFactory.Create(HttpContext, status, codigo, mensaje);
     }
 
     private string? ObtenerRutaFisicaSegura(string rutaRelativa)
     {
         if (string.IsNullOrWhiteSpace(rutaRelativa)) return null;
         if (Path.IsPathRooted(rutaRelativa)) return null;
-        if (rutaRelativa.Contains("..")) return null;
+        if (rutaRelativa.Contains("..", StringComparison.Ordinal)) return null;
 
         var contentRoot = Path.GetFullPath(_environment.ContentRootPath);
-        var rutaFisica = Path.GetFullPath(Path.Combine(contentRoot, rutaRelativa.Replace("/", Path.DirectorySeparatorChar.ToString())));
+        var uploadsRoot = Path.GetFullPath(Path.Combine(contentRoot, "uploads"));
+        var rutaFisica = Path.GetFullPath(Path.Combine(
+            contentRoot,
+            rutaRelativa.Replace("/", Path.DirectorySeparatorChar.ToString())));
 
-        return rutaFisica.StartsWith(contentRoot, StringComparison.OrdinalIgnoreCase) ? rutaFisica : null;
+        return rutaFisica.StartsWith(
+            uploadsRoot + Path.DirectorySeparatorChar,
+            StringComparison.OrdinalIgnoreCase)
+            ? rutaFisica
+            : null;
     }
 
-    private async Task<bool> PuedeVerReclamacion(Reclamacion reclamacion)
-    {
-        if (User.IsInRole("Administrador") || User.IsInRole("AnalistaDAU") || User.IsInRole("Auditor"))
-        {
-            return true;
-        }
-
-        if (User.IsInRole("Ciudadano"))
-        {
-            var ciudadanoId = await ObtenerCiudadanoIdActual();
-            return ciudadanoId == reclamacion.CiudadanoId;
-        }
-
-        if (User.IsInRole("Prestadora"))
-        {
-            var prestadoraId = await ObtenerPrestadoraIdActual();
-            return prestadoraId == reclamacion.PrestadoraId;
-        }
-
-        return false;
-    }
-
-    private async Task<int?> ObtenerCiudadanoIdActual()
-    {
-        var correo = User.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrWhiteSpace(correo)) return null;
-
-        return await _db.Ciudadanos
-            .Where(x => x.Correo == correo && x.Activo)
-            .Select(x => (int?)x.Id)
-            .FirstOrDefaultAsync();
-    }
-
-    private async Task<int?> ObtenerPrestadoraIdActual()
-    {
-        var correo = User.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrWhiteSpace(correo)) return null;
-
-        return await _db.Prestadoras
-            .Where(x => x.Correo == correo && x.Activa)
-            .Select(x => (int?)x.Id)
-            .FirstOrDefaultAsync();
-    }
-
-    private int ObtenerUsuarioIdActual()
-    {
-        var userIdText = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        int.TryParse(userIdText, out var userId);
-        return userId;
-    }
-
-    private async Task RegistrarAuditoria(
+    private async Task RegistrarAuditoriaAsync(
         string entidad,
         string entidadId,
         string accion,
         string nivel,
         string detalle,
-        string estadoAnterior,
-        string estadoNuevo)
+        CancellationToken cancellationToken)
     {
-        var userId = ObtenerUsuarioIdActual();
+        _db.Auditorias.Add(CrearAuditoria(entidad, entidadId, accion, nivel, detalle));
+        await _db.SaveChangesAsync(cancellationToken);
+    }
 
-        _db.Auditorias.Add(new Auditoria
+    private Auditoria CrearAuditoria(
+        string entidad,
+        string entidadId,
+        string accion,
+        string nivel,
+        string detalle)
+    {
+        return new Auditoria
         {
-            UsuarioId = userId == 0 ? null : userId,
+            UsuarioId = _currentUser.UsuarioId,
             UsuarioCorreo = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
             UsuarioRol = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty,
             Entidad = entidad,
@@ -253,16 +400,14 @@ public class DocumentosController : ControllerBase
             Accion = accion,
             Nivel = string.IsNullOrWhiteSpace(nivel) ? "INFO" : nivel.ToUpperInvariant(),
             Detalle = detalle ?? string.Empty,
-            EstadoAnterior = estadoAnterior ?? string.Empty,
-            EstadoNuevo = estadoNuevo ?? string.Empty,
+            EstadoAnterior = string.Empty,
+            EstadoNuevo = string.Empty,
             MetodoHttp = HttpContext.Request.Method,
             Ruta = HttpContext.Request.Path,
             DireccionIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
             UserAgent = HttpContext.Request.Headers.UserAgent.ToString(),
             CorrelationId = HttpContext.TraceIdentifier,
             Fecha = DateTime.UtcNow
-        });
-
-        await _db.SaveChangesAsync();
+        };
     }
 }
