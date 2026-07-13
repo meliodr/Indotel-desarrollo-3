@@ -7,7 +7,7 @@ namespace Indotel.Core.Controllers;
 
 [ApiController]
 [Route("api/health")]
-public class HealthController : ControllerBase
+public sealed class HealthController : ControllerBase
 {
     private readonly IndotelDbContext _db;
     private readonly IWebHostEnvironment _environment;
@@ -21,29 +21,56 @@ public class HealthController : ControllerBase
     [AllowAnonymous]
     [HttpGet]
     [HttpGet("~/health")]
-    public IActionResult Get()
+    [HttpGet("live")]
+    [HttpGet("~/health/live")]
+    public IActionResult Live()
     {
         return Ok(new
         {
             status = "OK",
             service = "INDOTEL Core API",
-            version = "1.0.0",
+            version = "1.1.0",
             environment = _environment.EnvironmentName,
-            timestamp = DateTime.UtcNow
+            timestamp = DateTime.UtcNow,
+            correlationId = HttpContext.TraceIdentifier
         });
     }
 
     [AllowAnonymous]
+    [HttpGet("ready")]
     [HttpGet("db")]
-    public async Task<IActionResult> Db()
+    [HttpGet("~/health/ready")]
+    public async Task<IActionResult> Ready(CancellationToken cancellationToken)
     {
-        var puedeConectar = await _db.Database.CanConnectAsync();
-
-        return Ok(new
+        try
         {
-            status = puedeConectar ? "OK" : "ERROR",
-            database = puedeConectar ? "CONNECTED" : "DISCONNECTED",
-            timestamp = DateTime.UtcNow
-        });
+            var puedeConectar = await _db.Database.CanConnectAsync(cancellationToken);
+
+            var payload = new
+            {
+                status = puedeConectar ? "OK" : "ERROR",
+                service = "INDOTEL Core API",
+                database = puedeConectar ? "CONNECTED" : "DISCONNECTED",
+                timestamp = DateTime.UtcNow,
+                correlationId = HttpContext.TraceIdentifier
+            };
+
+            return puedeConectar
+                ? Ok(payload)
+                : StatusCode(StatusCodes.Status503ServiceUnavailable, payload);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                status = "ERROR",
+                service = "INDOTEL Core API",
+                database = "DISCONNECTED",
+                codigo = "BASE_DATOS_NO_DISPONIBLE",
+                mensaje = "El Core está activo, pero la base de datos no está disponible",
+                timestamp = DateTime.UtcNow,
+                correlationId = HttpContext.TraceIdentifier
+            });
+        }
     }
 }
