@@ -12,7 +12,7 @@ namespace INDOTEL_CAJA_REAL_.Clases
                 var configured = ConfigurationManager.AppSettings["ApiBaseUrl"];
                 if (string.IsNullOrWhiteSpace(configured))
                 {
-                    configured = "http://localhost:5185/";
+                    configured = "https://localhost:8443/";
                 }
 
                 if (!configured.EndsWith("/", StringComparison.Ordinal))
