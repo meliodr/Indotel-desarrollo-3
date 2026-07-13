@@ -1,0 +1,94 @@
+name: Validar integración con Caja antigua
+
+on:
+  push:
+    branches: [integracion-caja-antigua]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  preparar-y-validar-core:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout con historial completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: integracion-caja-antigua
+
+      - name: Integrar Caja antigua sin modificarla
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git rm -r --ignore-unmatch "INDOTEL_CAJA(REAL)"
+          git checkout 50a9dd485b24678f600ddd4f7362e0323f966291 -- "INDOTEL_CAJA(REAL)"
+
+          git rm -r --ignore-unmatch "INDOTEL_CAJA.Tests"
+          git rm --ignore-unmatch ".github/workflows/caja-ci.yml"
+          git rm --ignore-unmatch "scripts/validar_sprint4_caja.sh"
+
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Integra la Caja antigua intacta con el sistema actual"
+            git push origin HEAD:integracion-caja-antigua
+          fi
+
+      - name: Configurar .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restaurar Core
+        run: dotnet restore "core-indotel/Indotel.Core.sln"
+
+      - name: Compilar Core
+        run: dotnet build "core-indotel/Indotel.Core.sln" --configuration Release --no-restore
+
+      - name: Probar Core
+        run: dotnet test "core-indotel/Indotel.Core.Tests/Indotel.Core.Tests.csproj" --configuration Release --no-build
+
+      - name: Verificar contrato básico de la Caja antigua
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'https://localhost:7085/' 'INDOTEL_CAJA(REAL)/Clases/ApiClient.cs'
+          grep -Fq 'https://localhost:7085;http://localhost:5085' 'core-indotel/Indotel.Core/Properties/launchSettings.json'
+          grep -Fq '[HttpGet("cedula/{cedula}")]' 'core-indotel/Indotel.Core/Controllers/LegacyCajaCompatibilityController.cs'
+          grep -Fq '"/api/auth/login"' 'INDOTEL_CAJA(REAL)/Clases/ServicioAuth.cs'
+          grep -Fq '"/api/reclamaciones/cedula/"' 'INDOTEL_CAJA(REAL)/Clases/ServicioReclamaciones.cs'
+
+  compilar-caja-antigua:
+    needs: preparar-y-validar-core
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout de la integración preparada
+        uses: actions/checkout@v4
+        with:
+          ref: integracion-caja-antigua
+
+      - name: Instalar Developer Pack .NET Framework 4.8.1
+        shell: pwsh
+        run: choco install netfx-4.8.1-devpack -y --no-progress
+
+      - name: Restaurar paquetes NuGet de Caja
+        shell: pwsh
+        run: nuget restore "INDOTEL_CAJA(REAL)\packages.config" -PackagesDirectory "INDOTEL_CAJA(REAL)\packages" -NonInteractive
+
+      - name: Compilar Caja antigua
+        shell: pwsh
+        run: msbuild "INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" /m /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal
+
+      - name: Publicar binarios de validación
+        uses: actions/upload-artifact@v4
+        with:
+          name: caja-antigua-compilada
+          path: INDOTEL_CAJA(REAL)/bin/Release/**
+          if-no-files-found: error
