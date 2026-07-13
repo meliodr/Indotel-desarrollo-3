@@ -1,0 +1,55 @@
+name: Package Caja Source
+
+on:
+  pull_request:
+    paths:
+      - "INDOTEL_CAJA(REAL)/**"
+      - "INDOTEL_CAJA.Tests/**"
+      - "global.json"
+      - ".github/workflows/package-caja-source.yml"
+
+jobs:
+  package-source:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare source package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p package/Caja_actual
+          cp -a "INDOTEL_CAJA(REAL)" package/Caja_actual/
+          cp -a "INDOTEL_CAJA.Tests" package/Caja_actual/
+          cp "global.json" package/Caja_actual/
+          cat > package/Caja_actual/LEEME_CAJA_ACTUAL.txt <<'EOF'
+          CAJA ACTUAL INDOTEL
+          ===================
+          Fuente: rama main
+          Framework: .NET 8 para Windows (net8.0-windows)
+          Tipo: Windows Forms
+
+          Requisitos:
+          - Windows
+          - Visual Studio 2022
+          - Carga de trabajo Desarrollo de escritorio de .NET
+          - SDK de .NET 8
+
+          Proyecto principal:
+          INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj
+
+          Compilar desde PowerShell:
+          dotnet restore ".\INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj"
+          dotnet build ".\INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" --configuration Release
+          EOF
+          cd package
+          zip -r Caja_actual_INDOTEL_NET8_fuente.zip Caja_actual
+
+      - name: Upload source ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: caja-actual-fuente
+          path: package/Caja_actual_INDOTEL_NET8_fuente.zip
+          if-no-files-found: error
