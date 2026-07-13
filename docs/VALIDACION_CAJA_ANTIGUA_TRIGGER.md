@@ -13,3 +13,4 @@ Ejecución solicitada con propagación de salidas corregida.
 Ejecución solicitada con captura nativa de MSBuild corregida.
 Ejecución solicitada mediante System.Diagnostics.Process.
 Ejecución solicitada con try catch finally.
+Ejecución solicitada con setup-msbuild.
