@@ -1,11 +1,19 @@
 using System.Text.Json;
 using Indotel.Core.Helpers;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Indotel.Core.Middleware;
 
 public sealed class ExceptionHandlingMiddleware
 {
+    private static readonly HashSet<int> SqlConflictNumbers = new()
+    {
+        2601, // Índice único duplicado.
+        2627, // Restricción única duplicada.
+        547   // Restricción de clave foránea o CHECK.
+    };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
@@ -47,6 +55,33 @@ public sealed class ExceptionHandlingMiddleware
                 "CONFLICTO_CONCURRENCIA",
                 "El recurso cambió mientras se procesaba la solicitud. Actualice los datos e intente nuevamente.");
         }
+        catch (DbUpdateException ex) when (ObtenerSqlException(ex) is { } sqlException && SqlConflictNumbers.Contains(sqlException.Number))
+        {
+            _logger.LogWarning(
+                ex,
+                "Conflicto de integridad SQL. Numero={Numero} CorrelationId={CorrelationId}",
+                sqlException.Number,
+                context.TraceIdentifier);
+
+            await WriteProblemAsync(
+                context,
+                StatusCodes.Status409Conflict,
+                "CONFLICTO_PERSISTENCIA",
+                "La operación entra en conflicto con los datos existentes");
+        }
+        catch (DbUpdateException ex) when (ObtenerSqlException(ex) is not null)
+        {
+            _logger.LogError(
+                ex,
+                "SQL Server no disponible durante persistencia. CorrelationId={CorrelationId}",
+                context.TraceIdentifier);
+
+            await WriteProblemAsync(
+                context,
+                StatusCodes.Status503ServiceUnavailable,
+                "BASE_DATOS_NO_DISPONIBLE",
+                "La base de datos no está disponible temporalmente");
+        }
         catch (DbUpdateException ex)
         {
             _logger.LogWarning(
@@ -59,6 +94,20 @@ public sealed class ExceptionHandlingMiddleware
                 StatusCodes.Status409Conflict,
                 "CONFLICTO_PERSISTENCIA",
                 "La operación entra en conflicto con los datos existentes");
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError(
+                ex,
+                "SQL Server no disponible. Numero={Numero} CorrelationId={CorrelationId}",
+                ex.Number,
+                context.TraceIdentifier);
+
+            await WriteProblemAsync(
+                context,
+                StatusCodes.Status503ServiceUnavailable,
+                "BASE_DATOS_NO_DISPONIBLE",
+                "La base de datos no está disponible temporalmente");
         }
         catch (TimeoutException ex)
         {
@@ -86,6 +135,17 @@ public sealed class ExceptionHandlingMiddleware
                 "ERROR_INTERNO",
                 "Ocurrió un error interno en el servidor");
         }
+    }
+
+    private static SqlException? ObtenerSqlException(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException!)
+        {
+            if (current is SqlException sqlException) return sqlException;
+            if (current.InnerException is null) break;
+        }
+
+        return null;
     }
 
     private static async Task WriteProblemAsync(
