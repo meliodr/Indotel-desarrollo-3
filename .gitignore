@@ -1,11 +1,17 @@
 # Visual Studio
 .vs/
+**/.vs/
 *.user
 *.suo
 
 # .NET build output
 **/bin/
 **/obj/
+**/TestResults/
+
+# Data Protection and local runtime state
+**/.data-protection-keys/
+**/data-protection-keys/
 
 # Local configuration and logs
 *.log
