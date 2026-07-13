@@ -1,14 +1,40 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace INDOTEL_CAJA_REAL_.Clases
 {
-    public sealed class ServicioAuth
+    public class ServicioAuth
     {
-        private readonly ApiClient _api = new ApiClient();
+        private readonly HttpClient _client;
 
-        public Task<ApiResponse<LoginRespuesta>> Login(LoginRequest request) =>
-            _api.PostAsync<LoginRespuesta>("/api/auth/login", request);
+        private readonly ApiClient api;
 
-        public Task<ApiResponse<object>> Logout() => _api.Logout();
+        public ServicioAuth()
+        {
+            api = new ApiClient();
+        }
+
+        public async Task<ApiResponse<LoginRespuesta>> Login(LoginRequest request)
+        {
+            return await api.PostAsync<LoginRespuesta>(
+                "/api/auth/login",
+                request);
+        }
+
+        public async Task<ApiResponse<object>> Logout()
+        {
+            return await api.PostAsync<object>("api/auth/logout", 
+                new{
+                    refreshToken = Sesion.RefreshToken
+                });
+        }
+
     }
 }

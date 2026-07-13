@@ -1,20 +1,256 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\EntityFramework.6.5.2\build\EntityFramework.props" Condition="Exists('packages\EntityFramework.6.5.2\build\EntityFramework.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{ECA8C5E2-D3A2-45B9-A503-8FEC674D882D}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>disable</Nullable>
     <RootNamespace>INDOTEL_CAJA_REAL_</RootNamespace>
-    <AssemblyName>INDOTEL_CAJA_REAL</AssemblyName>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <AssemblyName>INDOTEL_CAJA%28REAL%29</AssemblyName>
+    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
-
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>packages\EntityFramework.6.5.2\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>packages\EntityFramework.6.5.2\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="JWT, Version=11.0.0.0, Culture=neutral, PublicKeyToken=6f98bca0f40f2ecf, processorArchitecture=MSIL">
+      <HintPath>packages\JWT.11.1.0\lib\net462\JWT.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=10.0.0.8, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.10.0.8\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.IO.Pipelines, Version=10.0.0.8, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.IO.Pipelines.10.0.8\lib\net462\System.IO.Pipelines.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Memory.4.6.3\lib\net462\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Numerics.Vectors.4.6.1\lib\net462\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Runtime.CompilerServices.Unsafe.6.1.2\lib\net462\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Encodings.Web, Version=10.0.0.8, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Text.Encodings.Web.10.0.8\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json, Version=10.0.0.8, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Text.Json.10.0.8\lib\net462\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Threading.Tasks.Extensions.4.6.3\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Clases\CambiarEstadoReclamacionDto.cs" />
+    <Compile Include="Clases\Ciudadano.cs" />
+    <Compile Include="Clases\CiudadanoCreate.cs" />
+    <Compile Include="Clases\HistorialReclamacion.cs" />
+    <Compile Include="Clases\MotivoReclamacion.cs" />
+    <Compile Include="Clases\Prestadora.cs" />
+    <Compile Include="Clases\ReclamacionCreate.cs" />
+    <Compile Include="Clases\ReclamacionListado.cs" />
+    <Compile Include="Clases\Reporte-Reclamacion\Reclamacion.cs" />
+    <Compile Include="Clases\ResolverReclamacionDto.cs" />
+    <Compile Include="Clases\Servicios\ApiClient.cs" />
+    <Compile Include="Clases\Servicios\ApiResponse.cs" />
+    <Compile Include="Clases\Login\LoginRequest.cs" />
+    <Compile Include="Clases\Login\LoginRespuesta.cs" />
+    <Compile Include="Clases\Servicios\RefreshTokenRequest.cs" />
+    <Compile Include="Clases\Reporte-Reclamacion\ReporteResumen.cs" />
+    <Compile Include="Clases\Servicios\ServicioAuth.cs" />
+    <Compile Include="Clases\Servicios\ServicioCatalogos.cs" />
+    <Compile Include="Clases\Servicios\ServicioCiudadanos.cs" />
+    <Compile Include="Clases\Servicios\ServicioMotivos.cs" />
+    <Compile Include="Clases\Servicios\ServicioPrestadoras.cs" />
+    <Compile Include="Clases\Servicios\ServicioReclamaciones.cs" />
+    <Compile Include="Clases\Servicios\ServicioRefresh.cs" />
+    <Compile Include="Clases\Servicios\ServicioReportes.cs" />
+    <Compile Include="Clases\Servicios\ServicioServicios.cs" />
+    <Compile Include="Clases\Servicios\ServicioTelecom.cs" />
+    <Compile Include="Clases\Servicios\ServicioTiposReclamacion.cs" />
+    <Compile Include="Clases\ServicioTelecoms.cs" />
+    <Compile Include="Clases\Sesion.cs" />
+    <Compile Include="Clases\Servicios\Token.cs" />
+    <Compile Include="Clases\TipoReclamacion.cs" />
+    <Compile Include="Clases\UsuarioSesion.cs" />
+    <Compile Include="FormsCaja\AdministrarReclamaciones.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\AdministrarReclamaciones.Designer.cs">
+      <DependentUpon>AdministrarReclamaciones.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\Buscar_ciudadano.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\Buscar_ciudadano.Designer.cs">
+      <DependentUpon>Buscar_ciudadano.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\Cambiar_Estado.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\Cambiar_Estado.Designer.cs">
+      <DependentUpon>Cambiar_Estado.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\Cerrar_Sesión.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\Cerrar_Sesión.Designer.cs">
+      <DependentUpon>Cerrar_Sesión.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\Detalle_Reclamaciones.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\Detalle_Reclamaciones.Designer.cs">
+      <DependentUpon>Detalle_Reclamaciones.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\Login.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\Login.Designer.cs">
+      <DependentUpon>Login.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\NUEVA_RECLAMACIÓN.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\NUEVA_RECLAMACIÓN.Designer.cs">
+      <DependentUpon>NUEVA_RECLAMACIÓN.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\Panel Principal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\Panel Principal.Designer.cs">
+      <DependentUpon>Panel Principal.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\REGISTRAR_CIUDADANO.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\REGISTRAR_CIUDADANO.Designer.cs">
+      <DependentUpon>REGISTRAR_CIUDADANO.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormsCaja\Resolver_Reclamacion.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormsCaja\Resolver_Reclamacion.Designer.cs">
+      <DependentUpon>Resolver_Reclamacion.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormsCaja\AdministrarReclamaciones.resx">
+      <DependentUpon>AdministrarReclamaciones.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\Buscar_ciudadano.resx">
+      <DependentUpon>Buscar_ciudadano.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\Cambiar_Estado.resx">
+      <DependentUpon>Cambiar_Estado.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\Cerrar_Sesión.resx">
+      <DependentUpon>Cerrar_Sesión.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\Detalle_Reclamaciones.resx">
+      <DependentUpon>Detalle_Reclamaciones.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\Login.resx">
+      <DependentUpon>Login.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\NUEVA_RECLAMACIÓN.resx">
+      <DependentUpon>NUEVA_RECLAMACIÓN.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\Panel Principal.resx">
+      <DependentUpon>Panel Principal.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\REGISTRAR_CIUDADANO.resx">
+      <DependentUpon>REGISTRAR_CIUDADANO.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormsCaja\Resolver_Reclamacion.resx">
+      <DependentUpon>Resolver_Reclamacion.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Capture.JPG" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\EntityFramework.6.5.2\build\EntityFramework.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\EntityFramework.6.5.2\build\EntityFramework.props'))" />
+    <Error Condition="!Exists('packages\EntityFramework.6.5.2\build\EntityFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\EntityFramework.6.5.2\build\EntityFramework.targets'))" />
+    <Error Condition="!Exists('packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets'))" />
+  </Target>
+  <Import Project="packages\EntityFramework.6.5.2\build\EntityFramework.targets" Condition="Exists('packages\EntityFramework.6.5.2\build\EntityFramework.targets')" />
+  <Import Project="packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets" Condition="Exists('packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" />
 </Project>

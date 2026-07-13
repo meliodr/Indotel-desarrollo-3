@@ -1,6 +1,12 @@
-using INDOTEL_CAJA_REAL_.Clases;
+﻿using INDOTEL_CAJA_REAL_.Clases;
+using INDOTEL_CAJA_REAL_.Clases.Servicios;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -20,132 +26,119 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
 
         private async void btnBuscarCedula_Click(object sender, EventArgs e)
         {
-            btnBuscarCedula.Enabled = false;
-            Cursor = Cursors.WaitCursor;
+            ServicioReclamaciones servicio =
+         new ServicioReclamaciones();
 
-            try
+            /*if (!string.IsNullOrWhiteSpace(txtCedula.Text))
             {
-                var servicio = new ServicioReclamaciones();
+                var respuesta =
+                    await servicio.BuscarPorCedula(txtCedula.Text);
 
-                if (!string.IsNullOrWhiteSpace(txtCedula.Text))
+                if (!respuesta.Exitoso)
                 {
-                    if (!ValidacionesCaja.CedulaValida(txtCedula.Text))
-                    {
-                        MessageBox.Show("La cedula debe contener 11 digitos.");
-                        return;
-                    }
-
-                    var porCedula = await servicio.BuscarPorCedula(txtCedula.Text);
-                    MostrarResultado(porCedula);
+                    MessageBox.Show(respuesta.Mensaje);
                     return;
                 }
 
-                if (!string.IsNullOrWhiteSpace(txtExpediente.Text))
+                dgvReclamaciones.DataSource =
+                    respuesta.Datos;
+
+                return;
+            }*/
+
+            if (!string.IsNullOrWhiteSpace(txtExpediente.Text))
+            {
+                var respuesta =
+                    await servicio.BuscarExpediente(
+                        txtExpediente.Text);
+
+                if (!respuesta.Exitoso)
                 {
-                    var respuesta = await servicio.Buscar(
-                        numeroExpediente: txtExpediente.Text,
-                        page: 1,
-                        pageSize: 100);
-
-                    if (!respuesta.Exitoso)
-                    {
-                        MessageBox.Show(
-                            respuesta.MensajeConReferencia,
-                            "Busqueda no completada",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    dgvReclamaciones.DataSource = respuesta.Datos?.Data ?? new List<Reclamacion>();
+                    MessageBox.Show(respuesta.Mensaje);
                     return;
                 }
 
-                MessageBox.Show("Indique una cedula o un numero de expediente.");
+                List<Reclamacion> lista =
+                    new List<Reclamacion>();
+
+                lista.Add(respuesta.Datos);
+
+                dgvReclamaciones.DataSource =
+                    lista;
+
+                return;
             }
-            finally
-            {
-                Cursor = Cursors.Default;
-                btnBuscarCedula.Enabled = true;
-            }
+
+            MessageBox.Show(
+                "Debe un número de expediente.");
+
         }
+
+       
 
         private async void btnActualizar_Click(object sender, EventArgs e)
         {
-            txtCedula.Clear();
+            //txtCedula.Clear();
+
             txtExpediente.Clear();
+
             await CargarTodas();
+
         }
 
         private void btnVer_Click(object sender, EventArgs e)
         {
             if (dgvReclamaciones.CurrentRow == null)
             {
-                MessageBox.Show("Seleccione una reclamacion.");
+                MessageBox.Show("Seleccione una reclamación.");
                 return;
             }
 
-            var id = Convert.ToInt32(dgvReclamaciones.CurrentRow.Cells["Id"].Value);
-            using (var detalle = new Detalle_Reclamaciones(id))
-            {
-                detalle.ShowDialog(this);
-            }
+            int id = Convert.ToInt32(
+                dgvReclamaciones.CurrentRow.Cells["Id"].Value);
+
+           Detalle_Reclamaciones frm =
+                new Detalle_Reclamaciones(id);
+
+            frm.ShowDialog();
+
         }
 
         private async Task CargarTodas()
         {
-            btnActualizar.Enabled = false;
-            Cursor = Cursors.WaitCursor;
-            try
-            {
-                var servicio = new ServicioReclamaciones();
-                var respuesta = await servicio.Buscar(page: 1, pageSize: 100);
+            ServicioReclamaciones servicio =
+                new ServicioReclamaciones();
 
-                if (!respuesta.Exitoso)
-                {
-                    MessageBox.Show(
-                        respuesta.MensajeConReferencia,
-                        "No fue posible cargar las reclamaciones",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-                    return;
-                }
+            var respuesta =
+                await servicio.ObtenerTodas();
 
-                dgvReclamaciones.DataSource = respuesta.Datos?.Data ?? new List<Reclamacion>();
-            }
-            finally
-            {
-                Cursor = Cursors.Default;
-                btnActualizar.Enabled = true;
-            }
-        }
-
-        private void MostrarResultado(ApiResponse<List<Reclamacion>> respuesta)
-        {
             if (!respuesta.Exitoso)
             {
-                MessageBox.Show(
-                    respuesta.MensajeConReferencia,
-                    "Busqueda no completada",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                MessageBox.Show(respuesta.Mensaje);
                 return;
             }
 
-            dgvReclamaciones.DataSource = respuesta.Datos ?? new List<Reclamacion>();
+            dgvReclamaciones.DataSource =
+                respuesta.Datos;
         }
 
         private void btnCerrar_Click(object sender, EventArgs e)
         {
-            Close();
+            Panel_Principal principal = new Panel_Principal();
+
+            principal.Show();
+
+            this.Hide();
         }
 
         private void label3_Click(object sender, EventArgs e)
         {
+
         }
 
         private void txtExpediente_TextChanged(object sender, EventArgs e)
         {
+
         }
     }
 }

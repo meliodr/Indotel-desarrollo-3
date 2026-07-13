@@ -1,6 +1,13 @@
-using INDOTEL_CAJA_REAL_.Clases;
+﻿using INDOTEL_CAJA_REAL_.Clases;
 using INDOTEL_CAJA_REAL_.FormsCaja;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace INDOTEL_CAJA_REAL_
@@ -10,97 +17,80 @@ namespace INDOTEL_CAJA_REAL_
         public Login()
         {
             InitializeComponent();
+            /*Panel_Principal dashboard = new Panel_Principal();
+
+            dashboard.Show();*/
         }
 
         private async void btnInicioSesion_Click(object sender, EventArgs e)
         {
-            var correo = txtCorreo.Text?.Trim();
-            var password = txtContraseña.Text;
-
-            if (!ValidacionesCaja.CorreoValido(correo))
+            if (string.IsNullOrWhiteSpace(txtCorreo.Text))
             {
-                MessageBox.Show("Ingrese un correo valido.", "Inicio de sesion");
-                txtCorreo.Focus();
+                MessageBox.Show("Ingrese el correo.");
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(txtContraseña.Text))
             {
-                MessageBox.Show("Ingrese la contrasena.", "Inicio de sesion");
-                txtContraseña.Focus();
+                MessageBox.Show("Ingrese la contraseña.");
                 return;
             }
 
             btnInicioSesion.Enabled = false;
-            Cursor = Cursors.WaitCursor;
 
             try
             {
-                var servicio = new ServicioAuth();
-                var respuesta = await servicio.Login(new LoginRequest
-                {
-                    Correo = correo,
-                    Password = password
-                });
+                ServicioAuth servicio = new ServicioAuth();
 
-                if (!respuesta.Exitoso || respuesta.Datos?.Usuario == null)
+                LoginRequest request = new LoginRequest
                 {
-                    MessageBox.Show(
-                        respuesta.MensajeConReferencia,
-                        "No fue posible iniciar sesion",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
+                    Correo = txtCorreo.Text,
+                    Password = txtContraseña.Text
+                };
+
+                var respuesta = await servicio.Login(request);
+
+                if (!respuesta.Exitoso)
+                {
+                    MessageBox.Show(respuesta.Mensaje);
                     return;
                 }
 
                 Sesion.Token = respuesta.Datos.Token;
+
                 Sesion.RefreshToken = respuesta.Datos.RefreshToken;
+
                 Sesion.Usuario = respuesta.Datos.Usuario;
 
-                if (!PermisosCaja.PuedeIngresar(Sesion.Usuario.Rol))
-                {
-                    await servicio.Logout();
-                    MessageBox.Show(
-                        "Este perfil no tiene acceso al modulo interno de Caja.",
-                        "Acceso denegado",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-                    return;
-                }
+               Panel_Principal dashboard = new Panel_Principal();
 
-                txtContraseña.Clear();
-                Hide();
-                using (var dashboard = new Panel_Principal())
-                {
-                    dashboard.ShowDialog(this);
-                }
+                dashboard.Show();
 
-                if (!IsDisposed)
-                {
-                    Show();
-                    Activate();
-                }
+                this.Hide();
             }
             finally
             {
-                Cursor = Cursors.Default;
                 btnInicioSesion.Enabled = true;
             }
+
+
         }
 
         private void label1_Click(object sender, EventArgs e)
         {
+
         }
+
+      
 
         private void Login_Load(object sender, EventArgs e)
         {
-            Sesion.Limpiar();
-            txtCorreo.Focus();
+
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            Close();
+            this.Close();
         }
     }
 }
