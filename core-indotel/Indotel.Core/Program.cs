@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading.RateLimiting;
 using Indotel.Core.Constants;
 using Indotel.Core.Data;
+using Indotel.Core.Filters;
 using Indotel.Core.Helpers;
 using Indotel.Core.Middleware;
 using Indotel.Core.Services;
@@ -33,7 +34,10 @@ if (!builder.Environment.IsDevelopment() &&
 }
 
 builder.Services.AddProblemDetails();
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ApiProblemResultFilter>();
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUserService>();
