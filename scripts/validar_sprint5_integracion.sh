@@ -11,7 +11,9 @@ fail() {
 
 printf '\n==> Verificacion de rama y componentes\n'
 CURRENT_BRANCH="$(git branch --show-current)"
-[[ "$CURRENT_BRANCH" == "integracion" ]] || fail "Este script debe ejecutarse desde la rama integracion. Rama actual: $CURRENT_BRANCH"
+RESOLVED_BRANCH="${CURRENT_BRANCH:-${GITHUB_REF_NAME:-}}"
+[[ "$RESOLVED_BRANCH" == "integracion" ]] \
+  || fail "Este script debe ejecutarse desde la rama integracion. Rama detectada: ${RESOLVED_BRANCH:-desconocida}"
 
 COMPONENTS=(
   "core-indotel/Indotel.Core/Indotel.Core.csproj"
