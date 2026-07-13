@@ -1,13 +1,6 @@
-﻿using INDOTEL_CAJA_REAL_.Clases;
+using INDOTEL_CAJA_REAL_.Clases;
 using INDOTEL_CAJA_REAL_.FormsCaja;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace INDOTEL_CAJA_REAL_
@@ -17,80 +10,97 @@ namespace INDOTEL_CAJA_REAL_
         public Login()
         {
             InitializeComponent();
-            /*Panel_Principal dashboard = new Panel_Principal();
-
-            dashboard.Show();*/
         }
 
         private async void btnInicioSesion_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtCorreo.Text))
+            var correo = txtCorreo.Text?.Trim();
+            var password = txtContraseña.Text;
+
+            if (!ValidacionesCaja.CorreoValido(correo))
             {
-                MessageBox.Show("Ingrese el correo.");
+                MessageBox.Show("Ingrese un correo valido.", "Inicio de sesion");
+                txtCorreo.Focus();
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(txtContraseña.Text))
+            if (string.IsNullOrWhiteSpace(password))
             {
-                MessageBox.Show("Ingrese la contraseña.");
+                MessageBox.Show("Ingrese la contrasena.", "Inicio de sesion");
+                txtContraseña.Focus();
                 return;
             }
 
             btnInicioSesion.Enabled = false;
+            Cursor = Cursors.WaitCursor;
 
             try
             {
-                ServicioAuth servicio = new ServicioAuth();
-
-                LoginRequest request = new LoginRequest
+                var servicio = new ServicioAuth();
+                var respuesta = await servicio.Login(new LoginRequest
                 {
-                    Correo = txtCorreo.Text,
-                    Password = txtContraseña.Text
-                };
+                    Correo = correo,
+                    Password = password
+                });
 
-                var respuesta = await servicio.Login(request);
-
-                if (!respuesta.Exitoso)
+                if (!respuesta.Exitoso || respuesta.Datos?.Usuario == null)
                 {
-                    MessageBox.Show(respuesta.Mensaje);
+                    MessageBox.Show(
+                        respuesta.MensajeConReferencia,
+                        "No fue posible iniciar sesion",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     return;
                 }
 
                 Sesion.Token = respuesta.Datos.Token;
-
                 Sesion.RefreshToken = respuesta.Datos.RefreshToken;
-
                 Sesion.Usuario = respuesta.Datos.Usuario;
 
-               Panel_Principal dashboard = new Panel_Principal();
+                if (!PermisosCaja.PuedeIngresar(Sesion.Usuario.Rol))
+                {
+                    await servicio.Logout();
+                    MessageBox.Show(
+                        "Este perfil no tiene acceso al modulo interno de Caja.",
+                        "Acceso denegado",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
 
-                dashboard.Show();
+                txtContraseña.Clear();
+                Hide();
+                using (var dashboard = new Panel_Principal())
+                {
+                    dashboard.ShowDialog(this);
+                }
 
-                this.Hide();
+                if (!IsDisposed)
+                {
+                    Show();
+                    Activate();
+                }
             }
             finally
             {
+                Cursor = Cursors.Default;
                 btnInicioSesion.Enabled = true;
             }
-
-
         }
 
         private void label1_Click(object sender, EventArgs e)
         {
-
         }
-
-      
 
         private void Login_Load(object sender, EventArgs e)
         {
-
+            Sesion.Limpiar();
+            txtCorreo.Focus();
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
     }
 }
