@@ -26,17 +26,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git rm -r --ignore-unmatch "INDOTEL_CAJA(REAL)"
           git checkout 50a9dd485b24678f600ddd4f7362e0323f966291 -- "INDOTEL_CAJA(REAL)"
-
           git rm -r --ignore-unmatch "INDOTEL_CAJA.Tests"
           git rm --ignore-unmatch ".github/workflows/caja-ci.yml"
           git rm --ignore-unmatch "scripts/validar_sprint4_caja.sh"
-
           git add -A
           if ! git diff --cached --quiet; then
             git commit -m "Integra la Caja antigua intacta con el sistema actual"
@@ -85,20 +81,42 @@ jobs:
         shell: pwsh
         run: nuget restore "INDOTEL_CAJA(REAL)\packages.config" -PackagesDirectory "INDOTEL_CAJA(REAL)\packages" -NonInteractive
 
-      - name: Compilar Caja antigua
+      - name: Compilar Caja antigua y extraer errores
+        id: compilar_caja
+        continue-on-error: true
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
           & msbuild "INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" /m /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal /fl /flp:"logfile=artifacts\caja-msbuild.log;verbosity=diagnostic"
           $codigo = $LASTEXITCODE
-          if ($codigo -ne 0) {
-            Get-Content "artifacts\caja-msbuild.log" -Tail 200
-            exit $codigo
+          Set-Content -Path "artifacts\caja-exit-code.txt" -Value $codigo
+          $errores = Select-String -Path "artifacts\caja-msbuild.log" -Pattern ": error ", " error CS", " error MSB" -SimpleMatch
+          if ($errores) {
+            $errores.Line | Sort-Object -Unique | Set-Content "artifacts\caja-errors.txt"
+          } else {
+            Get-Content "artifacts\caja-msbuild.log" -Tail 100 | Set-Content "artifacts\caja-errors.txt"
           }
+          exit $codigo
 
-      - name: Publicar binarios de validación
+      - name: Publicar errores de compilación
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: caja-antigua-compilada
+          name: caja-antigua-diagnostico-${{ github.run_id }}
+          path: |
+            artifacts/caja-errors.txt
+            artifacts/caja-exit-code.txt
+          if-no-files-found: error
+
+      - name: Fallar si Caja no compiló
+        if: steps.compilar_caja.outcome == 'failure'
+        shell: pwsh
+        run: exit 1
+
+      - name: Publicar binarios de validación
+        if: steps.compilar_caja.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: caja-antigua-compilada-${{ github.run_id }}
           path: INDOTEL_CAJA(REAL)/bin/Release/**
           if-no-files-found: error
