@@ -28,10 +28,16 @@ public static class GatewayProblemWriter
     {
         if (context.Response.HasStarted) return;
 
+        var retryAfter = context.Response.Headers["Retry-After"].ToString();
         context.Response.Clear();
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";
         context.Response.Headers[CorrelationIdMiddleware.HeaderName] = context.TraceIdentifier;
+
+        if (!string.IsNullOrWhiteSpace(retryAfter))
+        {
+            context.Response.Headers["Retry-After"] = retryAfter;
+        }
 
         var payload = new
         {
