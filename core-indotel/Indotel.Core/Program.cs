@@ -9,6 +9,7 @@ using Indotel.Core.Middleware;
 using Indotel.Core.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -33,6 +34,25 @@ if (!builder.Environment.IsDevelopment() &&
     throw new InvalidOperationException("La clave JWT de ejemplo no puede utilizarse fuera de Development.");
 }
 
+var connectRetryCount = Math.Clamp(
+    builder.Configuration.GetValue<int?>("Database:ConnectRetryCount") ?? 3,
+    0,
+    10);
+var connectRetryInterval = Math.Clamp(
+    builder.Configuration.GetValue<int?>("Database:ConnectRetryIntervalSeconds") ?? 2,
+    1,
+    60);
+var commandTimeout = Math.Clamp(
+    builder.Configuration.GetValue<int?>("Database:CommandTimeoutSeconds") ?? 30,
+    5,
+    300);
+
+var sqlConnectionBuilder = new SqlConnectionStringBuilder(connectionString)
+{
+    ConnectRetryCount = connectRetryCount,
+    ConnectRetryInterval = connectRetryInterval
+};
+
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers(options =>
 {
@@ -44,13 +64,11 @@ builder.Services.AddScoped<CurrentUserService>();
 
 builder.Services.AddDbContext<IndotelDbContext>(options =>
 {
-    options.UseSqlServer(connectionString, sqlOptions =>
+    options.UseSqlServer(sqlConnectionBuilder.ConnectionString, sqlOptions =>
     {
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null);
-        sqlOptions.CommandTimeout(30);
+        // No se reintentan comandos de escritura automáticamente: podría duplicar una operación.
+        // La resiliencia de conexión se configura mediante ConnectRetryCount/Interval.
+        sqlOptions.CommandTimeout(commandTimeout);
     });
 });
 
@@ -65,7 +83,7 @@ builder.Services.AddRateLimiter(options =>
 
         if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
         {
-            response.Headers.RetryAfter = Math.Ceiling(retryAfter.TotalSeconds).ToString();
+            response.Headers["Retry-After"] = Math.Ceiling(retryAfter.TotalSeconds).ToString();
         }
 
         var problem = ApiProblemFactory.Build(
