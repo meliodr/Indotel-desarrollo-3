@@ -1,12 +1,14 @@
 name: Caja CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [caja]
     paths:
       - "INDOTEL_CAJA(REAL)/**"
       - "INDOTEL_CAJA.Tests/**"
       - "scripts/validar_sprint4_caja.sh"
+      - "scripts/validar_sprint4_caja_windows.ps1"
       - ".github/workflows/caja-ci.yml"
       - "global.json"
   pull_request:
@@ -14,8 +16,16 @@ on:
       - "INDOTEL_CAJA(REAL)/**"
       - "INDOTEL_CAJA.Tests/**"
       - "scripts/validar_sprint4_caja.sh"
+      - "scripts/validar_sprint4_caja_windows.ps1"
       - ".github/workflows/caja-ci.yml"
       - "global.json"
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
 
 jobs:
   build-test-publish:
@@ -29,24 +39,28 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+          cache: true
+          cache-dependency-path: |
+            INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj
+            INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj
 
-      - name: Restore Caja
-        run: dotnet restore "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj"
-
-      - name: Restore Tests
-        run: dotnet restore "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj"
-
-      - name: Build Caja
-        run: dotnet build "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --no-restore
-
-      - name: Test Caja helpers
-        run: dotnet test "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj" --configuration Release --no-restore --collect:"XPlat Code Coverage"
-
-      - name: Publish Caja
-        run: dotnet publish "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --runtime win-x64 --self-contained false --output artifacts/caja
+      - name: Validar Caja en Windows
+        shell: pwsh
+        run: ./scripts/validar_sprint4_caja_windows.ps1
 
       - name: Upload Caja artifact
         uses: actions/upload-artifact@v4
         with:
           name: indotel-caja-win-x64
           path: artifacts/caja
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: indotel-caja-test-results
+          path: INDOTEL_CAJA.Tests/TestResults
+          if-no-files-found: ignore
+          retention-days: 14
