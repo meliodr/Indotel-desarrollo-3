@@ -1,28 +1,22 @@
-# Visual Studio
+bin/
+obj/
 .vs/
-**/.vs/
+.vscode/.ropeproject
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-
-# Compilación
-[Bb]in/
-[Oo]bj/
-**/[Bb]in/
-**/[Oo]bj/
-*.pdb
-*.cache
-
-# Paquetes restaurables
-packages/
-**/packages/
-
-# Archivos temporales
+*.dbmdl
+*.jfm
+*.pfx
+*.snk
+*.mdf
+*.ldf
+appsettings.Development.json
+.env
+.env.*
+TestResults/
+coverage/
 *.log
-*.tmp
-.DS_Store
-Thumbs.db
-
-# Archivo original comprimido
-*.rar
+docker.env
+uploads/
