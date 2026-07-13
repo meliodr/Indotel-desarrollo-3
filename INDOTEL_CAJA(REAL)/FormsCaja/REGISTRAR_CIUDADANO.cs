@@ -1,13 +1,6 @@
-﻿using INDOTEL_CAJA_REAL_.Clases;
+using INDOTEL_CAJA_REAL_.Clases;
 using INDOTEL_CAJA_REAL_.Clases.Servicios;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace INDOTEL_CAJA_REAL_.FormsCaja
@@ -21,38 +14,22 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            Panel_Principal principal = new Panel_Principal();
-
-            principal.Show();
-
-            this.Hide();
-        }
-
-        private bool ValidarCedula()
-        {
-            string cedula = txtCedula.Text.Replace("-", "").Trim();
-
-            if (cedula.Length != 11)
-            {
-                MessageBox.Show("La cédula debe contener 11 dígitos.");
-                txtCedula.Focus();
-                return false;
-            }
-
-            return true;
+            DialogResult = DialogResult.Cancel;
+            Close();
         }
 
         private async void btnGuardar_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtCedula.Text))
+            if (!PermisosCaja.PuedeGestionar(Sesion.Usuario?.Rol))
             {
-                MessageBox.Show("Debe ingresar la cédula.");
-                txtCedula.Focus();
+                MessageBox.Show("No tiene permiso para registrar ciudadanos.");
                 return;
             }
 
-            if (!ValidarCedula()) 
+            if (!ValidacionesCaja.CedulaValida(txtCedula.Text))
             {
+                MessageBox.Show("La cedula debe contener exactamente 11 digitos.");
+                txtCedula.Focus();
                 return;
             }
 
@@ -70,29 +47,38 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
                 return;
             }
 
-            btnGuardar.Enabled = false;
+            if (!string.IsNullOrWhiteSpace(txtCorreo.Text) &&
+                !ValidacionesCaja.CorreoValido(txtCorreo.Text))
+            {
+                MessageBox.Show("Ingrese un correo valido.");
+                txtCorreo.Focus();
+                return;
+            }
 
+            btnGuardar.Enabled = false;
+            Cursor = Cursors.WaitCursor;
             try
             {
-                CiudadanoCreate ciudadano = new CiudadanoCreate
+                var ciudadano = new CiudadanoCreate
                 {
-                    Cedula = txtCedula.Text.Trim(),
+                    Cedula = ValidacionesCaja.NormalizarCedula(txtCedula.Text),
                     Nombres = txtNombre.Text.Trim(),
                     Apellidos = txtApellido.Text.Trim(),
-                    Telefono = txtTelefono.Text.Trim(),
-                    Correo = txtCorreo.Text.Trim(),
-                    Direccion = txtDireccion.Text.Trim()
+                    Telefono = txtTelefono.Text?.Trim() ?? string.Empty,
+                    Correo = txtCorreo.Text?.Trim() ?? string.Empty,
+                    Direccion = txtDireccion.Text?.Trim() ?? string.Empty
                 };
 
-                ServicioCiudadanos servicio =
-                    new ServicioCiudadanos();
-
-                var respuesta =
-                    await servicio.Crear(ciudadano);
+                var servicio = new ServicioCiudadanos();
+                var respuesta = await servicio.Crear(ciudadano);
 
                 if (!respuesta.Exitoso)
                 {
-                    MessageBox.Show(respuesta.Mensaje);
+                    MessageBox.Show(
+                        respuesta.MensajeConReferencia,
+                        "No fue posible registrar al ciudadano",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -103,15 +89,13 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
                     MessageBoxIcon.Information);
 
                 DialogResult = DialogResult.OK;
-
                 Close();
             }
             finally
             {
+                Cursor = Cursors.Default;
                 btnGuardar.Enabled = true;
             }
         }
-
-       
     }
 }
