@@ -29,7 +29,7 @@ resolve_conflicts() {
     [[ -z "$path" ]] && continue
 
     case "$component:$path" in
-      web:INDOTEL.Web/*|web:INDOTEL.Web.Tests/*|web:.github/workflows/web-ci.yml|web:docs/SPRINT_3_WEB_CIUDADANO.md|web:scripts/validar_sprint3_web.sh)
+      web:INDOTEL.Web/*|web:INDOTEL.Web.Tests/*|web:.github/workflows/web-ci.yml|web:docs/SPRINT_3_WEB_CIUDADANO.md|web:docs/WEB_CORRECCIONES_Y_PRUEBAS.md|web:scripts/validar_sprint3_web.sh|web:scripts/limpiar_archivos_generados_web.sh)
         git checkout --theirs -- "$path"
         git add "$path"
         ;;
@@ -56,6 +56,45 @@ resolve_conflicts() {
   fi
 }
 
+cleanup_component_artifacts() {
+  local component="$1"
+
+  if [[ "$component" == "web" ]]; then
+    git rm -r -f --ignore-unmatch -- \
+      .vs \
+      INDOTEL.Web/bin \
+      INDOTEL.Web/obj \
+      INDOTEL.Web.Tests/bin \
+      INDOTEL.Web.Tests/obj \
+      INDOTEL.Web.Tests/TestResults
+    git rm -f --ignore-unmatch -- INDOTEL.Web/appsettings.Development.json
+
+    rm -rf \
+      .vs \
+      INDOTEL.Web/bin \
+      INDOTEL.Web/obj \
+      INDOTEL.Web.Tests/bin \
+      INDOTEL.Web.Tests/obj \
+      INDOTEL.Web.Tests/TestResults
+    rm -f INDOTEL.Web/appsettings.Development.json
+  fi
+
+  if [[ "$component" == "caja" ]]; then
+    git rm -r -f --ignore-unmatch -- \
+      'INDOTEL_CAJA(REAL)/bin' \
+      'INDOTEL_CAJA(REAL)/obj' \
+      INDOTEL_CAJA.Tests/bin \
+      INDOTEL_CAJA.Tests/obj \
+      INDOTEL_CAJA.Tests/TestResults
+    rm -rf \
+      'INDOTEL_CAJA(REAL)/bin' \
+      'INDOTEL_CAJA(REAL)/obj' \
+      INDOTEL_CAJA.Tests/bin \
+      INDOTEL_CAJA.Tests/obj \
+      INDOTEL_CAJA.Tests/TestResults
+  fi
+}
+
 merge_component() {
   local component="$1"
   local ref="origin/$component"
@@ -70,6 +109,7 @@ merge_component() {
     resolve_conflicts "$component"
   fi
 
+  cleanup_component_artifacts "$component"
   git add -A
   git commit -m "Sprint 5: integra componente $component"
 }
@@ -103,10 +143,14 @@ packages/
 .env
 .env.*
 !.env.example
+!deploy/.env.release.example
+deploy/.env.release
 appsettings.Development.json
 appsettings.*.local.json
 docker.env
 *.pfx
+*.p12
+*.key
 *.snk
 
 # Datos persistentes
@@ -151,6 +195,13 @@ for path in core-indotel/Indotel.Core/Indotel.Core.csproj \
     exit 1
   fi
 done
+
+TRACKED_GENERATED="$(git ls-files | grep -E '(^|/)(bin|obj|TestResults|coverage|packages|\.vs)/' || true)"
+if [[ -n "$TRACKED_GENERATED" ]]; then
+  echo "La integracion conserva artefactos generados:" >&2
+  echo "$TRACKED_GENERATED" >&2
+  exit 1
+fi
 
 echo
 echo "Sprint 5 preparado en la rama integracion. Ejecute scripts/validar_sprint5_integracion.sh."
