@@ -35,7 +35,9 @@ builder.Services.AddHttpClient("IndotelCore", ConfigureGatewayClient)
 var configuredKeysPath = builder.Configuration.GetValue<string>("Security:DataProtectionKeysPath");
 var keysPath = string.IsNullOrWhiteSpace(configuredKeysPath)
     ? Path.Combine(builder.Environment.ContentRootPath, ".data-protection-keys")
-    : Path.GetFullPath(configuredKeysPath);
+    : Path.IsPathRooted(configuredKeysPath)
+        ? configuredKeysPath
+        : Path.Combine(builder.Environment.ContentRootPath, configuredKeysPath);
 Directory.CreateDirectory(keysPath);
 
 builder.Services.AddDataProtection()
@@ -69,7 +71,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseStatusCodePagesWithReExecute("/Home/StatusCode", "?code={0}");
+app.UseStatusCodePagesWithReExecute("/Home/HttpStatus", "?code={0}");
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
