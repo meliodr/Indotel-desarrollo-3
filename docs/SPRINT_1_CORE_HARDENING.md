@@ -2,9 +2,31 @@
 
 ## Estado
 
-**Implementación realizada en la rama `core`.**
+**Implementación y validación automática completadas en la rama `core`.**
 
-La validación definitiva requiere ejecutar restore, build, pruebas automáticas y pruebas de integración con SQL Server.
+Commit validado: `6704e0a`.
+
+La aceptación funcional definitiva conserva pendientes las pruebas manuales de integración con SQL Server, autenticación, propiedad de recursos y concurrencia indicadas al final de este documento.
+
+## Evidencia de validación automática
+
+Validación ejecutada en Ubuntu 24.04 mediante `scripts/validar_sprint1_core.sh`.
+
+Resultados:
+
+- Restauración: correcta.
+- Compilación Release: correcta, sin errores.
+- Pruebas automáticas: 20 ejecutadas, 20 correctas, 0 errores, 0 omitidas.
+- Publicación de comprobación: correcta.
+- Proyecto principal generado: `Indotel.Core.dll` para `net8.0`.
+- Proyecto de pruebas generado: `Indotel.Core.Tests.dll` para `net8.0`.
+- Cobertura Cobertura generada localmente por el runner.
+
+Mensaje final obtenido:
+
+```text
+Sprint 1 validado: restauración, compilación, pruebas y publicación completadas.
+```
 
 ## Correcciones implementadas
 
@@ -133,7 +155,7 @@ dotnet build core-indotel/Indotel.Core.sln --configuration Release
 dotnet test core-indotel/Indotel.Core.Tests/Indotel.Core.Tests.csproj --configuration Release
 ```
 
-## Pruebas manuales obligatorias
+## Pruebas manuales obligatorias pendientes
 
 1. `GET /health` con SQL encendido y apagado.
 2. `GET /health/ready` con SQL encendido: 200.
@@ -155,5 +177,5 @@ dotnet test core-indotel/Indotel.Core.Tests/Indotel.Core.Tests.csproj --configur
 - Compatibilidad exacta de los clientes Web y Caja con ProblemDetails.
 - Migraciones y seed sobre una base existente.
 - Comportamiento de transacciones serializables bajo carga.
-- CI real después del último commit.
+- Resultado del pipeline CI después del último commit.
 - Pruebas E2E con Gateway, Web y Caja; corresponden a sprints posteriores.
