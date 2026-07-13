@@ -99,8 +99,10 @@ public sealed class ApiProblemResultFilter : IResultFilter
                ?? LeerProperty(value, "detail")?.ToString();
     }
 
-    private static object? LeerProperty(object value, string propertyName)
+    private static object? LeerProperty(object? value, string propertyName)
     {
+        if (value is null) return null;
+
         if (value is IDictionary dictionary)
         {
             foreach (DictionaryEntry item in dictionary)
