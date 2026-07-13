@@ -71,6 +71,7 @@ jobs:
       - name: Checkout de la integración
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
 
       - name: Instalar Developer Pack .NET Framework 4.8.1
@@ -81,7 +82,7 @@ jobs:
         shell: pwsh
         run: nuget restore "INDOTEL_CAJA(REAL)\packages.config" -PackagesDirectory "INDOTEL_CAJA(REAL)\packages" -NonInteractive
 
-      - name: Compilar Caja antigua y extraer errores
+      - name: Compilar Caja antigua y extraer diagnóstico
         id: compilar_caja
         continue-on-error: true
         shell: pwsh
@@ -90,33 +91,49 @@ jobs:
           & msbuild "INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" /m /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal /fl /flp:"logfile=artifacts\caja-msbuild.log;verbosity=diagnostic"
           $codigo = $LASTEXITCODE
           Set-Content -Path "artifacts\caja-exit-code.txt" -Value $codigo
+
           $errores = Select-String -Path "artifacts\caja-msbuild.log" -Pattern ": error ", " error CS", " error MSB" -SimpleMatch
+          $lineas = @(
+            "RESULTADO_MSBUILD=$codigo"
+            "PROYECTO=INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj"
+            "FRAMEWORK=.NET Framework 4.8.1"
+            ""
+          )
+
           if ($errores) {
-            $errores.Line | Sort-Object -Unique | Set-Content "artifacts\caja-errors.txt"
+            $lineas += $errores.Line | Sort-Object -Unique
+          } elseif ($codigo -eq 0) {
+            $lineas += "COMPILACION_EXITOSA"
           } else {
-            Get-Content "artifacts\caja-msbuild.log" -Tail 100 | Set-Content "artifacts\caja-errors.txt"
+            $lineas += Get-Content "artifacts\caja-msbuild.log" -Tail 150
           }
+
+          $lineas | Set-Content "docs\CAJA_ANTIGUA_MSBUILD_DIAGNOSTICO.txt"
           exit $codigo
 
-      - name: Publicar errores de compilación
+      - name: Guardar diagnóstico en la rama
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: caja-antigua-diagnostico-${{ github.run_id }}
-          path: |
-            artifacts/caja-errors.txt
-            artifacts/caja-exit-code.txt
-          if-no-files-found: error
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "docs/CAJA_ANTIGUA_MSBUILD_DIAGNOSTICO.txt"
+          if (-not (git diff --cached --quiet)) {
+            git commit -m "Actualiza diagnóstico de compilación de Caja antigua"
+            git push origin HEAD:integracion-caja-antigua
+          }
 
       - name: Fallar si Caja no compiló
         if: steps.compilar_caja.outcome == 'failure'
         shell: pwsh
         run: exit 1
 
-      - name: Publicar binarios de validación
+      - name: Verificar binario generado
         if: steps.compilar_caja.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: caja-antigua-compilada-${{ github.run_id }}
-          path: INDOTEL_CAJA(REAL)/bin/Release/**
-          if-no-files-found: error
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "INDOTEL_CAJA(REAL)\bin\Release" -Filter "*.exe" -File | Select-Object -First 1
+          if (-not $exe) {
+            throw "MSBuild terminó sin errores, pero no se encontró el ejecutable de Caja."
+          }
+          Write-Host "Caja compilada: $($exe.FullName)"
