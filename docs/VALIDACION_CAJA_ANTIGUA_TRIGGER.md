@@ -11,3 +11,4 @@ Ejecución solicitada para publicar el diagnóstico en el PR temporal.
 Ejecución solicitada con trabajo separado de diagnóstico.
 Ejecución solicitada con propagación de salidas corregida.
 Ejecución solicitada con captura nativa de MSBuild corregida.
+Ejecución solicitada mediante System.Diagnostics.Process.
