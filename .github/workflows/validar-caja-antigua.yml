@@ -88,6 +88,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
+          New-Item -ItemType Directory -Force -Path "docs" | Out-Null
           & msbuild "INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" /m /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal /fl /flp:"logfile=artifacts\caja-msbuild.log;verbosity=diagnostic"
           $codigo = $LASTEXITCODE
           Set-Content -Path "artifacts\caja-exit-code.txt" -Value $codigo
@@ -104,8 +105,10 @@ jobs:
             $lineas += $errores.Line | Sort-Object -Unique
           } elseif ($codigo -eq 0) {
             $lineas += "COMPILACION_EXITOSA"
-          } else {
+          } elseif (Test-Path "artifacts\caja-msbuild.log") {
             $lineas += Get-Content "artifacts\caja-msbuild.log" -Tail 150
+          } else {
+            $lineas += "MSBuild terminó con error y no produjo el registro esperado."
           }
 
           $lineas | Set-Content "docs\CAJA_ANTIGUA_MSBUILD_DIAGNOSTICO.txt"
@@ -115,12 +118,25 @@ jobs:
         if: always()
         shell: pwsh
         run: |
+          $destino = "docs\CAJA_ANTIGUA_MSBUILD_DIAGNOSTICO.txt"
+          if (-not (Test-Path $destino)) {
+            New-Item -ItemType Directory -Force -Path "docs" | Out-Null
+            @(
+              "RESULTADO_MSBUILD=DIAGNOSTICO_NO_GENERADO"
+              "El paso de compilación no dejó el archivo esperado."
+            ) | Set-Content $destino
+          }
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "docs/CAJA_ANTIGUA_MSBUILD_DIAGNOSTICO.txt"
-          if (-not (git diff --cached --quiet)) {
+          git add -f $destino
+          git diff --cached --quiet
+          $sinCambios = $LASTEXITCODE -eq 0
+          if (-not $sinCambios) {
             git commit -m "Actualiza diagnóstico de compilación de Caja antigua"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             git push origin HEAD:integracion-caja-antigua
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
       - name: Fallar si Caja no compiló
