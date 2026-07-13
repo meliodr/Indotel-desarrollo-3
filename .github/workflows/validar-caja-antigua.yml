@@ -84,11 +84,37 @@ jobs:
         shell: pwsh
         run: nuget restore "INDOTEL_CAJA(REAL)\packages.config" -PackagesDirectory "INDOTEL_CAJA(REAL)\packages" -NonInteractive
 
-      - name: Compilar Caja antigua
+      - name: Preparar carpeta de diagnóstico
         shell: pwsh
-        run: msbuild "INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" /m /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal
+        run: New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
+
+      - name: Compilar Caja antigua
+        id: compilar_caja
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          & msbuild "INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" /m /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal /fl /flp:"logfile=artifacts\caja-msbuild.log;verbosity=diagnostic"
+          $codigo = $LASTEXITCODE
+          Set-Content -Path "artifacts\caja-exit-code.txt" -Value $codigo
+          exit $codigo
+
+      - name: Publicar diagnóstico de MSBuild
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: caja-antigua-msbuild-log
+          path: artifacts/**
+          if-no-files-found: error
+
+      - name: Fallar si Caja no compiló
+        if: steps.compilar_caja.outcome == 'failure'
+        shell: pwsh
+        run: |
+          Write-Host "La Caja antigua no compiló. Se publicó el registro caja-antigua-msbuild-log."
+          exit 1
 
       - name: Publicar binarios de validación
+        if: steps.compilar_caja.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: caja-antigua-compilada
