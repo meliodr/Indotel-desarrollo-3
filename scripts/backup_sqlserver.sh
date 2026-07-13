@@ -25,12 +25,12 @@ CONTAINER_PATH="/var/opt/mssql/backup/$FILE_NAME"
 HOST_PATH="$BACKUP_DIR/$FILE_NAME"
 
 printf '\n==> Creando respaldo de %s\n' "$DATABASE"
-docker exec "$CONTAINER" sh -lc '
+docker exec -e FILE_NAME="$FILE_NAME" "$CONTAINER" sh -lc '
   SQLCMD=/opt/mssql-tools18/bin/sqlcmd
   [ -x "$SQLCMD" ] || SQLCMD=/opt/mssql-tools/bin/sqlcmd
   "$SQLCMD" -C -b -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
-    -Q "BACKUP DATABASE [IndotelCoreDb] TO DISK = N'"'"'/var/opt/mssql/backup/'"$FILE_NAME"'"'"' WITH INIT, CHECKSUM, COMPRESSION, STATS = 10"
-' FILE_NAME="$FILE_NAME"
+    -Q "BACKUP DATABASE [IndotelCoreDb] TO DISK = N'"'"'/var/opt/mssql/backup/$FILE_NAME'"'"' WITH INIT, CHECKSUM, COMPRESSION, STATS = 10"
+'
 
 docker cp "$CONTAINER:$CONTAINER_PATH" "$HOST_PATH"
 sha256sum "$HOST_PATH" > "$HOST_PATH.sha256"
