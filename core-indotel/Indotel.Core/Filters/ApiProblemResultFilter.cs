@@ -12,7 +12,17 @@ public sealed class ApiProblemResultFilter : IResultFilter
     {
         if (!TryGetStatusAndValue(context.Result, out var statusCode, out var value)) return;
         if (statusCode < StatusCodes.Status400BadRequest) return;
-        if (value is ProblemDetails) return;
+
+        if (value is ProblemDetails existingProblem)
+        {
+            NormalizarProblemDetails(context.HttpContext, existingProblem, statusCode);
+            context.Result = new ObjectResult(existingProblem)
+            {
+                StatusCode = statusCode,
+                ContentTypes = { "application/problem+json" }
+            };
+            return;
+        }
 
         var mensaje = LeerMensaje(value) ?? GetDefaultMessage(statusCode);
         var codigo = LeerProperty(value, "codigo")?.ToString() ?? GetDefaultCode(statusCode);
@@ -33,6 +43,28 @@ public sealed class ApiProblemResultFilter : IResultFilter
 
     public void OnResultExecuted(ResultExecutedContext context)
     {
+    }
+
+    private static void NormalizarProblemDetails(
+        HttpContext context,
+        ProblemDetails problem,
+        int statusCode)
+    {
+        problem.Status ??= statusCode;
+        problem.Instance ??= context.Request.Path;
+        problem.Title ??= GetDefaultMessage(statusCode);
+
+        var mensaje = string.IsNullOrWhiteSpace(problem.Detail)
+            ? problem is ValidationProblemDetails
+                ? "Uno o mas campos contienen datos no validos"
+                : GetDefaultMessage(statusCode)
+            : problem.Detail;
+
+        problem.Detail = mensaje;
+        problem.Extensions.TryAdd("mensaje", mensaje);
+        problem.Extensions.TryAdd("codigo", GetDefaultCode(statusCode));
+        problem.Extensions.TryAdd("correlationId", context.TraceIdentifier);
+        problem.Extensions.TryAdd("fecha", DateTime.UtcNow);
     }
 
     private static bool TryGetStatusAndValue(
@@ -118,14 +150,14 @@ public sealed class ApiProblemResultFilter : IResultFilter
 
     private static string GetDefaultMessage(int statusCode) => statusCode switch
     {
-        StatusCodes.Status400BadRequest => "La solicitud contiene datos no válidos",
-        StatusCodes.Status401Unauthorized => "La sesión no es válida o ha expirado",
-        StatusCodes.Status403Forbidden => "No tiene permiso para ejecutar esta operación",
+        StatusCodes.Status400BadRequest => "La solicitud contiene datos no validos",
+        StatusCodes.Status401Unauthorized => "La sesion no es valida o ha expirado",
+        StatusCodes.Status403Forbidden => "No tiene permiso para ejecutar esta operacion",
         StatusCodes.Status404NotFound => "El recurso solicitado no existe",
-        StatusCodes.Status409Conflict => "La operación entra en conflicto con el estado actual",
-        StatusCodes.Status423Locked => "El usuario está bloqueado temporalmente",
-        StatusCodes.Status429TooManyRequests => "Se excedió el límite temporal de solicitudes",
-        StatusCodes.Status503ServiceUnavailable => "El servicio no está disponible temporalmente",
+        StatusCodes.Status409Conflict => "La operacion entra en conflicto con el estado actual",
+        StatusCodes.Status423Locked => "El usuario esta bloqueado temporalmente",
+        StatusCodes.Status429TooManyRequests => "Se excedio el limite temporal de solicitudes",
+        StatusCodes.Status503ServiceUnavailable => "El servicio no esta disponible temporalmente",
         _ => "La solicitud no pudo completarse"
     };
 }
