@@ -1,0 +1,35 @@
+@model INDOTEL.WEB.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Servicio no disponible";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-warning shadow-sm">
+                <div class="card-body p-4 p-md-5 text-center">
+                    <div class="display-4 mb-3" aria-hidden="true">⚠️</div>
+                    <h1 class="h3 mb-3">Servicio temporalmente no disponible</h1>
+                    <p class="text-muted mb-4">
+                        @(ViewBag.Mensaje ?? "No pudimos comunicarnos con el servicio central. Tus datos no fueron enviados.")
+                    </p>
+                    <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+                        <button type="button" class="btn btn-primary" onclick="window.location.reload()">
+                            Reintentar
+                        </button>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                            Volver al inicio
+                        </a>
+                    </div>
+
+                    @if (Model.ShowRequestId)
+                    {
+                        <p class="small text-muted mt-4 mb-0">
+                            Código de seguimiento: <code>@Model.RequestId</code>
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
