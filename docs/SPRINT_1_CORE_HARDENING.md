@@ -36,7 +36,8 @@ La validación definitiva requiere ejecutar restore, build, pruebas automáticas
 - `/health` y `/health/live`: comprueban que el proceso está vivo.
 - `/health/ready`, `/api/health/ready` y `/api/health/db`: comprueban SQL Server.
 - Readiness devuelve HTTP 503 cuando la base de datos no está disponible.
-- SQL Server utiliza reintentos transitorios y timeout de comando.
+- SQL Server utiliza resiliencia de conexión configurable y timeout de comando.
+- No se reintentan automáticamente comandos de escritura, porque podrían duplicar operaciones.
 - Seed y migraciones de inicio son configurables.
 
 ### Errores y observabilidad
@@ -73,13 +74,15 @@ La validación definitiva requiere ejecutar restore, build, pruebas automáticas
 - En otros ambientes se requiere `Cors:AllowedOrigins`.
 - El Core rechaza la clave JWT de ejemplo fuera de Development.
 - La cadena de conexión y la clave JWT se validan durante el inicio.
+- La resiliencia SQL se configura con `ConnectRetryCount`, `ConnectRetryIntervalSeconds` y `CommandTimeoutSeconds`.
 
 ### Pruebas y CI
 
-- Proyecto `Indotel.Core.Tests`.
+- Proyecto `Indotel.Core.Tests` agregado a la solución.
 - Pruebas de transiciones válidas, inválidas y estados finales.
 - Pruebas de firmas PDF, PNG y JPEG.
 - Workflow de GitHub Actions actualizado para restaurar, compilar y ejecutar pruebas.
+- Script reproducible `scripts/validar_sprint1_core.sh` para limpiar, restaurar, compilar, probar y publicar.
 
 ## Archivos principales agregados
 
@@ -94,6 +97,7 @@ La validación definitiva requiere ejecutar restore, build, pruebas automáticas
 - `Indotel.Core.Tests/Indotel.Core.Tests.csproj`
 - `Indotel.Core.Tests/ReclamacionEstadoServiceTests.cs`
 - `Indotel.Core.Tests/FileSignatureValidatorTests.cs`
+- `scripts/validar_sprint1_core.sh`
 
 ## Configuración local esperada
 
@@ -103,6 +107,9 @@ Crear `appsettings.Development.json` desde el ejemplo y configurar:
 - `Jwt:Key`
 - `Cors:AllowedOrigins`
 - `SeedData:Enabled`
+- `Database:ConnectRetryCount`
+- `Database:ConnectRetryIntervalSeconds`
+- `Database:CommandTimeoutSeconds`
 - `Security:ExposeResetTokenInResponse`
 
 No se debe usar la clave de ejemplo fuera de Development.
@@ -113,11 +120,14 @@ No se debe usar la clave de ejemplo fuera de Development.
 cd /home/jarry/indotel-prueba-core
 git fetch origin
 git reset --hard origin/core
+bash scripts/validar_sprint1_core.sh
+```
 
-dotnet restore core-indotel/Indotel.Core/Indotel.Core.csproj
-dotnet restore core-indotel/Indotel.Core.Tests/Indotel.Core.Tests.csproj
+Alternativa manual:
 
-dotnet build core-indotel/Indotel.Core/Indotel.Core.csproj --configuration Release
+```bash
+dotnet restore core-indotel/Indotel.Core.sln
+dotnet build core-indotel/Indotel.Core.sln --configuration Release
 dotnet test core-indotel/Indotel.Core.Tests/Indotel.Core.Tests.csproj --configuration Release
 ```
 
