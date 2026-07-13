@@ -72,12 +72,22 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
 
-          $ErrorActionPreference = "Continue"
-          $PSNativeCommandUseErrorActionPreference = $false
-          & msbuild "INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" /m /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal /fl /flp:"logfile=artifacts\caja-msbuild.log;verbosity=diagnostic"
-          $codigo = $LASTEXITCODE
-          $global:LASTEXITCODE = 0
-          $ErrorActionPreference = "Stop"
+          $msbuild = (Get-Command msbuild.exe).Source
+          $inicio = [System.Diagnostics.ProcessStartInfo]::new()
+          $inicio.FileName = $msbuild
+          $inicio.UseShellExecute = $false
+          $inicio.CreateNoWindow = $true
+          $inicio.ArgumentList.Add("INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj")
+          $inicio.ArgumentList.Add("/m")
+          $inicio.ArgumentList.Add("/p:Configuration=Release")
+          $inicio.ArgumentList.Add("/p:Platform=AnyCPU")
+          $inicio.ArgumentList.Add("/verbosity:minimal")
+          $inicio.ArgumentList.Add("/fl")
+          $inicio.ArgumentList.Add("/flp:logfile=artifacts\caja-msbuild.log;verbosity=diagnostic")
+
+          $proceso = [System.Diagnostics.Process]::Start($inicio)
+          $proceso.WaitForExit()
+          $codigo = $proceso.ExitCode
 
           $errores = Select-String -Path "artifacts\caja-msbuild.log" -Pattern ": error ", " error CS", " error MSB" -SimpleMatch
           $lineas = @(
@@ -103,7 +113,6 @@ jobs:
           "diagnostico=$base64" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
           Write-Host "MSBuild terminó con código $codigo; el resultado fue exportado para el trabajo de diagnóstico."
-          exit 0
 
       - name: Verificar ejecutable cuando compile
         if: steps.compilar_caja.outputs.codigo == '0'
