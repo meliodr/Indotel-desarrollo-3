@@ -57,6 +57,24 @@ builder.Services.AddDbContext<IndotelDbContext>(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var response = context.HttpContext.Response;
+        response.StatusCode = StatusCodes.Status429TooManyRequests;
+        response.ContentType = "application/problem+json";
+
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            response.Headers.RetryAfter = Math.Ceiling(retryAfter.TotalSeconds).ToString();
+        }
+
+        var problem = ApiProblemFactory.Build(
+            context.HttpContext,
+            StatusCodes.Status429TooManyRequests,
+            "LIMITE_SOLICITUDES_EXCEDIDO",
+            "Se excedió el límite temporal de solicitudes");
+        await response.WriteAsync(JsonSerializer.Serialize(problem), cancellationToken);
+    };
 
     options.AddPolicy("AuthPolicy", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -195,6 +213,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
