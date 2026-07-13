@@ -11,10 +11,44 @@ permissions:
   contents: read
 
 jobs:
+  preflight:
+    name: Detectar integración completa
+    runs-on: ubuntu-24.04
+    outputs:
+      ready: ${{ steps.components.outputs.ready }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar cuatro componentes
+        id: components
+        shell: bash
+        run: |
+          required=(
+            core-indotel/Indotel.Core/Indotel.Core.csproj
+            api-gateway/Indotel.ApiGateway/Indotel.ApiGateway.csproj
+            INDOTEL.Web/INDOTEL.WEB.csproj
+            'INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj'
+          )
+          ready=true
+          for file in "${required[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "Pendiente de integrar: $file"
+              ready=false
+            fi
+          done
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+          if [[ "$ready" != "true" ]]; then
+            echo "Ejecute scripts/preparar_sprint5_integracion.sh y vuelva a hacer push."
+          fi
+
   validate-linux:
     name: Core, Gateway, Web y pruebas Caja
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    needs: preflight
+    if: needs.preflight.outputs.ready == 'true'
 
     steps:
       - name: Checkout
@@ -44,7 +78,8 @@ jobs:
     name: E2E Web Gateway Core SQL
     runs-on: ubuntu-24.04
     timeout-minutes: 35
-    needs: validate-linux
+    needs: [preflight, validate-linux]
+    if: needs.preflight.outputs.ready == 'true'
 
     steps:
       - name: Checkout
@@ -86,6 +121,8 @@ jobs:
     name: Caja Windows build test publish
     runs-on: windows-latest
     timeout-minutes: 20
+    needs: preflight
+    if: needs.preflight.outputs.ready == 'true'
 
     steps:
       - name: Checkout
@@ -118,7 +155,8 @@ jobs:
     name: Build imagenes release
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: validate-linux
+    needs: [preflight, validate-linux]
+    if: needs.preflight.outputs.ready == 'true'
 
     steps:
       - name: Checkout
