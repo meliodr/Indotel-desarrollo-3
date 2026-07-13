@@ -2,7 +2,7 @@ name: Caja CI
 
 on:
   push:
-    branches: [caja]
+    branches: [caja, main]
     paths:
       - "INDOTEL_CAJA(REAL)/**"
       - "INDOTEL_CAJA.Tests/**"
@@ -16,6 +16,7 @@ on:
       - "scripts/validar_sprint4_caja.sh"
       - ".github/workflows/caja-ci.yml"
       - "global.json"
+  workflow_dispatch:
 
 jobs:
   build-test-publish:
