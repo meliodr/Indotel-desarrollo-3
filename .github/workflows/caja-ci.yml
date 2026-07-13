@@ -36,8 +36,21 @@ jobs:
       - name: Restore Tests
         run: dotnet restore "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj"
 
+      - name: Prepare build logs
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path "artifacts/logs" | Out-Null
+
       - name: Build Caja
-        run: dotnet build "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --no-restore
+        shell: pwsh
+        run: dotnet build "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --no-restore /flp:"logfile=artifacts/logs/caja-build.log;verbosity=diagnostic"
+
+      - name: Upload Caja build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: caja-build-log
+          path: artifacts/logs/caja-build.log
+          if-no-files-found: warn
 
       - name: Test Caja helpers
         run: dotnet test "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj" --configuration Release --no-restore --collect:"XPlat Code Coverage"
