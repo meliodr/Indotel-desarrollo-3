@@ -8,3 +8,4 @@ Ejecución solicitada para extraer los errores concretos de MSBuild.
 Ejecución solicitada para guardar el diagnóstico en la rama.
 Ejecución solicitada con persistencia corregida del diagnóstico.
 Ejecución solicitada para publicar el diagnóstico en el PR temporal.
+Ejecución solicitada con trabajo separado de diagnóstico.
