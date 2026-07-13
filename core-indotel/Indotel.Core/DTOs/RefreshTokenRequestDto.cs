@@ -1,6 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Indotel.Core.DTOs;
 
 public class RefreshTokenRequestDto
 {
-    public string RefreshToken { get; set; } = string.Empty;
+    private string _refreshToken = string.Empty;
+
+    [Required]
+    public string RefreshToken
+    {
+        get => _refreshToken;
+        set => _refreshToken = value ?? string.Empty;
+    }
 }
