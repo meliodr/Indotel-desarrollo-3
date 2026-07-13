@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace INDOTEL.WEB.Services;
 
 public sealed class GatewayUnavailableException : Exception
@@ -49,13 +51,43 @@ public sealed class GatewayTransportHandler : DelegatingHandler
             if (response.Headers.TryGetValues(CorrelationHeader, out var values))
             {
                 var returnedCorrelationId = values.FirstOrDefault();
-                if (!string.IsNullOrWhiteSpace(returnedCorrelationId) && httpContext is not null)
+                if (!string.IsNullOrWhiteSpace(returnedCorrelationId))
                 {
-                    httpContext.Response.Headers[CorrelationHeader] = returnedCorrelationId;
+                    correlationId = returnedCorrelationId;
+                    if (httpContext is not null)
+                    {
+                        httpContext.Response.Headers[CorrelationHeader] = returnedCorrelationId;
+                    }
                 }
             }
 
+            if (response.StatusCode is HttpStatusCode.BadGateway or
+                HttpStatusCode.ServiceUnavailable or
+                HttpStatusCode.GatewayTimeout)
+            {
+                var statusCode = response.StatusCode;
+                response.Dispose();
+
+                _logger.LogWarning(
+                    "Gateway o Core no disponible. StatusCode={StatusCode} Metodo={Metodo} Ruta={Ruta} CorrelationId={CorrelationId}",
+                    (int)statusCode,
+                    request.Method,
+                    request.RequestUri?.PathAndQuery,
+                    correlationId);
+
+                throw new GatewayUnavailableException(
+                    "El servicio central no está disponible temporalmente.",
+                    statusCode == HttpStatusCode.GatewayTimeout
+                        ? "GATEWAY_TIMEOUT"
+                        : "GATEWAY_NO_DISPONIBLE",
+                    timeout: statusCode == HttpStatusCode.GatewayTimeout);
+            }
+
             return response;
+        }
+        catch (GatewayUnavailableException)
+        {
+            throw;
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
