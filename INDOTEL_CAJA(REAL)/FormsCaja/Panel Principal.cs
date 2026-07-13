@@ -1,11 +1,5 @@
-﻿using INDOTEL_CAJA_REAL_.Clases;
+using INDOTEL_CAJA_REAL_.Clases;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -20,140 +14,135 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
 
         private void label1_Click(object sender, EventArgs e)
         {
-            NUEVA_RECLAMACIÓN reclamacion = new NUEVA_RECLAMACIÓN();
+            if (!PermisosCaja.PuedeGestionar(Sesion.Usuario?.Rol))
+            {
+                MostrarSoloLectura();
+                return;
+            }
 
-            reclamacion.Show();
-
-            this.Hide();
+            AbrirFormulario(new NUEVA_RECLAMACIÓN());
         }
 
         private void label3_Click(object sender, EventArgs e)
         {
-            AdministrarReclamaciones admireclamaciones = new AdministrarReclamaciones();
-
-            admireclamaciones.Show();
-
-            this.Hide();
-
-
+            AbrirFormulario(new AdministrarReclamaciones());
         }
 
         private void label4_Click(object sender, EventArgs e)
         {
-            REGISTRAR_CIUDADANO registrar_ciudadano = new REGISTRAR_CIUDADANO();
+            if (!PermisosCaja.PuedeGestionar(Sesion.Usuario?.Rol))
+            {
+                MostrarSoloLectura();
+                return;
+            }
 
-            registrar_ciudadano.Show();
-
-            this.Hide();
-
+            AbrirFormulario(new REGISTRAR_CIUDADANO());
         }
 
         private void label8_Click(object sender, EventArgs e)
         {
-
         }
 
         private async void Panel_Principal_Load(object sender, EventArgs e)
         {
-            lblNombre.Text = "Bienvenido" + " " + Sesion.Usuario.NombreCompleto;
+            if (!Sesion.Logueado || !PermisosCaja.PuedeIngresar(Sesion.Usuario?.Rol))
+            {
+                MessageBox.Show(
+                    "La sesion no es valida para este modulo.",
+                    "INDOTEL Caja",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                Close();
+                return;
+            }
 
-            lblNombre2.Text = Sesion.Usuario.NombreCompleto;
-
-            
-
+            lblNombre.Text = $"Bienvenido {Sesion.Usuario.NombreCompleto}";
+            lblNombre2.Text = $"{Sesion.Usuario.NombreCompleto} ({Sesion.Usuario.Rol})";
+            AplicarPermisos();
             await CargarDashboard();
+        }
+
+        private void AplicarPermisos()
+        {
+            var puedeGestionar = PermisosCaja.PuedeGestionar(Sesion.Usuario?.Rol);
+            label1.Enabled = puedeGestionar;
+            label4.Enabled = puedeGestionar;
+            label1.Cursor = puedeGestionar ? Cursors.Hand : Cursors.No;
+            label4.Cursor = puedeGestionar ? Cursors.Hand : Cursors.No;
         }
 
         private async Task CargarDashboard()
         {
+            btnActualizar.Enabled = false;
             Cursor = Cursors.WaitCursor;
-
-            await CargarResumen();
-
-            await CargarReclamaciones();
-
-            Cursor = Cursors.Default;
+            try
+            {
+                await CargarResumen();
+                await CargarReclamaciones();
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+                btnActualizar.Enabled = true;
+            }
         }
 
         private async Task CargarResumen()
         {
-            ServicioReportes servicio =
-                new ServicioReportes();
+            var servicio = new ServicioReportes();
+            var respuesta = await servicio.ObtenerResumen();
 
-            var respuesta =
-                await servicio.ObtenerResumen();
-
-            if (!respuesta.Exitoso)
+            if (!respuesta.Exitoso || respuesta.Datos == null)
             {
-                MessageBox.Show(respuesta.Mensaje);
-
+                MessageBox.Show(
+                    respuesta.MensajeConReferencia,
+                    "No fue posible cargar el resumen",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
                 return;
             }
 
-            lblCiudadanos.Text =
-                respuesta.Datos.ciudadanos.ToString();
-
-            lblPrestadoras.Text =
-                respuesta.Datos.prestadoras.ToString();
-
-            lblServicios.Text =
-                respuesta.Datos.servicios.ToString();
-
-            lblReclamaciones.Text =
-                respuesta.Datos.reclamaciones.ToString();
-
-            lblabiertas.Text =
-                respuesta.Datos.abiertas.ToString();
-
-            lblCerradas.Text =
-                respuesta.Datos.cerradas.ToString();
-
-            lblVencidas.Text =
-                respuesta.Datos.vencidas.ToString();
-
-            lblRespondidas.Text =
-                respuesta.Datos.respondidasPrestadora.ToString();
-
-            lblResueltas.Text =
-                respuesta.Datos.resueltas.ToString();
-
-            lblResoluciones.Text =
-                respuesta.Datos.resolucionesInstitucionales.ToString();
+            lblCiudadanos.Text = respuesta.Datos.ciudadanos.ToString();
+            lblPrestadoras.Text = respuesta.Datos.prestadoras.ToString();
+            lblServicios.Text = respuesta.Datos.servicios.ToString();
+            lblReclamaciones.Text = respuesta.Datos.reclamaciones.ToString();
+            lblabiertas.Text = respuesta.Datos.abiertas.ToString();
+            lblCerradas.Text = respuesta.Datos.cerradas.ToString();
+            lblVencidas.Text = respuesta.Datos.vencidas.ToString();
+            lblRespondidas.Text = respuesta.Datos.respondidasPrestadora.ToString();
+            lblResueltas.Text = respuesta.Datos.resueltas.ToString();
+            lblResoluciones.Text = respuesta.Datos.resolucionesInstitucionales.ToString();
         }
 
         private async Task CargarReclamaciones()
         {
-            ServicioReclamaciones servicio =
-                new ServicioReclamaciones();
-
-            var respuesta =
-                await servicio.ObtenerTodas();
+            var servicio = new ServicioReclamaciones();
+            var respuesta = await servicio.ObtenerTodas();
 
             if (!respuesta.Exitoso)
             {
-                MessageBox.Show(respuesta.Mensaje);
-
+                MessageBox.Show(
+                    respuesta.MensajeConReferencia,
+                    "No fue posible cargar las reclamaciones",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
                 return;
             }
 
             dgResumen.AutoGenerateColumns = true;
-
             dgResumen.DataSource = respuesta.Datos;
         }
 
         private void panelResumen_Paint(object sender, PaintEventArgs e)
         {
-
         }
 
         private void label8_Click_1(object sender, EventArgs e)
         {
-
         }
 
         private void label29_Click(object sender, EventArgs e)
         {
-
         }
 
         private async void btnActualizar_Click(object sender, EventArgs e)
@@ -163,25 +152,41 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
 
         private void label2_Click(object sender, EventArgs e)
         {
-            Buscar_ciudadano buscar_Ciudadano = new Buscar_ciudadano();
-
-            buscar_Ciudadano.Show();
-
-            this.Hide();
+            AbrirFormulario(new Buscar_ciudadano());
         }
 
         private void btnSalir_Click(object sender, EventArgs e)
         {
-            Cerrar_Sesión cerrar_sesion = new Cerrar_Sesión();
+            using (var cerrarSesion = new Cerrar_Sesión())
+            {
+                cerrarSesion.ShowDialog(this);
+            }
 
-            cerrar_sesion.Show();
-
-            this.Hide();
+            if (!Sesion.Logueado)
+            {
+                Close();
+            }
         }
 
         private void dgResumen_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
+        }
 
+        private void AbrirFormulario(Form formulario)
+        {
+            using (formulario)
+            {
+                formulario.ShowDialog(this);
+            }
+        }
+
+        private static void MostrarSoloLectura()
+        {
+            MessageBox.Show(
+                "El perfil Auditor puede consultar informacion, pero no modificarla.",
+                "Modo de solo lectura",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
     }
 }
