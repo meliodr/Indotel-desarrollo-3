@@ -6,3 +6,4 @@ Reejecución solicitada desde el flujo actualizado de la rama de integración.
 Validación final del Core, la Caja antigua y sus binarios.
 Ejecución solicitada para extraer los errores concretos de MSBuild.
 Ejecución solicitada para guardar el diagnóstico en la rama.
+Ejecución solicitada con persistencia corregida del diagnóstico.
