@@ -57,6 +57,7 @@ public class HomeController : Controller
         return View(model);
     }
 
+    [HttpGet("/Home/HttpStatus/{code:int}")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult HttpStatus(int code)
     {
