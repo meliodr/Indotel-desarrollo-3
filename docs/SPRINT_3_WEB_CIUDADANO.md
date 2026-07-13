@@ -2,9 +2,32 @@
 
 ## Estado
 
-**Implementación realizada en la rama `web`.**
+**Implementación y validación automática completadas en la rama `web`.**
 
-La validación definitiva requiere ejecutar restore, build, pruebas automáticas y el flujo integrado Web → Gateway → Core → SQL Server.
+Commit validado: `7cf27ac`.
+
+La aceptación funcional definitiva conserva pendiente el flujo integrado Web → Gateway → Core → SQL Server y las pruebas manuales de caída, sesión y roles.
+
+## Evidencia de validación automática
+
+Validación ejecutada en Ubuntu 24.04 mediante `scripts/validar_sprint3_web.sh` con SDK .NET 8.0.128.
+
+Resultados:
+
+- Restauración: correcta.
+- Compilación Release de Web: correcta, 0 advertencias y 0 errores.
+- Compilación Release de pruebas: correcta, 0 advertencias y 0 errores.
+- Pruebas automáticas: 12 ejecutadas, 12 correctas, 0 errores, 0 omitidas.
+- Publicación de comprobación: correcta.
+- Cobertura Cobertura generada localmente.
+
+Mensaje final obtenido:
+
+```text
+Sprint 3 validado: restauracion, compilacion, pruebas y publicacion completadas.
+```
+
+Durante las pruebas aparecieron advertencias de Data Protection indicando que las claves locales se almacenan sin un cifrador XML configurado. No impidieron la validación y se resolverán en el Sprint 6 de despliegue y endurecimiento de secretos.
 
 ## Objetivo
 
