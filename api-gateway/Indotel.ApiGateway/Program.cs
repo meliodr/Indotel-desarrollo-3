@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.RateLimiting;
 using Indotel.ApiGateway;
 using Microsoft.AspNetCore.RateLimiting;
@@ -49,7 +51,7 @@ builder.Services.AddHttpClient("CoreProxy", client =>
         Math.Clamp(gatewayOptions.ConnectTimeoutSeconds, 1, 30)),
     PooledConnectionLifetime = TimeSpan.FromMinutes(5),
     PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
-    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+    AutomaticDecompression = DecompressionMethods.None,
     UseCookies = false,
     AllowAutoRedirect = false
 });
@@ -94,12 +96,18 @@ builder.Services.AddRateLimiter(options =>
                 ? "api"
                 : "health";
 
+        var authorization = context.Request.Headers.Authorization.ToString();
+        var actor = string.IsNullOrWhiteSpace(authorization)
+            ? "anon"
+            : Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(authorization)))[..16];
+
         var permitLimit = group == "auth"
             ? Math.Min(20, Math.Max(5, gatewayOptions.RateLimitPermit))
             : Math.Max(20, gatewayOptions.RateLimitPermit);
 
         return RateLimitPartition.GetFixedWindowLimiter(
-            $"{ip}:{group}",
+            $"{ip}:{actor}:{group}",
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = permitLimit,
@@ -172,7 +180,7 @@ app.MapGet("/health/ready", async (
             coreStatusCode = result.StatusCode,
             correlationId = context.TraceIdentifier,
             fecha = DateTime.UtcNow
-        }, cancellationToken);
+        }, cancellationToken: cancellationToken);
         return;
     }
 
