@@ -8,8 +8,10 @@ public static class SeedData
 {
     public static async Task InitializeAsync(IServiceProvider services)
     {
-        using var scope = services.CreateScope();
+        await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<IndotelDbContext>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var environment = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
         var passwordHasher = new PasswordHasher<Usuario>();
 
         await db.Database.MigrateAsync();
@@ -57,25 +59,40 @@ public static class SeedData
 
         await db.SaveChangesAsync();
 
+        var adminEmail = configuration["SeedData:AdminEmail"]?.Trim().ToLowerInvariant()
+                         ?? "admin@indotel.test";
+        var adminPassword = configuration["SeedData:AdminPassword"];
+
+        if (string.IsNullOrWhiteSpace(adminPassword))
+        {
+            if (!environment.IsDevelopment())
+            {
+                throw new InvalidOperationException(
+                    "SeedData:AdminPassword es obligatorio cuando el seed se ejecuta fuera de Development.");
+            }
+
+            adminPassword = "Admin123*";
+        }
+
         var adminRole = await db.Roles.FirstAsync(x => x.Nombre == "Administrador");
-        var admin = await db.Usuarios.FirstOrDefaultAsync(x => x.Correo == "admin@indotel.test");
+        var admin = await db.Usuarios.FirstOrDefaultAsync(x => x.Correo == adminEmail);
 
         if (admin is null)
         {
             admin = new Usuario
             {
                 NombreCompleto = "Administrador INDOTEL",
-                Correo = "admin@indotel.test",
+                Correo = adminEmail,
                 RolId = adminRole.Id,
                 Activo = true
             };
 
-            admin.PasswordHash = passwordHasher.HashPassword(admin, "Admin123*");
+            admin.PasswordHash = passwordHasher.HashPassword(admin, adminPassword);
             db.Usuarios.Add(admin);
         }
         else if (admin.PasswordHash == "PendienteConfigurarHashEnBloqueJWT")
         {
-            admin.PasswordHash = passwordHasher.HashPassword(admin, "Admin123*");
+            admin.PasswordHash = passwordHasher.HashPassword(admin, adminPassword);
         }
 
         await db.SaveChangesAsync();
