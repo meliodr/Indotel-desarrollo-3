@@ -3,6 +3,8 @@ name: Validar integración con Caja antigua
 on:
   push:
     branches: [integracion-caja-antigua]
+  pull_request:
+    branches: [integracion-caja-antigua]
   workflow_dispatch:
 
 permissions:
