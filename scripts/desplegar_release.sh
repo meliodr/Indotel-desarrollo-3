@@ -19,7 +19,9 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose no esta disponibl
 
 [[ -f "$ENV_FILE" ]] || fail "No existe $ENV_FILE. Copie deploy/.env.release.example y complete los valores."
 
-if grep -q 'CAMBIAR_' "$ENV_FILE"; then
+# Revisar solamente asignaciones reales. Los comentarios de la plantilla pueden
+# mencionar CAMBIAR_ como instruccion y no deben bloquear el despliegue.
+if grep -Eq '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=[[:space:]]*CAMBIAR_' "$ENV_FILE"; then
   fail "El archivo $ENV_FILE conserva valores CAMBIAR_."
 fi
 
