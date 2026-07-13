@@ -58,7 +58,7 @@ public class HomeController : Controller
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult StatusCode(int code)
+    public IActionResult HttpStatus(int code)
     {
         Response.StatusCode = code;
         ViewBag.StatusCode = code;
@@ -79,7 +79,7 @@ public class HomeController : Controller
             _ => "La solicitud no pudo completarse."
         };
 
-        return View();
+        return View("StatusCode");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
