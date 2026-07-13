@@ -60,11 +60,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'https://localhost:7085/' 'INDOTEL_CAJA(REAL)/Clases/ApiClient.cs'
+          grep -Fq 'https://localhost:7085/' 'INDOTEL_CAJA(REAL)/Clases/Servicios/ApiClient.cs'
           grep -Fq 'https://localhost:7085;http://localhost:5085' 'core-indotel/Indotel.Core/Properties/launchSettings.json'
           grep -Fq '[HttpGet("cedula/{cedula}")]' 'core-indotel/Indotel.Core/Controllers/LegacyCajaCompatibilityController.cs'
-          grep -Fq '"/api/auth/login"' 'INDOTEL_CAJA(REAL)/Clases/ServicioAuth.cs'
-          grep -Fq '"/api/reclamaciones/cedula/"' 'INDOTEL_CAJA(REAL)/Clases/ServicioReclamaciones.cs'
+          grep -Fq '"/api/auth/login"' 'INDOTEL_CAJA(REAL)/Clases/Servicios/ServicioAuth.cs'
+          grep -Fq '"/api/reclamaciones/cedula/"' 'INDOTEL_CAJA(REAL)/Clases/Servicios/ServicioReclamaciones.cs'
 
   compilar-caja-antigua:
     needs: preparar-y-validar-core
