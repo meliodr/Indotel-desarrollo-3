@@ -1,126 +1,150 @@
-﻿using INDOTEL_CAJA_REAL_.Clases;
+using INDOTEL_CAJA_REAL_.Clases;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 
 namespace INDOTEL_CAJA_REAL_.FormsCaja
 {
     public partial class Cambiar_Estado : Form
     {
         private readonly int reclamacionId;
-
         private readonly string expediente;
-
         private readonly string estadoActual;
 
         public Cambiar_Estado(int id, string expediente, string estado)
         {
             InitializeComponent();
-
             reclamacionId = id;
-
             this.expediente = expediente;
-
             estadoActual = estado;
-
         }
 
-        private void Cambiar_Estado_Load(object sender, EventArgs e)
+        private async void Cambiar_Estado_Load(object sender, EventArgs e)
         {
-            txtExpediente.Text =expediente;
+            txtExpediente.Text = expediente;
+            txtEstadoActual.Text = estadoActual;
 
-            txtEstadoActual.Text =estadoActual;
+            if (!PermisosCaja.PuedeGestionar(Sesion.Usuario?.Rol))
+            {
+                btnGuardar.Enabled = false;
+                MessageBox.Show(
+                    "Su perfil solo tiene permiso de consulta.",
+                    "Acceso de solo lectura",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
 
-            CargarEstadosDisponibles();
-
+            await CargarEstadosDisponibles();
         }
 
         private async void btnGuardar_Click(object sender, EventArgs e)
         {
-            if (cmbEstadoNuevo.SelectedIndex == -1)
+            if (!PermisosCaja.PuedeGestionar(Sesion.Usuario?.Rol))
             {
-                MessageBox.Show(
-                    "Seleccione un estado.");
-
+                MessageBox.Show("No tiene permiso para cambiar estados.");
                 return;
             }
 
-            CambiarEstadoReclamacionDto dto =
-                new CambiarEstadoReclamacionDto
-                {
-                    EstadoNuevo = cmbEstadoNuevo.Text,
+            if (cmbEstadoNuevo.SelectedItem == null)
+            {
+                MessageBox.Show("Seleccione un estado.");
+                return;
+            }
 
-                    Comentario = txtComentario.Text
+            var comentario = txtComentario.Text?.Trim();
+            if (string.IsNullOrWhiteSpace(comentario))
+            {
+                MessageBox.Show("Indique el motivo o comentario del cambio.");
+                txtComentario.Focus();
+                return;
+            }
+
+            btnGuardar.Enabled = false;
+            Cursor = Cursors.WaitCursor;
+            try
+            {
+                var dto = new CambiarEstadoReclamacionDto
+                {
+                    EstadoNuevo = cmbEstadoNuevo.SelectedItem.ToString(),
+                    Comentario = comentario
                 };
 
-            ServicioReclamaciones servicio =new ServicioReclamaciones();
+                var servicio = new ServicioReclamaciones();
+                var respuesta = await servicio.CambiarEstado(reclamacionId, dto);
 
-            var respuesta =await servicio.CambiarEstado(reclamacionId,dto);
+                if (!respuesta.Exitoso)
+                {
+                    MessageBox.Show(
+                        respuesta.MensajeConReferencia,
+                        "No fue posible cambiar el estado",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
 
-            if (!respuesta.Exitoso)
-            {
-                MessageBox.Show(
-                    respuesta.Mensaje);
-
-                return;
+                MessageBox.Show("Estado actualizado correctamente.");
+                DialogResult = DialogResult.OK;
+                Close();
             }
-
-            MessageBox.Show(
-                "Estado actualizado correctamente.");
-
-            DialogResult = DialogResult.OK;
-
-            Close();
-
+            finally
+            {
+                Cursor = Cursors.Default;
+                btnGuardar.Enabled = cmbEstadoNuevo.Items.Count > 0;
+            }
         }
 
         private void BtnCancelar_Click(object sender, EventArgs e)
         {
-            Panel_Principal principal = new Panel_Principal();
-
-            principal.Show();
-
-            this.Hide();
+            DialogResult = DialogResult.Cancel;
+            Close();
         }
 
-        private void CargarEstadosDisponibles()
+        private async System.Threading.Tasks.Task CargarEstadosDisponibles()
         {
             cmbEstadoNuevo.Items.Clear();
+            btnGuardar.Enabled = false;
+            Cursor = Cursors.WaitCursor;
 
-            switch (estadoActual)
+            try
             {
-                case "RECIBIDA":
-                    cmbEstadoNuevo.Items.Add("VALIDADA");
-                    break;
+                var servicio = new ServicioReclamaciones();
+                var respuesta = await servicio.ObtenerTransiciones(reclamacionId);
 
-                case "VALIDADA":
-                    cmbEstadoNuevo.Items.Add("ENVIADA_A_PRESTADORA");
-                    break;
+                if (!respuesta.Exitoso || respuesta.Datos == null)
+                {
+                    MessageBox.Show(
+                        respuesta.MensajeConReferencia,
+                        "No fue posible consultar las transiciones",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
 
-                case "ENVIADA_A_PRESTADORA":
-                    cmbEstadoNuevo.Items.Add("RESPONDIDA_POR_PRESTADORA");
-                    break;
+                txtEstadoActual.Text = respuesta.Datos.EstadoActual;
+                foreach (var estado in respuesta.Datos.TransicionesPermitidas.Distinct())
+                {
+                    cmbEstadoNuevo.Items.Add(estado);
+                }
 
-                case "RESPONDIDA_POR_PRESTADORA":
-                    cmbEstadoNuevo.Items.Add("EN_REVISION_INDOTEL");
-                    break;
-
-                case "EN_REVISION_INDOTEL":
-                    cmbEstadoNuevo.Items.Add("RESUELTA");
-                    break;
-
-                case "RESUELTA":
-                    cmbEstadoNuevo.Items.Add("CERRADA");
-                    break;
+                if (cmbEstadoNuevo.Items.Count > 0)
+                {
+                    cmbEstadoNuevo.SelectedIndex = 0;
+                    btnGuardar.Enabled = respuesta.Datos.PuedeCambiarEstado;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "No existen transiciones disponibles para el estado y rol actuales.",
+                        "Sin acciones disponibles",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
             }
         }
-
     }
 }
