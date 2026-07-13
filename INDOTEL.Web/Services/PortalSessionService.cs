@@ -1,262 +1,379 @@
 using INDOTEL.WEB.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
-namespace INDOTEL.WEB.Services
+namespace INDOTEL.WEB.Services;
+
+public enum PortalRefreshResult
 {
-    public sealed class PortalSessionService
+    Success,
+    InvalidSession,
+    TemporaryFailure
+}
+
+public sealed class PortalSessionService
+{
+    public const string SessionIdClaim = "PortalSessionId";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
+        PropertyNameCaseInsensitive = true
+    };
 
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> RefreshLocks = new();
 
-        public PortalSessionService(
-            IHttpClientFactory httpClientFactory,
-            IHttpContextAccessor httpContextAccessor)
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly PortalTokenStore _tokenStore;
+    private readonly ILogger<PortalSessionService> _logger;
+
+    public PortalSessionService(
+        IHttpClientFactory httpClientFactory,
+        IHttpContextAccessor httpContextAccessor,
+        PortalTokenStore tokenStore,
+        ILogger<PortalSessionService> logger)
+    {
+        _httpClientFactory = httpClientFactory;
+        _httpContextAccessor = httpContextAccessor;
+        _tokenStore = tokenStore;
+        _logger = logger;
+    }
+
+    private HttpContext HttpContext =>
+        _httpContextAccessor.HttpContext
+        ?? throw new InvalidOperationException("No existe un contexto HTTP activo.");
+
+    public async Task<HttpClient> CrearClienteAutorizadoAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var client = _httpClientFactory.CreateClient("IndotelGateway");
+        var sessionId = ObtenerSessionId();
+        if (string.IsNullOrWhiteSpace(sessionId)) return client;
+
+        var state = await _tokenStore.GetAsync(sessionId, cancellationToken);
+        if (state is null || state.RefreshTokenExpiraEn <= DateTimeOffset.UtcNow)
         {
-            _httpClientFactory = httpClientFactory;
-            _httpContextAccessor = httpContextAccessor;
+            await CerrarSesionLocalAsync(cancellationToken);
+            return client;
         }
 
-        private HttpContext HttpContext =>
-            _httpContextAccessor.HttpContext
-            ?? throw new InvalidOperationException("No existe un contexto HTTP activo.");
-
-        public async Task<HttpClient> CrearClienteAutorizadoAsync(CancellationToken cancellationToken = default)
+        if (DebeRenovarToken(state))
         {
-            var client = _httpClientFactory.CreateClient("IndotelCore");
-            var token = HttpContext.User.FindFirstValue("JWToken");
+            var result = await RenovarSesionAsync(cancellationToken);
+            if (result == PortalRefreshResult.TemporaryFailure)
+            {
+                throw new GatewayUnavailableException(
+                    "No fue posible renovar la sesión porque el servicio central no está disponible.",
+                    "RENOVACION_TEMPORALMENTE_NO_DISPONIBLE",
+                    timeout: false);
+            }
 
-            if (string.IsNullOrWhiteSpace(token))
+            if (result == PortalRefreshResult.InvalidSession)
             {
                 return client;
             }
 
-            if (DebeRenovarToken())
-            {
-                var renovado = await RenovarSesionAsync(cancellationToken);
-                if (!renovado)
-                {
-                    return client;
-                }
-
-                token = HttpContext.User.FindFirstValue("JWToken");
-            }
-
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            return client;
+            state = await _tokenStore.GetAsync(sessionId, cancellationToken);
         }
 
-        public async Task IniciarSesionAsync(LoginResponse loginResult)
+        if (!string.IsNullOrWhiteSpace(state?.AccessToken))
         {
-            var principal = CrearPrincipal(loginResult);
-            var expiraCookie = ConvertirAFechaUtc(loginResult.RefreshTokenExpiraEn);
-
-            if (expiraCookie <= DateTimeOffset.UtcNow)
-            {
-                expiraCookie = DateTimeOffset.UtcNow.AddHours(1);
-            }
-
-            var propiedades = new AuthenticationProperties
-            {
-                IsPersistent = true,
-                AllowRefresh = true,
-                ExpiresUtc = expiraCookie
-            };
-
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            HttpContext.User = principal;
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
-                propiedades);
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", state.AccessToken);
         }
 
-        public async Task<bool> RenovarSesionAsync(CancellationToken cancellationToken = default)
+        return client;
+    }
+
+    public async Task IniciarSesionAsync(
+        LoginResponse loginResult,
+        CancellationToken cancellationToken = default)
+    {
+        var oldSessionId = ObtenerSessionId();
+        if (!string.IsNullOrWhiteSpace(oldSessionId))
         {
-            var refreshToken = HttpContext.User.FindFirstValue("RefreshToken");
-            var refreshExpiraEn = LeerFechaClaim("RefreshTokenExpiraEn");
-
-            if (string.IsNullOrWhiteSpace(refreshToken) ||
-                refreshExpiraEn is null ||
-                refreshExpiraEn <= DateTimeOffset.UtcNow)
-            {
-                await CerrarSesionLocalAsync();
-                return false;
-            }
-
-            try
-            {
-                var client = _httpClientFactory.CreateClient("IndotelCore");
-                var contenido = new StringContent(
-                    JsonSerializer.Serialize(new { RefreshToken = refreshToken }),
-                    Encoding.UTF8,
-                    "application/json");
-
-                var response = await client.PostAsync(
-                    "/api/auth/refresh-token",
-                    contenido,
-                    cancellationToken);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    await CerrarSesionLocalAsync();
-                    return false;
-                }
-
-                var json = await response.Content.ReadAsStringAsync(cancellationToken);
-                var loginResult = JsonSerializer.Deserialize<LoginResponse>(json, JsonOptions);
-
-                if (!EsRespuestaLoginValida(loginResult) ||
-                    !loginResult!.Usuario.Rol.Equals("Ciudadano", StringComparison.OrdinalIgnoreCase))
-                {
-                    await CerrarSesionLocalAsync();
-                    return false;
-                }
-
-                await IniciarSesionAsync(loginResult);
-                return true;
-            }
-            catch (HttpRequestException)
-            {
-                await CerrarSesionLocalAsync();
-                return false;
-            }
-            catch (JsonException)
-            {
-                await CerrarSesionLocalAsync();
-                return false;
-            }
+            await _tokenStore.RemoveAsync(oldSessionId, cancellationToken);
         }
 
-        public async Task CerrarSesionAsync(CancellationToken cancellationToken = default)
+        var sessionId = Guid.NewGuid().ToString("N");
+        var state = CrearTokenState(loginResult);
+        await _tokenStore.SaveAsync(sessionId, state, cancellationToken);
+        await GuardarCookieAsync(loginResult, sessionId, cancellationToken);
+    }
+
+    public async Task<PortalRefreshResult> RenovarSesionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var sessionId = ObtenerSessionId();
+        if (string.IsNullOrWhiteSpace(sessionId))
         {
-            try
-            {
-                var client = await CrearClienteAutorizadoAsync(cancellationToken);
-                var refreshToken = HttpContext.User.FindFirstValue("RefreshToken");
-
-                if (client.DefaultRequestHeaders.Authorization is not null &&
-                    !string.IsNullOrWhiteSpace(refreshToken))
-                {
-                    var contenido = new StringContent(
-                        JsonSerializer.Serialize(new LogoutRequest { RefreshToken = refreshToken }),
-                        Encoding.UTF8,
-                        "application/json");
-
-                    await client.PostAsync("/api/auth/logout", contenido, cancellationToken);
-                }
-            }
-            catch (HttpRequestException)
-            {
-                // La sesión local debe cerrarse incluso si la API no responde.
-            }
-            finally
-            {
-                await CerrarSesionLocalAsync();
-            }
+            await CerrarSesionLocalAsync(cancellationToken);
+            return PortalRefreshResult.InvalidSession;
         }
 
-        public async Task RevocarRespuestaLoginAsync(
-            LoginResponse loginResult,
-            CancellationToken cancellationToken = default)
+        var refreshLock = RefreshLocks.GetOrAdd(sessionId, _ => new SemaphoreSlim(1, 1));
+        await refreshLock.WaitAsync(cancellationToken);
+
+        try
         {
-            if (!EsRespuestaLoginValida(loginResult))
+            var state = await _tokenStore.GetAsync(sessionId, cancellationToken);
+            if (state is null ||
+                string.IsNullOrWhiteSpace(state.RefreshToken) ||
+                state.RefreshTokenExpiraEn <= DateTimeOffset.UtcNow)
             {
-                return;
+                await CerrarSesionLocalAsync(cancellationToken);
+                return PortalRefreshResult.InvalidSession;
             }
 
-            try
+            if (!DebeRenovarToken(state))
             {
-                var client = _httpClientFactory.CreateClient("IndotelCore");
+                return PortalRefreshResult.Success;
+            }
+
+            var client = _httpClientFactory.CreateClient("IndotelGateway");
+            using var contenido = new StringContent(
+                JsonSerializer.Serialize(new { RefreshToken = state.RefreshToken }),
+                Encoding.UTF8,
+                "application/json");
+
+            using var response = await client.PostAsync(
+                "/api/auth/refresh-token",
+                contenido,
+                cancellationToken);
+
+            if (response.StatusCode is HttpStatusCode.BadRequest or
+                HttpStatusCode.Unauthorized or
+                HttpStatusCode.Forbidden)
+            {
+                await CerrarSesionLocalAsync(cancellationToken);
+                return PortalRefreshResult.InvalidSession;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Renovación temporalmente rechazada. StatusCode={StatusCode} CorrelationId={CorrelationId}",
+                    (int)response.StatusCode,
+                    HttpContext.TraceIdentifier);
+                return PortalRefreshResult.TemporaryFailure;
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            var loginResult = JsonSerializer.Deserialize<LoginResponse>(json, JsonOptions);
+
+            if (!EsRespuestaLoginValida(loginResult) ||
+                !loginResult!.Usuario.Rol.Equals("Ciudadano", StringComparison.OrdinalIgnoreCase))
+            {
+                await CerrarSesionLocalAsync(cancellationToken);
+                return PortalRefreshResult.InvalidSession;
+            }
+
+            await _tokenStore.SaveAsync(
+                sessionId,
+                CrearTokenState(loginResult),
+                cancellationToken);
+            await GuardarCookieAsync(loginResult, sessionId, cancellationToken);
+
+            return PortalRefreshResult.Success;
+        }
+        catch (GatewayUnavailableException ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "No se pudo renovar la sesión por indisponibilidad temporal. CorrelationId={CorrelationId}",
+                HttpContext.TraceIdentifier);
+            return PortalRefreshResult.TemporaryFailure;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Respuesta inválida durante renovación. CorrelationId={CorrelationId}",
+                HttpContext.TraceIdentifier);
+            return PortalRefreshResult.TemporaryFailure;
+        }
+        finally
+        {
+            refreshLock.Release();
+        }
+    }
+
+    public async Task CerrarSesionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var sessionId = ObtenerSessionId();
+        var state = string.IsNullOrWhiteSpace(sessionId)
+            ? null
+            : await _tokenStore.GetAsync(sessionId, cancellationToken);
+
+        try
+        {
+            if (state is not null &&
+                !string.IsNullOrWhiteSpace(state.AccessToken) &&
+                !string.IsNullOrWhiteSpace(state.RefreshToken))
+            {
+                var client = _httpClientFactory.CreateClient("IndotelGateway");
                 client.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", loginResult.Token);
+                    new AuthenticationHeaderValue("Bearer", state.AccessToken);
 
-                var contenido = new StringContent(
+                using var contenido = new StringContent(
                     JsonSerializer.Serialize(new LogoutRequest
                     {
-                        RefreshToken = loginResult.RefreshToken
+                        RefreshToken = state.RefreshToken
                     }),
                     Encoding.UTF8,
                     "application/json");
 
-                await client.PostAsync("/api/auth/logout", contenido, cancellationToken);
+                await client.PostAsync(
+                    "/api/auth/logout",
+                    contenido,
+                    cancellationToken);
             }
-            catch (HttpRequestException)
-            {
-                // No se interrumpe el flujo del portal si la revocación remota falla.
-            }
         }
-
-        public static bool EsRespuestaLoginValida(LoginResponse? loginResult)
+        catch (GatewayUnavailableException)
         {
-            return loginResult is not null &&
-                   loginResult.Usuario is not null &&
-                   !string.IsNullOrWhiteSpace(loginResult.Token) &&
-                   !string.IsNullOrWhiteSpace(loginResult.RefreshToken) &&
-                   loginResult.Usuario.Id > 0 &&
-                   !string.IsNullOrWhiteSpace(loginResult.Usuario.Correo) &&
-                   !string.IsNullOrWhiteSpace(loginResult.Usuario.Rol);
+            // La revocación remota puede completarse después; la sesión local se elimina siempre.
         }
-
-        private ClaimsPrincipal CrearPrincipal(LoginResponse loginResult)
+        finally
         {
-            var claims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, loginResult.Usuario.Id.ToString()),
-                new(ClaimTypes.Name, loginResult.Usuario.NombreCompleto),
-                new(ClaimTypes.Email, loginResult.Usuario.Correo),
-                new(ClaimTypes.Role, loginResult.Usuario.Rol),
-                new("JWToken", loginResult.Token),
-                new("RefreshToken", loginResult.RefreshToken),
-                new("TokenExpiraEn", ConvertirAFechaUtc(loginResult.ExpiraEn).ToString("O")),
-                new("RefreshTokenExpiraEn", ConvertirAFechaUtc(loginResult.RefreshTokenExpiraEn).ToString("O"))
-            };
-
-            var identidad = new ClaimsIdentity(
-                claims,
-                CookieAuthenticationDefaults.AuthenticationScheme);
-
-            return new ClaimsPrincipal(identidad);
+            await CerrarSesionLocalAsync(cancellationToken);
         }
+    }
 
-        private bool DebeRenovarToken()
+    public async Task RevocarRespuestaLoginAsync(
+        LoginResponse loginResult,
+        CancellationToken cancellationToken = default)
+    {
+        if (!EsRespuestaLoginValida(loginResult)) return;
+
+        try
         {
-            var expiraEn = LeerFechaClaim("TokenExpiraEn");
-            return expiraEn is null || expiraEn <= DateTimeOffset.UtcNow.AddMinutes(2);
-        }
+            var client = _httpClientFactory.CreateClient("IndotelGateway");
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", loginResult.Token);
 
-        private DateTimeOffset? LeerFechaClaim(string tipoClaim)
+            using var contenido = new StringContent(
+                JsonSerializer.Serialize(new LogoutRequest
+                {
+                    RefreshToken = loginResult.RefreshToken
+                }),
+                Encoding.UTF8,
+                "application/json");
+
+            await client.PostAsync(
+                "/api/auth/logout",
+                contenido,
+                cancellationToken);
+        }
+        catch (GatewayUnavailableException)
         {
-            var valor = HttpContext.User.FindFirstValue(tipoClaim);
-            return DateTimeOffset.TryParse(valor, out var fecha) ? fecha.ToUniversalTime() : null;
+            // No se interrumpe el portal si la revocación remota falla.
         }
+    }
 
-        private static DateTimeOffset ConvertirAFechaUtc(DateTime fecha)
+    public static bool EsRespuestaLoginValida(LoginResponse? loginResult)
+    {
+        return loginResult is not null &&
+               loginResult.Usuario is not null &&
+               !string.IsNullOrWhiteSpace(loginResult.Token) &&
+               !string.IsNullOrWhiteSpace(loginResult.RefreshToken) &&
+               loginResult.Usuario.Id > 0 &&
+               !string.IsNullOrWhiteSpace(loginResult.Usuario.Correo) &&
+               !string.IsNullOrWhiteSpace(loginResult.Usuario.Rol);
+    }
+
+    private async Task GuardarCookieAsync(
+        LoginResponse loginResult,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        var principal = CrearPrincipal(loginResult, sessionId);
+        var expiraCookie = ConvertirAFechaUtc(loginResult.RefreshTokenExpiraEn);
+
+        if (expiraCookie <= DateTimeOffset.UtcNow)
         {
-            var fechaUtc = fecha.Kind == DateTimeKind.Utc
-                ? fecha
-                : fecha.ToUniversalTime();
-
-            return new DateTimeOffset(fechaUtc);
+            expiraCookie = DateTimeOffset.UtcNow.AddMinutes(30);
         }
 
-        private async Task CerrarSesionLocalAsync()
+        var propiedades = new AuthenticationProperties
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
+            IsPersistent = true,
+            AllowRefresh = true,
+            ExpiresUtc = expiraCookie
+        };
+
+        await HttpContext.SignOutAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            propiedades: null);
+        HttpContext.User = principal;
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal,
+            propiedades);
+
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    private static ClaimsPrincipal CrearPrincipal(
+        LoginResponse loginResult,
+        string sessionId)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, loginResult.Usuario.Id.ToString()),
+            new(ClaimTypes.Name, loginResult.Usuario.NombreCompleto),
+            new(ClaimTypes.Email, loginResult.Usuario.Correo),
+            new(ClaimTypes.Role, loginResult.Usuario.Rol),
+            new(SessionIdClaim, sessionId)
+        };
+
+        var identidad = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        return new ClaimsPrincipal(identidad);
+    }
+
+    private static PortalTokenState CrearTokenState(LoginResponse loginResult) => new()
+    {
+        AccessToken = loginResult.Token,
+        RefreshToken = loginResult.RefreshToken,
+        AccessTokenExpiraEn = ConvertirAFechaUtc(loginResult.ExpiraEn),
+        RefreshTokenExpiraEn = ConvertirAFechaUtc(loginResult.RefreshTokenExpiraEn)
+    };
+
+    private static bool DebeRenovarToken(PortalTokenState state) =>
+        state.AccessTokenExpiraEn <= DateTimeOffset.UtcNow.AddMinutes(2);
+
+    private string? ObtenerSessionId() =>
+        HttpContext.User.FindFirstValue(SessionIdClaim);
+
+    private static DateTimeOffset ConvertirAFechaUtc(DateTime fecha)
+    {
+        var fechaUtc = fecha.Kind == DateTimeKind.Utc
+            ? fecha
+            : fecha.ToUniversalTime();
+
+        return new DateTimeOffset(fechaUtc);
+    }
+
+    private async Task CerrarSesionLocalAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var sessionId = ObtenerSessionId();
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            await _tokenStore.RemoveAsync(sessionId, cancellationToken);
+            RefreshLocks.TryRemove(sessionId, out _);
         }
+
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
     }
 }
