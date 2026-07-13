@@ -33,6 +33,8 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.txtExpediente = new System.Windows.Forms.TextBox();
+            this.labelCedula = new System.Windows.Forms.Label();
+            this.txtCedula = new System.Windows.Forms.TextBox();
             this.dgvReclamaciones = new System.Windows.Forms.DataGridView();
             this.btnVer = new System.Windows.Forms.Button();
             this.btnActualizar = new System.Windows.Forms.Button();
@@ -52,10 +54,10 @@
             // 
             // btnBuscarCedula
             // 
-            this.btnBuscarCedula.Location = new System.Drawing.Point(298, 44);
+            this.btnBuscarCedula.Location = new System.Drawing.Point(675, 44);
             this.btnBuscarCedula.Name = "btnBuscarCedula";
             this.btnBuscarCedula.Size = new System.Drawing.Size(92, 35);
-            this.btnBuscarCedula.TabIndex = 3;
+            this.btnBuscarCedula.TabIndex = 5;
             this.btnBuscarCedula.Text = "Buscar";
             this.btnBuscarCedula.UseVisualStyleBackColor = true;
             this.btnBuscarCedula.Click += new System.EventHandler(this.btnBuscarCedula_Click);
@@ -67,7 +69,7 @@
             this.label3.Location = new System.Drawing.Point(11, 105);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(276, 24);
-            this.label3.TabIndex = 4;
+            this.label3.TabIndex = 6;
             this.label3.Text = "Reclamaciones Encontradas";
             this.label3.Click += new System.EventHandler(this.label3_Click);
             // 
@@ -77,52 +79,70 @@
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.Location = new System.Drawing.Point(12, 53);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(92, 16);
-            this.label4.TabIndex = 5;
-            this.label4.Text = "No Experiente";
+            this.label4.Size = new System.Drawing.Size(96, 16);
+            this.label4.TabIndex = 1;
+            this.label4.Text = "No. expediente";
             // 
             // txtExpediente
             // 
-            this.txtExpediente.Location = new System.Drawing.Point(110, 52);
+            this.txtExpediente.Location = new System.Drawing.Point(114, 52);
             this.txtExpediente.Name = "txtExpediente";
             this.txtExpediente.Size = new System.Drawing.Size(155, 20);
-            this.txtExpediente.TabIndex = 7;
+            this.txtExpediente.TabIndex = 2;
             this.txtExpediente.TextChanged += new System.EventHandler(this.txtExpediente_TextChanged);
+            // 
+            // labelCedula
+            // 
+            this.labelCedula.AutoSize = true;
+            this.labelCedula.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelCedula.Location = new System.Drawing.Point(360, 53);
+            this.labelCedula.Name = "labelCedula";
+            this.labelCedula.Size = new System.Drawing.Size(50, 16);
+            this.labelCedula.TabIndex = 3;
+            this.labelCedula.Text = "Cédula";
+            // 
+            // txtCedula
+            // 
+            this.txtCedula.Location = new System.Drawing.Point(416, 52);
+            this.txtCedula.MaxLength = 11;
+            this.txtCedula.Name = "txtCedula";
+            this.txtCedula.Size = new System.Drawing.Size(155, 20);
+            this.txtCedula.TabIndex = 4;
             // 
             // dgvReclamaciones
             // 
             this.dgvReclamaciones.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvReclamaciones.Location = new System.Drawing.Point(15, 151);
             this.dgvReclamaciones.Name = "dgvReclamaciones";
-            this.dgvReclamaciones.Size = new System.Drawing.Size(644, 261);
-            this.dgvReclamaciones.TabIndex = 8;
+            this.dgvReclamaciones.Size = new System.Drawing.Size(752, 261);
+            this.dgvReclamaciones.TabIndex = 7;
             // 
             // btnVer
             // 
             this.btnVer.Location = new System.Drawing.Point(15, 436);
             this.btnVer.Name = "btnVer";
             this.btnVer.Size = new System.Drawing.Size(122, 53);
-            this.btnVer.TabIndex = 9;
+            this.btnVer.TabIndex = 8;
             this.btnVer.Text = "Ver";
             this.btnVer.UseVisualStyleBackColor = true;
             this.btnVer.Click += new System.EventHandler(this.btnVer_Click);
             // 
             // btnActualizar
             // 
-            this.btnActualizar.Location = new System.Drawing.Point(279, 436);
+            this.btnActualizar.Location = new System.Drawing.Point(331, 436);
             this.btnActualizar.Name = "btnActualizar";
             this.btnActualizar.Size = new System.Drawing.Size(120, 53);
-            this.btnActualizar.TabIndex = 12;
+            this.btnActualizar.TabIndex = 9;
             this.btnActualizar.Text = "Actualizar";
             this.btnActualizar.UseVisualStyleBackColor = true;
             this.btnActualizar.Click += new System.EventHandler(this.btnActualizar_Click);
             // 
             // btnCerrar
             // 
-            this.btnCerrar.Location = new System.Drawing.Point(539, 436);
+            this.btnCerrar.Location = new System.Drawing.Point(647, 436);
             this.btnCerrar.Name = "btnCerrar";
             this.btnCerrar.Size = new System.Drawing.Size(120, 53);
-            this.btnCerrar.TabIndex = 13;
+            this.btnCerrar.TabIndex = 10;
             this.btnCerrar.Text = "Cerrar";
             this.btnCerrar.UseVisualStyleBackColor = true;
             this.btnCerrar.Click += new System.EventHandler(this.btnCerrar_Click);
@@ -136,6 +156,8 @@
             this.Controls.Add(this.btnActualizar);
             this.Controls.Add(this.btnVer);
             this.Controls.Add(this.dgvReclamaciones);
+            this.Controls.Add(this.txtCedula);
+            this.Controls.Add(this.labelCedula);
             this.Controls.Add(this.txtExpediente);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -157,6 +179,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox txtExpediente;
+        private System.Windows.Forms.Label labelCedula;
+        private System.Windows.Forms.TextBox txtCedula;
         private System.Windows.Forms.DataGridView dgvReclamaciones;
         private System.Windows.Forms.Button btnVer;
         private System.Windows.Forms.Button btnActualizar;
