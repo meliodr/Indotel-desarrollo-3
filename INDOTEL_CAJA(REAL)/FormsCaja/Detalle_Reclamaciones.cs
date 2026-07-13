@@ -30,9 +30,8 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
             btnCambiarEstado.Enabled = puedeGestionar;
             btnResolver.Enabled = puedeGestionar;
 
-            // La respuesta de prestadora corresponde al portal o modulo de la prestadora.
-            btnRespuestaPrestadora.Enabled = false;
-            btnRespuestaPrestadora.Visible = false;
+            // La respuesta de la prestadora se gestiona fuera de Caja.
+            // El botón fue retirado del formulario para evitar exponer una acción no autorizada.
         }
 
         private async Task CargarReclamacion()
@@ -140,13 +139,6 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
 
             var motivo = respuesta.Datos.FirstOrDefault(x => x.Id == reclamacion.MotivoReclamacionId.Value);
             if (motivo != null) txtMotivo.Text = motivo.Nombre;
-        }
-
-        private void btnRespuestaPrestadora_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show(
-                "La respuesta de la prestadora se registra desde su modulo autorizado.",
-                "Accion no disponible en Caja");
         }
 
         private void btnSalir_Click(object sender, EventArgs e)
