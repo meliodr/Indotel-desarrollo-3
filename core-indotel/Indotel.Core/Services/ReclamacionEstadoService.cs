@@ -63,7 +63,7 @@ public static class ReclamacionEstadoService
 
     public static string NormalizarEstado(string estado)
     {
-        return estado.Trim().ToUpperInvariant();
+        return (estado ?? string.Empty).Trim().ToUpperInvariant();
     }
 
     public static bool ExisteEstado(string estado)
@@ -83,17 +83,23 @@ public static class ReclamacionEstadoService
         var actual = NormalizarEstado(estadoActual);
         var nuevo = NormalizarEstado(estadoNuevo);
 
-        if (!ExisteEstado(actual) || !ExisteEstado(nuevo))
+        return ExisteEstado(actual) &&
+               ExisteEstado(nuevo) &&
+               TransicionesPermitidas.TryGetValue(actual, out var permitidos) &&
+               permitidos.Contains(nuevo);
+    }
+
+    public static IReadOnlyList<string> ObtenerTransicionesPermitidas(string estadoActual)
+    {
+        var actual = NormalizarEstado(estadoActual);
+
+        if (!ExisteEstado(actual) ||
+            !TransicionesPermitidas.TryGetValue(actual, out var permitidos))
         {
-            return false;
+            return Array.Empty<string>();
         }
 
-        if (!TransicionesPermitidas.TryGetValue(actual, out var permitidos))
-        {
-            return false;
-        }
-
-        return permitidos.Contains(nuevo);
+        return permitidos.ToArray();
     }
 
     public static string CrearMensajeTransicionInvalida(string estadoActual, string estadoNuevo)
