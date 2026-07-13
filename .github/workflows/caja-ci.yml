@@ -1,0 +1,65 @@
+name: Caja CI
+
+on:
+  push:
+    branches: [caja]
+    paths:
+      - "INDOTEL_CAJA(REAL)/**"
+      - "INDOTEL_CAJA.Tests/**"
+      - "scripts/validar_sprint4_caja.sh"
+      - ".github/workflows/caja-ci.yml"
+      - "global.json"
+  pull_request:
+    paths:
+      - "INDOTEL_CAJA(REAL)/**"
+      - "INDOTEL_CAJA.Tests/**"
+      - "scripts/validar_sprint4_caja.sh"
+      - ".github/workflows/caja-ci.yml"
+      - "global.json"
+
+jobs:
+  build-test-publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore Caja
+        run: dotnet restore "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj"
+
+      - name: Restore Tests
+        run: dotnet restore "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj"
+
+      - name: Prepare build logs
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path "artifacts/logs" | Out-Null
+
+      - name: Build Caja
+        shell: pwsh
+        run: dotnet build "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --no-restore /flp:"logfile=artifacts/logs/caja-build.log;verbosity=diagnostic"
+
+      - name: Upload Caja build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: caja-build-log
+          path: artifacts/logs/caja-build.log
+          if-no-files-found: warn
+
+      - name: Test Caja helpers
+        run: dotnet test "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj" --configuration Release --no-restore --collect:"XPlat Code Coverage"
+
+      - name: Publish Caja
+        run: dotnet publish "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --runtime win-x64 --self-contained false --output artifacts/caja
+
+      - name: Upload Caja artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: indotel-caja-win-x64
+          path: artifacts/caja

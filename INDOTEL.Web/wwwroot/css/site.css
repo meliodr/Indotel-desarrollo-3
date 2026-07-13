@@ -1,0 +1,63 @@
+/* Custom Palette INDOTEL */
+:root {
+    --azul-indotel: #002F6C;
+    --rojo-tecnologico: #CE1126;
+    --gris-suave: #F8F9FA;
+    --blanco: #FFFFFF;
+}
+
+/* Cambiar el comportamiento de los botones primarios (Azul Institucional) */
+.btn-primary {
+    background-color: var(--azul-indotel) !important;
+    border-color: var(--azul-indotel) !important;
+    color: var(--blanco) !important;
+}
+
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: #001f47 !important; /* Un tono un poco más oscuro para el efecto hover */
+        border-color: #001f47 !important;
+    }
+
+/* Cambiar los encabezados de las tarjetas y barras (Bg-Primary) */
+.bg-primary {
+    background-color: var(--azul-indotel) !important;
+}
+
+/* Botones de acción secundaria o alertas destacadas (Rojo Tecnológico) */
+.btn-danger, .badge.bg-danger {
+    background-color: var(--rojo-tecnologico) !important;
+    border-color: var(--rojo-tecnologico) !important;
+}
+
+    .btn-danger:hover {
+        background-color: #a60e1e !important;
+        border-color: #a60e1e !important;
+    }
+
+/* Forzar textos principales con el Azul Marino Profundo */
+.text-primary, h1.text-primary, h2.text-primary, h4.text-primary, .navbar-brand {
+    color: var(--azul-indotel) !important;
+}
+
+/* Fondos alternos en Gris de Contraste Suave */
+.bg-light, .table-light, .bg-light-subtle {
+    background-color: var(--gris-suave) !important;
+}
+
+/* Bordes y detalles estéticos */
+.border-primary {
+    border-color: var(--azul-indotel) !important;
+}
+
+/* Ajuste específico para el botón de registro o alertas críticas */
+.btn-rojo-indotel {
+    background-color: var(--rojo-tecnologico) !important;
+    border-color: var(--rojo-tecnologico) !important;
+    color: var(--blanco) !important;
+}
+
+    .btn-rojo-indotel:hover {
+        background-color: #a60e1e !important;
+        border-color: #a60e1e !important;
+        color: var(--blanco) !important;
+    }

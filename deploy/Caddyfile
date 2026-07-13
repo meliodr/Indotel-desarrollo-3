@@ -1,0 +1,34 @@
+{
+    admin off
+    auto_https disable_redirects
+}
+
+{$INDOTEL_DOMAIN:localhost} {
+    tls internal
+    encode zstd gzip
+
+    header {
+        -Server
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    handle /api/* {
+        reverse_proxy gateway:8080
+    }
+
+    handle /health* {
+        reverse_proxy gateway:8080
+    }
+
+    handle {
+        reverse_proxy web:8080
+    }
+
+    log {
+        output stdout
+        format json
+    }
+}

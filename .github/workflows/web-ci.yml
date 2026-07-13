@@ -1,0 +1,42 @@
+name: Web CI
+
+on:
+  push:
+    branches: [web]
+  pull_request:
+    paths:
+      - "INDOTEL.Web/**"
+      - "INDOTEL.Web.Tests/**"
+      - "scripts/validar_sprint3_web.sh"
+      - ".github/workflows/web-ci.yml"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore Web
+        run: dotnet restore INDOTEL.Web/INDOTEL.WEB.csproj
+
+      - name: Restore Tests
+        run: dotnet restore INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj
+
+      - name: Build Web
+        run: dotnet build INDOTEL.Web/INDOTEL.WEB.csproj --configuration Release --no-restore
+
+      - name: Build Tests
+        run: dotnet build INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj --configuration Release --no-restore
+
+      - name: Test Web
+        run: dotnet test INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj --configuration Release --no-build --collect:"XPlat Code Coverage" --verbosity normal
+
+      - name: Publish Web
+        run: dotnet publish INDOTEL.Web/INDOTEL.WEB.csproj --configuration Release --no-restore --output /tmp/indotel-web

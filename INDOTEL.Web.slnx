@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="INDOTEL.Web/INDOTEL.WEB.csproj" />
+  <Project Path="INDOTEL.Web.Tests/INDOTEL.Web.Tests.csproj" />
+</Solution>

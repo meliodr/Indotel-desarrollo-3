@@ -1,0 +1,29 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=IndotelCoreDb;Trusted_Connection=True;TrustServerCertificate=True;"
+  },
+  "Jwt": {
+    "Issuer": "Indotel.Core",
+    "Audience": "Indotel.Clients",
+    "Key": "COLOCA_AQUI_UNA_CLAVE_LOCAL_DE_32_CARACTERES_O_MAS",
+    "AccessTokenMinutes": 30,
+    "RefreshTokenDays": 7
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "http://localhost:5234"
+    ]
+  },
+  "SeedData": {
+    "Enabled": true
+  },
+  "Database": {
+    "ApplyMigrationsOnStartup": true,
+    "ConnectRetryCount": 3,
+    "ConnectRetryIntervalSeconds": 2,
+    "CommandTimeoutSeconds": 30
+  },
+  "Security": {
+    "ExposeResetTokenInResponse": true
+  }
+}

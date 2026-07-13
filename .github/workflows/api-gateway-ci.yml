@@ -1,0 +1,37 @@
+name: API Gateway INDOTEL CI
+
+on:
+  push:
+    branches:
+      - api-gateway
+  pull_request:
+    branches:
+      - api-gateway
+
+jobs:
+  build-test-gateway:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Gateway
+        run: dotnet restore api-gateway/Indotel.ApiGateway/Indotel.ApiGateway.csproj
+
+      - name: Restore tests
+        run: dotnet restore api-gateway/Indotel.ApiGateway.Tests/Indotel.ApiGateway.Tests.csproj
+
+      - name: Build Gateway
+        run: dotnet build api-gateway/Indotel.ApiGateway/Indotel.ApiGateway.csproj --configuration Release --no-restore
+
+      - name: Test Gateway
+        run: dotnet test api-gateway/Indotel.ApiGateway.Tests/Indotel.ApiGateway.Tests.csproj --configuration Release --no-restore --collect:"XPlat Code Coverage"
+
+      - name: Publish Gateway
+        run: dotnet publish api-gateway/Indotel.ApiGateway/Indotel.ApiGateway.csproj --configuration Release --no-restore --output /tmp/indotel-api-gateway
