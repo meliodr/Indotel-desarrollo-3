@@ -68,7 +68,6 @@ jobs:
 
       - name: Compilar Caja antigua
         id: compilar_caja
-        continue-on-error: true
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
@@ -97,10 +96,12 @@ jobs:
           $base64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($texto))
           "codigo=$codigo" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "diagnostico=$base64" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          exit $codigo
+
+          Write-Host "MSBuild terminó con código $codigo; el resultado fue exportado para el trabajo de diagnóstico."
+          exit 0
 
       - name: Verificar ejecutable cuando compile
-        if: steps.compilar_caja.outcome == 'success'
+        if: steps.compilar_caja.outputs.codigo == '0'
         shell: pwsh
         run: |
           $exe = Get-ChildItem "INDOTEL_CAJA(REAL)\bin\Release" -Filter "*.exe" -File | Select-Object -First 1
