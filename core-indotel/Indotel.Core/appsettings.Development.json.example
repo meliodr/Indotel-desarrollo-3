@@ -18,7 +18,10 @@
     "Enabled": true
   },
   "Database": {
-    "ApplyMigrationsOnStartup": true
+    "ApplyMigrationsOnStartup": true,
+    "ConnectRetryCount": 3,
+    "ConnectRetryIntervalSeconds": 2,
+    "CommandTimeoutSeconds": 30
   },
   "Security": {
     "ExposeResetTokenInResponse": true
