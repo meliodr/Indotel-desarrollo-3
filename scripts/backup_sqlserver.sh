@@ -33,6 +33,9 @@ docker exec -e FILE_NAME="$FILE_NAME" "$CONTAINER" sh -lc '
 '
 
 docker cp "$CONTAINER:$CONTAINER_PATH" "$HOST_PATH"
-sha256sum "$HOST_PATH" > "$HOST_PATH.sha256"
+(
+  cd "$BACKUP_DIR"
+  sha256sum "$FILE_NAME" > "$FILE_NAME.sha256"
+)
 
 printf '\nRespaldo creado:\n%s\n%s\n' "$HOST_PATH" "$HOST_PATH.sha256"
