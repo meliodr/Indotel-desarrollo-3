@@ -2,9 +2,30 @@
 
 ## Estado
 
-**Implementación realizada en la rama `api-gateway`.**
+**Implementación y validación automática completadas en la rama `api-gateway`.**
 
-La validación definitiva requiere ejecutar restore, build, pruebas automáticas y una prueba integrada contra el Core.
+Commit validado: `e57da27`.
+
+La aceptación funcional definitiva conserva pendiente la prueba integrada Gateway → Core → SQL Server y la comprobación manual de respuestas `503` con el Core apagado.
+
+## Evidencia de validación automática
+
+Validación ejecutada en Ubuntu 24.04 mediante `scripts/validar_sprint2_gateway.sh`.
+
+Resultados:
+
+- Restauración: correcta.
+- Compilación Release del Gateway: correcta.
+- Compilación Release de pruebas: correcta.
+- Pruebas automáticas: 14 ejecutadas, 14 correctas, 0 errores, 0 omitidas.
+- Publicación de comprobación: correcta.
+- Cobertura Cobertura generada localmente.
+
+Mensaje final obtenido:
+
+```text
+Sprint 2 validado: restauracion, compilacion, pruebas y publicacion completadas.
+```
 
 ## Objetivo
 
