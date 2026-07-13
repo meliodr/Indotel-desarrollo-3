@@ -8,7 +8,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   preparar-y-validar-core:
@@ -20,24 +22,6 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
-
-      - name: Integrar Caja antigua sin modificarla
-        if: github.ref_name == 'integracion-caja-antigua'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm -r --ignore-unmatch "INDOTEL_CAJA(REAL)"
-          git checkout 50a9dd485b24678f600ddd4f7362e0323f966291 -- "INDOTEL_CAJA(REAL)"
-          git rm -r --ignore-unmatch "INDOTEL_CAJA.Tests"
-          git rm --ignore-unmatch ".github/workflows/caja-ci.yml"
-          git rm --ignore-unmatch "scripts/validar_sprint4_caja.sh"
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "Integra la Caja antigua intacta con el sistema actual"
-            git push origin HEAD:integracion-caja-antigua
-          fi
 
       - name: Configurar .NET 8
         uses: actions/setup-dotnet@v4
@@ -71,7 +55,6 @@ jobs:
       - name: Checkout de la integración
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
 
       - name: Instalar Developer Pack .NET Framework 4.8.1
@@ -82,23 +65,24 @@ jobs:
         shell: pwsh
         run: nuget restore "INDOTEL_CAJA(REAL)\packages.config" -PackagesDirectory "INDOTEL_CAJA(REAL)\packages" -NonInteractive
 
-      - name: Compilar Caja antigua y extraer diagnóstico
+      - name: Compilar Caja antigua y preparar diagnóstico
         id: compilar_caja
         continue-on-error: true
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
-          New-Item -ItemType Directory -Force -Path "docs" | Out-Null
           & msbuild "INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj" /m /p:Configuration=Release /p:Platform=AnyCPU /verbosity:minimal /fl /flp:"logfile=artifacts\caja-msbuild.log;verbosity=diagnostic"
           $codigo = $LASTEXITCODE
-          Set-Content -Path "artifacts\caja-exit-code.txt" -Value $codigo
 
           $errores = Select-String -Path "artifacts\caja-msbuild.log" -Pattern ": error ", " error CS", " error MSB" -SimpleMatch
           $lineas = @(
-            "RESULTADO_MSBUILD=$codigo"
-            "PROYECTO=INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj"
-            "FRAMEWORK=.NET Framework 4.8.1"
+            "## Diagnóstico automático de la Caja antigua"
             ""
+            "- Resultado MSBuild: **$codigo**"
+            "- Proyecto: `INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj`"
+            "- Framework: **.NET Framework 4.8.1**"
+            ""
+            "```text"
           )
 
           if ($errores) {
@@ -106,38 +90,30 @@ jobs:
           } elseif ($codigo -eq 0) {
             $lineas += "COMPILACION_EXITOSA"
           } elseif (Test-Path "artifacts\caja-msbuild.log") {
-            $lineas += Get-Content "artifacts\caja-msbuild.log" -Tail 150
+            $lineas += Get-Content "artifacts\caja-msbuild.log" -Tail 120
           } else {
             $lineas += "MSBuild terminó con error y no produjo el registro esperado."
           }
 
-          $lineas | Set-Content "docs\CAJA_ANTIGUA_MSBUILD_DIAGNOSTICO.txt"
+          $lineas += "```"
+          $lineas | Set-Content "artifacts\comentario-msbuild.md"
           exit $codigo
 
-      - name: Guardar diagnóstico en la rama
-        if: always()
+      - name: Publicar diagnóstico en el PR temporal
+        if: always() && github.event_name == 'pull_request'
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          $destino = "docs\CAJA_ANTIGUA_MSBUILD_DIAGNOSTICO.txt"
-          if (-not (Test-Path $destino)) {
-            New-Item -ItemType Directory -Force -Path "docs" | Out-Null
+          if (-not (Test-Path "artifacts\comentario-msbuild.md")) {
             @(
-              "RESULTADO_MSBUILD=DIAGNOSTICO_NO_GENERADO"
-              "El paso de compilación no dejó el archivo esperado."
-            ) | Set-Content $destino
+              "## Diagnóstico automático de la Caja antigua"
+              ""
+              "No se generó el archivo de diagnóstico esperado."
+            ) | Set-Content "artifacts\comentario-msbuild.md"
           }
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f $destino
-          git diff --cached --quiet
-          $sinCambios = $LASTEXITCODE -eq 0
-          if (-not $sinCambios) {
-            git commit -m "Actualiza diagnóstico de compilación de Caja antigua"
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            git push origin HEAD:integracion-caja-antigua
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
+          gh pr comment $env:PR_NUMBER --body-file "artifacts\comentario-msbuild.md"
 
       - name: Fallar si Caja no compiló
         if: steps.compilar_caja.outcome == 'failure'
