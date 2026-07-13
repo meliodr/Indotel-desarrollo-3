@@ -1,22 +1,47 @@
-bin/
-obj/
+# IDE
 .vs/
-.vscode/.ropeproject
+**/.vs/
+.vscode/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-*.dbmdl
-*.jfm
-*.pfx
-*.snk
-*.mdf
-*.ldf
-appsettings.Development.json
+
+# Compilacion y pruebas
+**/bin/
+**/obj/
+**/TestResults/
+**/coverage/
+*.pdb
+*.cache
+
+# Dependencias restaurables
+packages/
+**/packages/
+
+# Configuracion local y secretos
 .env
 .env.*
-TestResults/
-coverage/
-*.log
+!.env.example
+!deploy/.env.release.example
+deploy/.env.release
+appsettings.Development.json
+appsettings.*.local.json
 docker.env
+*.pfx
+*.p12
+*.key
+*.snk
+
+# Datos persistentes
 uploads/
+.data-protection-keys/
+backups/
+artifacts/
+
+# Logs y temporales
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+*.rar
