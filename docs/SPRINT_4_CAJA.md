@@ -2,9 +2,19 @@
 
 ## Estado
 
-**Implementación realizada en la rama `caja`.**
+**Implementación completada y validación local Linux aprobada en la rama `caja`.**
 
-La validación local en Ubuntu comprueba restauración, pruebas de infraestructura y configuración del proyecto. La compilación y publicación completas de WinForms se ejecutan en Windows mediante GitHub Actions (`windows-latest`) o en una computadora Windows con .NET 8.
+Commit validado localmente: `0197a6a`.
+
+La validación ejecutada en Ubuntu 24.04 confirmó:
+
+- restauración correcta del proyecto Caja;
+- 15 pruebas de infraestructura ejecutadas y aprobadas;
+- 0 errores y 0 pruebas omitidas;
+- cobertura Cobertura generada;
+- configuración `net8.0-windows`, WinForms y `EnableWindowsTargeting` correcta.
+
+La compilación visual y publicación `win-x64` requieren Windows Desktop SDK. Esa etapa se ejecuta mediante GitHub Actions con `windows-latest` y debe conservarse como evidencia antes del cierre funcional definitivo.
 
 ## Objetivo
 
@@ -16,11 +26,10 @@ Convertir Caja en un cliente interno seguro y resiliente que consuma exclusivame
 
 - Migración de .NET Framework 4.8.1 a `net8.0-windows`.
 - Proyecto SDK-style con WinForms.
-- `EnableWindowsTargeting` habilitado.
+- Compilación cruzada declarada mediante `EnableWindowsTargeting`.
 - SDK fijado en .NET 8.
 - Eliminación de Entity Framework y paquetes heredados.
 - Eliminación del almacenamiento de token duplicado.
-- CI y publicación ejecutados en `windows-latest`, que sí incluye el SDK Windows Desktop requerido.
 
 ### Comunicación
 
@@ -101,7 +110,7 @@ Convertir Caja en un cliente interno seguro y resiliente que consuma exclusivame
 
 En producción debe utilizarse la URL HTTPS real del Gateway.
 
-## Validación local en Ubuntu
+## Validación local Linux
 
 ```bash
 cd /home/jarry/indotel-prueba-caja
@@ -110,7 +119,7 @@ git reset --hard origin/caja
 bash scripts/validar_sprint4_caja.sh
 ```
 
-En Ubuntu con un SDK que no incluya `Microsoft.NET.Sdk.WindowsDesktop`, el resultado esperado es:
+Resultado validado:
 
 ```text
 Validacion local Linux completada:
@@ -119,17 +128,15 @@ Validacion local Linux completada:
 - configuracion net8.0-windows/WinForms: correcta.
 ```
 
-Esto no sustituye la compilación Windows. El cierre automático completo requiere que el workflow **Caja CI** apruebe restauración, compilación, pruebas y publicación en `windows-latest`.
+## Validación Windows pendiente
 
-## Validación completa en Windows
+El workflow `.github/workflows/caja-ci.yml` debe confirmar:
 
-```powershell
-dotnet restore "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj"
-dotnet restore "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj"
-dotnet build "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --no-restore
-dotnet test "INDOTEL_CAJA.Tests/INDOTEL_CAJA.Tests.csproj" --configuration Release --no-restore --collect:"XPlat Code Coverage"
-dotnet publish "INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj" --configuration Release --runtime win-x64 --self-contained false --output artifacts/caja
-```
+1. restauración;
+2. compilación Release;
+3. 15 pruebas de infraestructura;
+4. publicación `win-x64`;
+5. generación del artefacto `indotel-caja-win-x64`.
 
 ## Pruebas manuales pendientes
 
