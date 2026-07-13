@@ -71,7 +71,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseStatusCodePagesWithReExecute("/Home/HttpStatus", "?code={0}");
+app.UseStatusCodePagesWithReExecute("/Home/HttpStatus/{0}");
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
