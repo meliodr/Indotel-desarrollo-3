@@ -54,8 +54,10 @@ var sqlConnectionBuilder = new SqlConnectionStringBuilder(connectionString)
 };
 
 builder.Services.AddProblemDetails();
+builder.Services.AddScoped<TransactionalActionFilter>();
 builder.Services.AddControllers(options =>
 {
+    options.Filters.AddService<TransactionalActionFilter>();
     options.Filters.Add<ApiProblemResultFilter>();
 });
 builder.Services.AddEndpointsApiExplorer();
@@ -263,7 +265,6 @@ app.UseCors("ApiCors");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<TransactionalRequestMiddleware>();
 
 app.UseStatusCodePages(async statusContext =>
 {
