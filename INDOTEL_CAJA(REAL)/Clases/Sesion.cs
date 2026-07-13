@@ -1,33 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace INDOTEL_CAJA_REAL_.Clases
 {
-    public class Sesion
+    public static class Sesion
     {
-        public static string Token { get; set; }
-
-        public static string RefreshToken { get; set; }
-
+        public static string Token { get; set; } = string.Empty;
+        public static string RefreshToken { get; set; } = string.Empty;
         public static UsuarioSesion Usuario { get; set; }
 
-        public static bool Logueado
-        {
-            get
-            {
-                return !string.IsNullOrEmpty(Token);
-            }
-        }
+        public static bool Logueado =>
+            !string.IsNullOrWhiteSpace(Token) && Usuario != null;
 
         public static void Limpiar()
         {
-            Token = "";
-            RefreshToken = "";
+            Token = string.Empty;
+            RefreshToken = string.Empty;
             Usuario = null;
         }
-
     }
 }
