@@ -2,6 +2,7 @@ using System.Text.Json;
 using Indotel.ApiGateway;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Xunit;
 
 namespace Indotel.ApiGateway.Tests;
 
