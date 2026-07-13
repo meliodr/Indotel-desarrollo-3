@@ -62,6 +62,9 @@ jobs:
         shell: pwsh
         run: choco install netfx-4.8.1-devpack -y --no-progress
 
+      - name: Configurar MSBuild
+        uses: microsoft/setup-msbuild@v2
+
       - name: Restaurar paquetes NuGet de Caja
         shell: pwsh
         run: nuget restore "INDOTEL_CAJA(REAL)\packages.config" -PackagesDirectory "INDOTEL_CAJA(REAL)\packages" -NonInteractive
