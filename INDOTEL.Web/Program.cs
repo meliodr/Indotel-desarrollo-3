@@ -81,6 +81,10 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Captura cualquier ruta que no haya coincidido con un endpoint MVC y devuelve
+// directamente la página 404, sin depender de una segunda resolución de ruta.
+app.MapFallbackToController("PageNotFound", "Home");
+
 app.Run();
 
 public partial class Program
