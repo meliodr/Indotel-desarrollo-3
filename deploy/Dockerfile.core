@@ -1,0 +1,35 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY core-indotel/Indotel.Core/Indotel.Core.csproj core-indotel/Indotel.Core/
+RUN dotnet restore core-indotel/Indotel.Core/Indotel.Core.csproj
+
+COPY core-indotel/Indotel.Core/ core-indotel/Indotel.Core/
+RUN dotnet publish core-indotel/Indotel.Core/Indotel.Core.csproj \
+    --configuration Release \
+    --no-restore \
+    --output /app/publish \
+    /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system indotel \
+    && useradd --system --gid indotel --home-dir /app indotel \
+    && mkdir -p /app/uploads \
+    && chown -R indotel:indotel /app
+
+COPY --from=build --chown=indotel:indotel /app/publish .
+
+USER indotel
+ENV ASPNETCORE_URLS=http://+:8080 \
+    DOTNET_EnableDiagnostics=0
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl --fail --silent http://127.0.0.1:8080/health || exit 1
+
+ENTRYPOINT ["dotnet", "Indotel.Core.dll"]
