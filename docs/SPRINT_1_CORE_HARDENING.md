@@ -46,13 +46,15 @@ La validación definitiva requiere ejecutar restore, build, pruebas automáticas
 - Compatibilidad conservada mediante la propiedad `mensaje`.
 - Todos los errores normalizados incluyen `codigo`, `correlationId` y `fecha`.
 - Middleware para excepciones de concurrencia, persistencia, timeout y errores no controlados.
+- Las caídas de SQL Server se diferencian de los conflictos de integridad de datos.
 - Propagación de `X-Correlation-ID` desde Gateway o cliente.
 - Rate limiting de autenticación particionado por IP.
 - Respuesta 429 estructurada con `Retry-After` cuando corresponde.
 
 ### Reclamaciones
 
-- Middleware transaccional para operaciones de escritura de reclamaciones.
+- Filtro transaccional para operaciones de escritura de reclamaciones.
+- La transacción se confirma antes de generar la respuesta HTTP.
 - Aislamiento serializable para evitar cambios simultáneos basados en un estado obsoleto.
 - Endpoint `GET /api/reclamaciones/{id}/transiciones`.
 - Las transiciones se calculan desde la máquina de estados del Core y se filtran por rol.
@@ -88,9 +90,9 @@ La validación definitiva requiere ejecutar restore, build, pruebas automáticas
 
 - `Constants/AuthorizationPolicies.cs`
 - `Filters/ApiProblemResultFilter.cs`
+- `Filters/TransactionalActionFilter.cs`
 - `Helpers/ApiProblemFactory.cs`
 - `Middleware/CorrelationIdMiddleware.cs`
-- `Middleware/TransactionalRequestMiddleware.cs`
 - `Services/CurrentUserService.cs`
 - `Services/FileSignatureValidator.cs`
 - `Controllers/ReclamacionTransicionesController.cs`
