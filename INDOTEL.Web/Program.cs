@@ -18,13 +18,19 @@ if (!Uri.TryCreate(gatewayBaseUrl, UriKind.Absolute, out var gatewayUri) ||
     throw new InvalidOperationException("ApiSettings:GatewayBaseUrl no está configurada correctamente.");
 }
 
-builder.Services.AddHttpClient("IndotelGateway", client =>
+void ConfigureGatewayClient(HttpClient client)
 {
     client.BaseAddress = gatewayUri;
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(20);
-})
-.AddHttpMessageHandler<GatewayTransportHandler>();
+}
+
+builder.Services.AddHttpClient("IndotelGateway", ConfigureGatewayClient)
+    .AddHttpMessageHandler<GatewayTransportHandler>();
+
+// Alias temporal para controladores existentes. Ambos nombres consumen exclusivamente el Gateway.
+builder.Services.AddHttpClient("IndotelCore", ConfigureGatewayClient)
+    .AddHttpMessageHandler<GatewayTransportHandler>();
 
 var configuredKeysPath = builder.Configuration.GetValue<string>("Security:DataProtectionKeysPath");
 var keysPath = string.IsNullOrWhiteSpace(configuredKeysPath)
