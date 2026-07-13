@@ -61,6 +61,12 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult HttpStatus(int code)
     {
+        return CrearVistaEstado(code);
+    }
+
+    [NonAction]
+    private IActionResult CrearVistaEstado(int code)
+    {
         Response.StatusCode = code;
         ViewBag.StatusCode = code;
         ViewBag.Titulo = code switch
@@ -81,6 +87,12 @@ public class HomeController : Controller
         };
 
         return View("StatusCode");
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult PageNotFound()
+    {
+        return CrearVistaEstado(StatusCodes.Status404NotFound);
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
