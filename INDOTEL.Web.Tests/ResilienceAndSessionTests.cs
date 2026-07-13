@@ -42,9 +42,10 @@ public sealed class PortalStatusPageTests : IClassFixture<WebApplicationFactory<
     {
         var response = await _client.GetAsync("/ruta-que-no-existe");
         var html = await response.Content.ReadAsStringAsync();
+        var htmlDecodificado = WebUtility.HtmlDecode(html);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Contains("Página no encontrada", html);
+        Assert.Contains("Página no encontrada", htmlDecodificado);
     }
 }
 
