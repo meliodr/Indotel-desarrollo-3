@@ -1,12 +1,5 @@
-﻿using INDOTEL_CAJA_REAL_.Clases;
+using INDOTEL_CAJA_REAL_.Clases;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace INDOTEL_CAJA_REAL_.FormsCaja
@@ -20,54 +13,49 @@ namespace INDOTEL_CAJA_REAL_.FormsCaja
 
         private void label6_Click(object sender, EventArgs e)
         {
-
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            Panel_Principal principal = new Panel_Principal();
-
-            principal.Show();
-
-            this.Hide();
+            DialogResult = DialogResult.Cancel;
+            Close();
         }
 
         private async void btnCerrarSesion_Click(object sender, EventArgs e)
         {
-            ServicioAuth servicio = new ServicioAuth();
+            btnCerrarSesion.Enabled = false;
+            Cursor = Cursors.WaitCursor;
 
-            var respuesta =
-                await servicio.Logout();
-
-            if (!respuesta.Exitoso)
+            try
             {
-                MessageBox.Show(respuesta.Mensaje);
-                return;
+                var servicio = new ServicioAuth();
+                var respuesta = await servicio.Logout();
+
+                var mensaje = respuesta.Exitoso
+                    ? "Sesion cerrada correctamente."
+                    : "La sesion local fue cerrada. No fue posible confirmar la revocacion remota.";
+
+                MessageBox.Show(
+                    respuesta.Exitoso ? mensaje : $"{mensaje}\n\n{respuesta.MensajeConReferencia}",
+                    "Cerrar sesion",
+                    MessageBoxButtons.OK,
+                    respuesta.Exitoso ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+
+                DialogResult = DialogResult.OK;
+                Close();
             }
-
-            Sesion.Token = "";
-            Sesion.RefreshToken = "";
-            Sesion.Usuario = null;
-
-            MessageBox.Show("Sesión cerrada correctamente.");
-
-            Hide();
-
-            Login login = new Login();
-
-            login.Show();
-
-            Close();
-
+            finally
+            {
+                Sesion.Limpiar();
+                Cursor = Cursors.Default;
+                btnCerrarSesion.Enabled = true;
+            }
         }
 
         private void Cerrar_Sesión_Load(object sender, EventArgs e)
         {
-            txtUsuario.Text = Sesion.Usuario.Correo;
-
-            txtRol.Text = Sesion.Usuario.Rol;
-
-
+            txtUsuario.Text = Sesion.Usuario?.Correo ?? "Sesion no disponible";
+            txtRol.Text = Sesion.Usuario?.Rol ?? string.Empty;
         }
     }
 }
