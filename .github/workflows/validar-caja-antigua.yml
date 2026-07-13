@@ -70,49 +70,68 @@ jobs:
         id: compilar_caja
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
-
-          $msbuild = (Get-Command msbuild.exe).Source
-          $inicio = [System.Diagnostics.ProcessStartInfo]::new()
-          $inicio.FileName = $msbuild
-          $inicio.UseShellExecute = $false
-          $inicio.CreateNoWindow = $true
-          $inicio.ArgumentList.Add("INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj")
-          $inicio.ArgumentList.Add("/m")
-          $inicio.ArgumentList.Add("/p:Configuration=Release")
-          $inicio.ArgumentList.Add("/p:Platform=AnyCPU")
-          $inicio.ArgumentList.Add("/verbosity:minimal")
-          $inicio.ArgumentList.Add("/fl")
-          $inicio.ArgumentList.Add("/flp:logfile=artifacts\caja-msbuild.log;verbosity=diagnostic")
-
-          $proceso = [System.Diagnostics.Process]::Start($inicio)
-          $proceso.WaitForExit()
-          $codigo = $proceso.ExitCode
-
-          $errores = Select-String -Path "artifacts\caja-msbuild.log" -Pattern ": error ", " error CS", " error MSB" -SimpleMatch
+          $codigo = 999
           $lineas = @(
-            "RESULTADO_MSBUILD=$codigo"
             "PROYECTO=INDOTEL_CAJA(REAL)/INDOTEL_CAJA(REAL).csproj"
             "FRAMEWORK=.NET Framework 4.8.1"
             ""
           )
 
-          if ($errores) {
-            $lineas += $errores.Line | Sort-Object -Unique
-          } elseif ($codigo -eq 0) {
-            $lineas += "COMPILACION_EXITOSA"
-          } elseif (Test-Path "artifacts\caja-msbuild.log") {
-            $lineas += Get-Content "artifacts\caja-msbuild.log" -Tail 100
-          } else {
-            $lineas += "MSBuild terminó con error y no produjo el registro esperado."
+          try {
+            New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
+
+            $msbuild = (Get-Command msbuild.exe -ErrorAction Stop).Source
+            $inicio = [System.Diagnostics.ProcessStartInfo]::new()
+            $inicio.FileName = $msbuild
+            $inicio.UseShellExecute = $false
+            $inicio.CreateNoWindow = $true
+            $inicio.ArgumentList.Add("INDOTEL_CAJA(REAL)\INDOTEL_CAJA(REAL).csproj")
+            $inicio.ArgumentList.Add("/m")
+            $inicio.ArgumentList.Add("/p:Configuration=Release")
+            $inicio.ArgumentList.Add("/p:Platform=AnyCPU")
+            $inicio.ArgumentList.Add("/verbosity:minimal")
+            $inicio.ArgumentList.Add("/fl")
+            $inicio.ArgumentList.Add("/flp:logfile=artifacts\caja-msbuild.log;verbosity=diagnostic")
+
+            $proceso = [System.Diagnostics.Process]::Start($inicio)
+            $proceso.WaitForExit()
+            $codigo = $proceso.ExitCode
+            $lineas += "RESULTADO_MSBUILD=$codigo"
+            $lineas += ""
+
+            if (Test-Path "artifacts\caja-msbuild.log") {
+              $errores = Select-String -Path "artifacts\caja-msbuild.log" -Pattern ": error ", " error CS", " error MSB" -SimpleMatch
+              if ($errores) {
+                $lineas += $errores.Line | Sort-Object -Unique
+              } elseif ($codigo -eq 0) {
+                $lineas += "COMPILACION_EXITOSA"
+              } else {
+                $lineas += Get-Content "artifacts\caja-msbuild.log" -Tail 80
+              }
+            } elseif ($codigo -eq 0) {
+              $lineas += "COMPILACION_EXITOSA_SIN_LOG"
+            } else {
+              $lineas += "MSBuild terminó con error y no produjo el registro esperado."
+            }
           }
-
-          $texto = $lineas -join "`n"
-          $base64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($texto))
-          "codigo=$codigo" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          "diagnostico=$base64" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
-          Write-Host "MSBuild terminó con código $codigo; el resultado fue exportado para el trabajo de diagnóstico."
+          catch {
+            $codigo = 998
+            $lineas += "RESULTADO_MSBUILD=$codigo"
+            $lineas += "EXCEPCION_DURANTE_VALIDACION"
+            $lineas += $_.Exception.ToString()
+            if (Test-Path "artifacts\caja-msbuild.log") {
+              $lineas += ""
+              $lineas += "ULTIMAS_LINEAS_MSBUILD:"
+              $lineas += Get-Content "artifacts\caja-msbuild.log" -Tail 80
+            }
+          }
+          finally {
+            $texto = $lineas -join "`n"
+            $base64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($texto))
+            "codigo=$codigo" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "diagnostico=$base64" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            Write-Host "Se exportó el diagnóstico con código $codigo."
+          }
 
       - name: Verificar ejecutable cuando compile
         if: steps.compilar_caja.outputs.codigo == '0'
