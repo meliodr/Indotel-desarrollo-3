@@ -1,19 +1,40 @@
 using INDOTEL.WEB.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSingleton<PortalTokenStore>();
 builder.Services.AddScoped<PortalSessionService>();
+builder.Services.AddTransient<GatewayTransportHandler>();
 
-var apiBaseUrl = builder.Configuration.GetValue<string>("ApiSettings:BaseUrl");
-builder.Services.AddHttpClient("IndotelCore", client =>
+var gatewayBaseUrl = builder.Configuration.GetValue<string>("ApiSettings:GatewayBaseUrl");
+if (!Uri.TryCreate(gatewayBaseUrl, UriKind.Absolute, out var gatewayUri) ||
+    gatewayUri.Scheme is not ("http" or "https"))
 {
-    client.BaseAddress = new Uri(apiBaseUrl ?? throw new InvalidOperationException("API Base URL no configurada."));
+    throw new InvalidOperationException("ApiSettings:GatewayBaseUrl no está configurada correctamente.");
+}
+
+builder.Services.AddHttpClient("IndotelGateway", client =>
+{
+    client.BaseAddress = gatewayUri;
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
+    client.Timeout = TimeSpan.FromSeconds(20);
+})
+.AddHttpMessageHandler<GatewayTransportHandler>();
+
+var configuredKeysPath = builder.Configuration.GetValue<string>("Security:DataProtectionKeysPath");
+var keysPath = string.IsNullOrWhiteSpace(configuredKeysPath)
+    ? Path.Combine(builder.Environment.ContentRootPath, ".data-protection-keys")
+    : Path.GetFullPath(configuredKeysPath);
+Directory.CreateDirectory(keysPath);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+    .SetApplicationName("INDOTEL.PortalCiudadano");
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -22,22 +43,27 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Auth/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
+        options.Cookie.Name = "INDOTEL.Portal.Session";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
     });
 
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+app.UseExceptionHandler("/Home/Error");
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
     app.UseHttpsRedirection();
 }
 
+app.UseStatusCodePagesWithReExecute("/Home/StatusCode", "?code={0}");
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
