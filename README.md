@@ -130,6 +130,25 @@ Caja debe configurar `ApiBaseUrl=https://localhost:8443/`.
 - Contenedores .NET con usuario no root.
 - Secretos y respaldos excluidos de Git.
 
+## Evolución planificada del Core
+
+La rama `proyecto-revisado-funcionando` documenta una ampliación exclusivamente aditiva del Core para incorporar perfiles administrativos, clientes comerciales, productos, servicios cobrables, cotizaciones, facturas, cuentas por cobrar, pagos, cobros y una GUI administrativa separada.
+
+Principios obligatorios:
+
+- no cambiar rutas ni respuestas utilizadas por Web, Caja o Gateway;
+- mantener `ServicioTelecom` separado del nuevo catálogo de servicios cobrables;
+- usar migraciones aditivas y feature flags;
+- aplicar idempotencia, transacciones explícitas y concurrencia en operaciones monetarias;
+- construir la GUI como proyecto separado que consume la API y nunca accede al `DbContext`.
+
+Documentación:
+
+```text
+docs/PLAN_EVOLUCION_CORE_COMERCIAL_Y_GUI.md
+docs/ADR_GUI_ADMINISTRATIVA_CORE.md
+```
+
 ## Operación
 
 Backup:
@@ -166,6 +185,8 @@ docs/ARQUITECTURA_FINAL.md
 docs/MANUAL_TECNICO.md
 docs/MANUAL_USUARIO.md
 docs/GUIA_DEMO_DEFENSA.md
+docs/PLAN_EVOLUCION_CORE_COMERCIAL_Y_GUI.md
+docs/ADR_GUI_ADMINISTRATIVA_CORE.md
 ```
 
 ## Responsabilidad ante fallos
