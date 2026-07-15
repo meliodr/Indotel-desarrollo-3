@@ -1,74 +1,95 @@
-# ADR: GUI administrativa del Core como aplicación separada
+# ADR: GUI operativa obligatoria del Core como aplicación separada
 
-Estado: aceptada para implementación futura
+Estado: aceptada y obligatoria para la entrega académica
 
 Fecha: 15/07/2026
 
 ## Contexto
 
-El proyecto requiere mejorar el llamado "GUI del Core" y agregar módulos administrativos para usuarios, perfiles, productos, clientes, servicios cobrables, cotizaciones, facturas, cuentas por cobrar, pagos y cobros.
+El docente confirmó que el Core debe tener una interfaz gráfica propia y mostró como referencia una interfaz de sistema bancario. Por tanto, Swagger no satisface por sí solo el requisito de GUI.
 
-El proyecto actual `Indotel.Core` es una ASP.NET Core Web API. Swagger es una interfaz técnica para explorar endpoints, pero no es una aplicación de operaciones administrativas.
-
-Incorporar páginas, acceso directo a Entity Framework y lógica visual dentro de la API aumentaría el acoplamiento y podría afectar a Caja, Web, Gateway e Integración.
+El proyecto actual `Indotel.Core` es una ASP.NET Core Web API consumida por Caja, Web y API Gateway. Integrar vistas, acceso a datos y lógica visual dentro de ese mismo ejecutable aumentaría el riesgo de romper consumidores y mezclar responsabilidades.
 
 ## Decisión
 
-Crear una aplicación independiente dentro de la solución:
+Crear un proyecto nuevo dentro de la misma solución del Core:
 
 ```text
-Indotel.Core.Admin
+core-indotel/
+├── Indotel.Core.sln
+├── Indotel.Core/
+├── Indotel.Core.Tests/
+└── Indotel.Core.Gui/
 ```
 
-La aplicación administrativa:
+`Indotel.Core.Gui` será la interfaz oficial y demostrable del Core.
 
+La aplicación:
+
+- usará ASP.NET Core 8 MVC y Razor Views;
 - consumirá `Indotel.Core` mediante HTTP;
 - no referenciará `IndotelDbContext`;
 - no consultará SQL Server directamente;
 - no duplicará reglas de negocio;
-- almacenará la sesión y los tokens del Core del lado servidor;
-- utilizará permisos y roles emitidos por el Core;
-- mostrará errores usando el contrato ProblemDetails y correlationId;
-- podrá ejecutarse o desplegarse sin modificar Caja, Web o Gateway.
+- almacenará JWT y refresh token del lado servidor;
+- utilizará una cookie segura como identificador de sesión;
+- aplicará permisos y roles emitidos por el Core;
+- mostrará errores mediante ProblemDetails y `correlationId`;
+- se ejecutará en un puerto independiente;
+- podrá detenerse sin afectar la API;
+- no requerirá cambios en Caja, Web ni Integración.
 
-## Motivación empresarial
+## Por qué sigue siendo GUI del Core
 
-Las plataformas grandes suelen separar la API de las interfaces operativas. Los dashboards empresariales organizan recursos por módulos, ofrecen búsquedas y filtros, aplican permisos por rol y muestran transacciones, clientes, productos, facturas, reportes y registros de integración sin permitir que la pantalla sustituya las reglas del backend.
+La separación es técnica, no funcional. Ambos proyectos forman parte de la solución y del entregable del Core:
 
-Para INDOTEL se aplicarán estos principios:
+```text
+Core API = reglas, seguridad, persistencia y contratos
+Core GUI = operación visual de esas reglas y contratos
+```
 
-1. API-first y contratos estables.
-2. Interfaz administrativa separada.
-3. Navegación modular.
-4. Acciones visibles según rol, pero siempre verificadas por el Core.
-5. Historial y auditoría disponibles en la vista de detalle.
-6. Operaciones financieras inmutables o reversables, no borrables.
-7. Diseño consistente mediante un sistema de componentes.
-8. Entorno de demostración separado de datos reales.
+La GUI no es otra Web ciudadana ni una modificación de Caja. Es la terminal administrativa del Core.
 
-## Tecnología
+## Patrón visual y operativo
 
-Primera versión:
+La GUI seguirá un patrón de aplicación bancaria interna:
 
-- ASP.NET Core 8;
-- Razor Pages o MVC;
-- Bootstrap 5;
-- estilos y tokens visuales inspirados en Fluent;
-- `IHttpClientFactory`;
-- cookie segura para la sesión del portal;
-- tokens JWT y refresh token almacenados en servidor;
-- protección CSRF;
-- autorización por política;
-- configuración de URL del Core por ambiente.
+- inicio de sesión;
+- dashboard;
+- navegación lateral por módulos;
+- listados filtrables;
+- formularios estructurados;
+- vistas de detalle con historial;
+- estados visibles;
+- auditoría;
+- salud del sistema;
+- cola de operaciones pendientes;
+- confirmación de acciones sensibles;
+- doble control operador/aprobador.
 
-Esta decisión reduce la curva de aprendizaje porque mantiene C# y .NET en toda la solución. No impide migrar el frontend a React, Angular o Blazor en el futuro, porque el contrato seguirá siendo la API.
+No se copiará la imagen de un banco específico. El diseño será institucional, inspirado en Fluent 2 y adaptado a INDOTEL.
 
-## Estructura visual propuesta
+## Primera tecnología
 
-### Navegación lateral
+```text
+ASP.NET Core 8 MVC
+Razor Views
+Bootstrap 5
+CSS institucional inspirado en Fluent
+IHttpClientFactory
+Cookies seguras
+Sesión del lado servidor
+Protección antiforgery
+Políticas de autorización
+```
+
+MVC se adopta porque separa presentación, entrada y modelos, mantiene el desarrollo principal en C# y permite pruebas sin agregar una cadena de herramientas JavaScript separada.
+
+## Módulos visuales
 
 ```text
 Inicio
+Operaciones pendientes
 Usuarios
 Perfiles
 Clientes
@@ -77,130 +98,122 @@ Servicios cobrables
 Cotizaciones
 Facturas
 Cuentas por cobrar
-Pagos y cobros
+Pagos
+Cobros y recibos
 Auditoría
 Salud del sistema
 Configuración
 ```
 
-### Dashboard
+Los módulos se activarán progresivamente mediante feature flags.
 
-- tarjetas de totales;
-- facturas pendientes y vencidas;
-- cuentas por cobrar;
-- pagos pendientes de conciliación;
-- cobros del día;
-- actividad reciente;
-- alertas del sistema;
-- acceso a auditoría por correlationId.
+## Doble autorización
 
-### Listados
+Las acciones sensibles usarán un patrón operador/aprobador:
 
-- búsqueda;
-- filtros;
-- paginación;
-- columnas configuradas por módulo;
-- etiquetas de estado;
-- acciones contextuales;
-- exportación futura;
-- estados vacíos y mensajes claros.
+```text
+Operador solicita -> PENDIENTE_APROBACION
+Supervisor revisa -> APROBADA o RECHAZADA
+```
 
-### Formularios
+El solicitante no podrá aprobar su propia operación.
 
-- validación en cliente para usabilidad;
-- validación definitiva en Core;
-- mensajes de error junto al campo;
-- confirmación para acciones sensibles;
-- resumen antes de emitir factura, aplicar cobro o reversar.
+Se aplicará inicialmente a:
 
-### Vista de detalle
+- modificación de tarifas;
+- aprobación de exenciones;
+- anulación de facturas;
+- reversión de cobros;
+- modificación de tasas de cambio;
+- activación de perfiles críticos.
 
-- encabezado con estado y número;
-- información principal;
-- detalles monetarios;
-- relaciones;
-- historial;
-- auditoría;
-- acciones permitidas.
-
-## Seguridad
+## Reglas de seguridad
 
 La GUI no debe:
 
 - almacenar JWT en `localStorage`;
 - enviar secretos al navegador;
-- confiar solamente en botones ocultos;
-- mostrar datos financieros sin autorización;
-- permitir edición libre de saldos;
-- permitir borrado de documentos financieros;
+- confiar únicamente en botones ocultos;
+- acceder al `DbContext`;
+- calcular saldos por su cuenta;
+- permitir edición manual de saldos;
+- borrar documentos financieros;
 - exponer excepciones técnicas.
 
 El Core seguirá siendo responsable de autorización, validación, transacciones, concurrencia, idempotencia y auditoría.
 
-## Swagger
+## Compatibilidad
 
-Swagger se mantendrá y mejorará como portal técnico:
+La implementación será aditiva:
 
-- contratos;
-- ejemplos;
-- roles;
-- errores;
-- estados;
-- idempotencia;
-- pruebas manuales de endpoints.
+- no se eliminan o renombran rutas;
+- no se cambian DTOs existentes;
+- no se modifica `ServicioTelecom`;
+- no se cambian roles actuales;
+- no se realizan migraciones destructivas;
+- no se modifica Caja;
+- no se modifica Web;
+- no se modifica Integración.
 
-No se intentará transformar Swagger en el dashboard administrativo.
+Antes y después de cada fase deben aprobarse las pruebas existentes y los smoke tests de consumidores.
 
-## Despliegue seguro
+## Despliegue inicial
 
-La GUI se agregará inicialmente sin modificar el despliegue actual.
+```text
+Core API: http://localhost:5085
+Core GUI: http://localhost:5285
+```
 
-Etapas:
-
-1. crear proyecto y pruebas;
-2. ejecutar localmente en puerto independiente;
-3. validar contra Core local;
-4. mantener `CoreAdminUi=false` por defecto;
-5. integrar al despliegue solo después de pruebas;
-6. agregar ruta de proxy en una fase posterior, sin cambiar las rutas existentes.
-
-## Consecuencias positivas
-
-- menor riesgo para Core actual;
-- no rompe consumidores;
-- interfaz reemplazable;
-- contratos reutilizables;
-- mejor seguridad;
-- pruebas más sencillas;
-- separación entre experiencia de usuario y reglas financieras.
-
-## Consecuencias negativas
-
-- se agrega un proyecto adicional;
-- requiere administrar sesión del portal;
-- requiere DTOs y clientes HTTP bien definidos;
-- algunas operaciones necesitan llamadas adicionales a la API.
-
-Estas desventajas son aceptables frente al riesgo de mezclar UI, reglas y persistencia.
+La GUI se ejecutará inicialmente de forma local e independiente. La integración con Caddy o el despliegue consolidado será una fase posterior y no modificará rutas actuales.
 
 ## Alternativas descartadas
 
-### Páginas dentro del proyecto API
+### Usar solamente Swagger
 
-Descartada por acoplamiento, aumento del riesgo de despliegue y mezcla de responsabilidades.
+Descartada porque Swagger es una consola técnica para probar endpoints, no una interfaz operativa completa.
 
-### GUI conectada directamente a SQL Server
+### Agregar páginas dentro del mismo proyecto API
 
-Descartada porque evita reglas, autorización, auditoría y contratos del Core.
+Descartada por acoplamiento, riesgo de despliegue y mezcla de responsabilidades.
 
-### Modificar la Web ciudadana actual para convertirla en panel administrativo
+### Conectar la GUI directamente a SQL Server
 
-Descartada porque podría romper el alcance y la experiencia de la Web existente.
+Descartada porque evitaría las reglas, autorización, auditoría y contratos del Core.
 
-### Usar únicamente Swagger
+### Convertir la Web ciudadana en GUI del Core
 
-Descartada porque Swagger es una herramienta técnica, no una aplicación operativa para usuarios administrativos.
+Descartada porque cambiaría el alcance y podría romper la experiencia existente.
+
+### Modificar Caja para representar el Core
+
+Descartada porque Caja tiene un alcance propio y debe permanecer independiente.
+
+## Consecuencias
+
+Positivas:
+
+- cumple explícitamente el requisito del docente;
+- reduce el riesgo para los consumidores actuales;
+- mantiene una arquitectura API-first;
+- permite una interfaz bancaria y administrativa real;
+- facilita pruebas, seguridad y evolución.
+
+Negativas:
+
+- agrega un proyecto adicional;
+- requiere administrar sesión y clientes HTTP;
+- exige mantener DTOs visuales y contratos;
+- añade trabajo de diseño y pruebas de interfaz.
+
+Las consecuencias negativas son aceptables y forman parte del alcance requerido.
+
+## Documentación relacionada
+
+```text
+docs/PLAN_EVOLUCION_CORE_COMERCIAL_Y_GUI.md
+docs/PLAN_IMPLEMENTACION_GUI_CORE_OBLIGATORIA.md
+```
 
 ## Resultado
 
-La GUI del Core será una aplicación administrativa separada y API-first. El Core continuará siendo headless desde el punto de vista del dominio y conservará toda la lógica de negocio.
+El Core INDOTEL tendrá una GUI propia, operativa y visible. La GUI será parte de la solución del Core, consumirá su API y permitirá demostrar usuarios, perfiles, administración, auditoría y los futuros módulos comerciales y financieros sin romper Caja, Web o Integración.
