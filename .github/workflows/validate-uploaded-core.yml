@@ -1,0 +1,67 @@
+name: Validate uploaded Core package
+
+on:
+  pull_request:
+    branches:
+      - proyecto-revisado-funcionando
+  workflow_dispatch:
+
+jobs:
+  core-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Reconstruct package
+        shell: bash
+        run: |
+          mkdir -p /tmp/indotel-src
+          cat validation/package.b64.* | base64 --decode > /tmp/core.zip
+          unzip -q /tmp/core.zip -d /tmp/indotel-src
+          test -f /tmp/indotel-src/core-indotel/Indotel.Core.sln
+      - name: Restore
+        run: dotnet restore /tmp/indotel-src/core-indotel/Indotel.Core.sln
+      - name: Build solution
+        run: dotnet build /tmp/indotel-src/core-indotel/Indotel.Core.sln -c Release --no-restore
+      - name: Run tests
+        run: dotnet test /tmp/indotel-src/core-indotel/Indotel.Core.Tests/Indotel.Core.Tests.csproj -c Release --no-build --logger "trx;LogFileName=results.trx"
+      - name: Install EF tool
+        run: dotnet tool install --global dotnet-ef --version 8.0.6
+      - name: Generate idempotent migration script
+        env:
+          ConnectionStrings__DefaultConnection: "Server=localhost;Database=IndotelValidation;User Id=sa;Password=ValidationOnly_123!;TrustServerCertificate=True"
+        run: dotnet ef migrations script --idempotent --project /tmp/indotel-src/core-indotel/Indotel.Core/Indotel.Core.csproj --no-build --output /tmp/migrations.sql
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-validation-results
+          path: |
+            /tmp/indotel-src/core-indotel/Indotel.Core.Tests/TestResults
+            /tmp/migrations.sql
+          if-no-files-found: ignore
+
+  gui-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Reconstruct package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP\indotel-src" | Out-Null
+          $parts = Get-ChildItem "validation\package.b64.*" | Sort-Object Name
+          $base64 = ($parts | ForEach-Object { Get-Content $_.FullName -Raw }) -join ''
+          [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\core.zip", [Convert]::FromBase64String($base64))
+          Expand-Archive "$env:RUNNER_TEMP\core.zip" "$env:RUNNER_TEMP\indotel-src" -Force
+      - name: Build WinForms GUI
+        shell: pwsh
+        run: dotnet build "$env:RUNNER_TEMP\indotel-src\core-indotel\INDOTEL.CORE.UI\INDOTEL.CORE.UI.csproj" -c Release -p:EnableWindowsTargeting=true
+      - name: Verify GUI has no database references
+        shell: pwsh
+        run: |
+          $hits = Get-ChildItem "$env:RUNNER_TEMP\indotel-src\core-indotel\INDOTEL.CORE.UI" -Recurse -File -Include *.cs,*.csproj | Select-String -Pattern 'IndotelDbContext|EntityFrameworkCore|SqlConnection|ConnectionStrings'
+          if ($hits) { $hits | Out-String | Write-Host; exit 1 }
