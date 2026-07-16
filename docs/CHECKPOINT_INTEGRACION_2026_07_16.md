@@ -1,0 +1,1 @@
+Checkpoint de integración creado mientras se consolida el paquete completo. Este archivo puede eliminarse al finalizar la entrega.
