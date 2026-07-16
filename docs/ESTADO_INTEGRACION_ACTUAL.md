@@ -1,0 +1,1 @@
+La integración consolidada se mantiene en la rama `integracion-core-web-api-caja-offline`. Caja conserva WPF/.NET 8 y se prepara con recibos impresos, contingencia offline e idempotencia.
