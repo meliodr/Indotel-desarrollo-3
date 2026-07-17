@@ -1,0 +1,28 @@
+ENTREGA FINAL PARA VM WINDOWS POR WHATSAPP
+=========================================
+
+Modalidad:
+- Ubuntu físico: Docker, SQL Server, Core API, Gateway, Web y pagos.
+- Windows VirtualBox: Caja WPF, Core WinForms y navegador.
+
+Artefacto:
+- INDOTEL_PROYECTO_COMPLETO_VM_WHATSAPP_FINAL.zip
+- SHA-256: e92f284e0701d708573d6e176df431281405bc1c46e323ed717e4e093d62a016
+- 645 archivos
+- Integridad ZIP verificada
+
+Configuración incluida:
+- IP inicial Ubuntu: 192.168.1.124
+- Core: 5085
+- Gateway: 5185
+- Web: 5234
+- Detección automática de cambio de IP.
+- Ejecución desde cualquier carpeta, incluyendo Descargas.
+- Verificación automática de Visual Studio y SDK .NET 8.
+- Compilación automática de Caja y Core UI.
+- Accesos directos automáticos.
+- Diagnóstico escrito en caso de error.
+
+Inicio:
+1. PREPARAR_VM_WINDOWS_COMPLETA.bat
+2. INICIAR_APLICACIONES_VM_WINDOWS.bat
