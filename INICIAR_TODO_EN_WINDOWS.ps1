@@ -45,6 +45,15 @@ function Start-DotnetService([string]$Name, [string]$Dll, [string]$WorkingDirect
     return [pscustomobject]@{ Name=$Name; Pid=$process.Id; Path=$Dll }
 }
 
+function Start-DesktopOnce([string]$ProcessName, [string]$FilePath) {
+    $existing = Get-Process -Name $ProcessName -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($existing) {
+        Write-Host ("Ya estaba abierto: {0} (PID {1})" -f $ProcessName, $existing.Id) -ForegroundColor Yellow
+        return
+    }
+    Start-Process -FilePath $FilePath -WorkingDirectory (Split-Path $FilePath)
+}
+
 function Wait-Url([string]$Name, [string]$Url, [int]$Attempts=90) {
     Write-Host ("Esperando {0}: {1}" -f $Name, $Url)
     foreach ($i in 1..$Attempts) {
@@ -108,8 +117,8 @@ if (-not $SinInterfaces) {
     $coreUi = Join-Path $root 'core-indotel\INDOTEL.CORE.UI\bin\Release\net8.0-windows\INDOTEL.CORE.UI.exe'
     if (-not (Test-Path $caja)) { throw 'No se encontro Caja compilada.' }
     if (-not (Test-Path $coreUi)) { throw 'No se encontro Core UI compilado.' }
-    Start-Process -FilePath $caja -WorkingDirectory (Split-Path $caja)
-    Start-Process -FilePath $coreUi -WorkingDirectory (Split-Path $coreUi)
+    Start-DesktopOnce 'Indotel.Caja' $caja
+    Start-DesktopOnce 'INDOTEL.CORE.UI' $coreUi
     Start-Process 'http://localhost:5234/'
     Start-Process 'http://localhost:5085/swagger'
 }
@@ -120,5 +129,8 @@ Write-Host 'Gateway: http://localhost:5185/health/ready'
 Write-Host 'Web:     http://localhost:5234/'
 Write-Host 'Pagos:   http://localhost:5285/health'
 Write-Host 'SQL:     (localdb)\MSSQLLocalDB'
-Write-Host 'Admin:   admin@indotel.test / Admin123*'
-Write-Host 'Cajero:  cajero@indotel.test / Caja123*'
+$seedConfig = Get-Content (Join-Path $root 'core-indotel\Indotel.Core\Data\Seed\seed-development.json') -Raw | ConvertFrom-Json
+$adminDemo = $seedConfig.usuarios | Where-Object rol -eq 'Administrador' | Select-Object -First 1
+$cajeroDemo = $seedConfig.usuarios | Where-Object rol -eq 'Cajero' | Select-Object -First 1
+Write-Host ("Admin:   {0} / {1}" -f $adminDemo.correo, $adminDemo.password)
+Write-Host ("Cajero:  {0} / {1}" -f $cajeroDemo.correo, $cajeroDemo.password)
