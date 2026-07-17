@@ -1,0 +1,22 @@
+ENTREGA VM WINDOWS V2
+=====================
+
+Correccion principal:
+- Instala Visual Studio 2022 Community automaticamente cuando solo esta descargado el instalador.
+- Instala Desarrollo de escritorio .NET para WPF y WinForms.
+- Instala ASP.NET y desarrollo web.
+- Verifica e instala SDK .NET 8.
+- Continua con PREPARAR_VM_WINDOWS_COMPLETA.bat sin configuracion manual.
+
+Artefactos:
+- INDOTEL_PROYECTO_COMPLETO_VM_WHATSAPP_FINAL_V2.zip
+- SHA-256: 198ed582568bcfaf987bb824c4c718e11894cbc1b81566ef8289bedb7bd3c5fe
+- PARCHE_VISUAL_STUDIO_VM_V2.zip
+- SHA-256: c90fe07ab4fc8b3c599e3c0fe336de9eeedc541c5573e687493ac5d486894cf9
+
+Uso:
+1. Extraer el ZIP completo.
+2. Ejecutar PREPARAR_VM_WINDOWS_COMPLETA.bat.
+3. Esperar a que termine Visual Studio.
+4. Reiniciar Windows solo cuando el instalador lo solicite.
+5. Volver a ejecutar PREPARAR_VM_WINDOWS_COMPLETA.bat despues del reinicio.
