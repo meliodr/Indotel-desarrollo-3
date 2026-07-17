@@ -1,0 +1,12 @@
+{
+  "UbuntuIp": "192.168.1.124",
+  "CoreUrl": "http://192.168.1.124:5085",
+  "GatewayUrl": "http://192.168.1.124:5185",
+  "WebUrl": "http://192.168.1.124:5234",
+  "PaymentsUrl": "http://192.168.1.124:5285",
+  "SqlHost": "192.168.1.124",
+  "SqlPort": 14330,
+  "TransferPort": 8000,
+  "ConfigurationMode": "WhatsApp-Windows-VM",
+  "GeneratedAtUtc": "2026-07-17T00:00:00Z"
+}
