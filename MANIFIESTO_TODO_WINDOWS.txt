@@ -1,0 +1,16 @@
+ENTREGA INDOTEL TODO WINDOWS
+============================
+
+Modalidad: una sola maquina Windows 11.
+Base de datos: SQL Server Express LocalDB.
+Core API: localhost:5085.
+Gateway: localhost:5185.
+Web: localhost:5234.
+Pagos: localhost:5285.
+Caja y Core UI: aplicaciones nativas Windows.
+
+No requiere Ubuntu, Docker Desktop ni WSL.
+Entrada principal: 01_PREPARAR_TODO_EN_WINDOWS.bat
+Inicio: 02_INICIAR_TODO_EN_WINDOWS.bat
+Prueba: 05_PROBAR_TODO_EN_WINDOWS.bat
+Detencion: 04_DETENER_TODO_EN_WINDOWS.bat
