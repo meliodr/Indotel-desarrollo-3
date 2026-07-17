@@ -7,8 +7,8 @@ Rama: `integracion-core-web-api-caja-offline`.
 ## Artefacto
 
 - Archivo: `INDOTEL_PROYECTO_COMPLETO_VM_WHATSAPP_FINAL.zip`
-- SHA-256: `e92f284e0701d708573d6e176df431281405bc1c46e323ed717e4e093d62a016`
-- Archivos: 645
+- SHA-256: `2e2f327a684e5375db7cf3bcb6e01eb822d16ba96ac56d8459ada6ca3f1004d8`
+- Archivos: 646
 - Integridad ZIP: verificada sin errores.
 
 ## Modalidad de ejecución
