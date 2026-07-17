@@ -14,3 +14,32 @@ Entrada principal: 01_PREPARAR_TODO_EN_WINDOWS.bat
 Inicio: 02_INICIAR_TODO_EN_WINDOWS.bat
 Prueba: 05_PROBAR_TODO_EN_WINDOWS.bat
 Detencion: 04_DETENER_TODO_EN_WINDOWS.bat
+
+CORRECCION V2 - CAJA WPF
+------------------------
+Se agregaron importaciones explicitas System.IO y System.Net.Http en cinco archivos de Caja para compatibilidad con la compilacion temporal XAML de Visual Studio 2026 Insiders.
+Validacion adicional: 07_VALIDAR_CAJA_WINDOWS.bat
+
+CORRECCIONES FUNCIONALES V4
+==========================
+- Caja WPF y Core UI con instancia unica.
+- Proteccion contra doble envio en login, ordenes y reclamaciones.
+- Core UI regresa al login al cerrar sesion.
+- Navegacion de escritorio filtrada por roles.
+- EstadoOrden usa la vista DetalleOrden existente.
+- Inicio publico cambia segun la sesion.
+- Tramite ciudadano consolidado en Ciudadano/NuevaReclamacion.
+- Monedas DOP y USD sincronizadas por codigo.
+- Datos demo externos en Data/Seed/seed-development.json.
+- Validacion automatica: 08_APLICAR_Y_VALIDAR_CORRECCIONES_V4.bat.
+- El seed V4 es idempotente y completa bases existentes sin requerir reinicio.
+- Reinicio limpio opcional: ELIMINAR_DATOS_DEMO_WINDOWS.bat.
+
+ARTEFACTOS V4
+=============
+- INDOTEL_TODO_WINDOWS_V4_CORREGIDO.zip
+- SHA-256: c9d53f0a5328111161160aa4c2f26e34a1b5d23880238120d6a4fa1a7d04cdb8
+- PARCHE_CORRECCIONES_FUNCIONALES_V4.zip
+- SHA-256: 991808a145188186f19074526e9d9c4ff632d18a75cc5711ae06c8847903a8b2
+- Integridad ZIP verificada.
+- Compilacion y pruebas definitivas se ejecutan en Windows mediante el script 08.
